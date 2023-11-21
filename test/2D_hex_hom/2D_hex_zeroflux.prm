@@ -1,0 +1,58 @@
+# Reactor Roseton 3D. Hexagonal small Reactor  
+# ---------------------------------------------------------------------------
+
+# Dimension of the problem (1, 2 or 3)
+set Dimension           = 2
+
+# Number of eigenvalues
+set N_Eigenvalues       = 1
+
+# Where it is stored the material coefficients
+set N_Refinements       = 0
+
+# Finite element Degree
+set FE_Degree           = 3
+
+#
+# GEOMETRY
+# Grid Type, Rectangular, Hexagonal or Unstructured
+set Geometry_Type       = Hexagonal
+
+# ".msh File where it is the 2d mesh
+set Mesh_Filename       = test/2D_hex_hom/2D_hex.msh
+
+# Number of cells per dimension
+set Mesh_Size           = 3  3  
+
+# Pitch of the cells in x dimension
+set Cell_Pitch_x          = 3* 23.6
+# Pitch of the cells in y dimension
+set Cell_Pitch_y          = 3* 23.6
+
+# Set the first and last existing cell every row in the reactor plant for output results
+set Geometry_Points     =  2 3 1 3 2 3
+
+# Boundary Conditions  (0 = ZeroFlux) (1  ZeroCurrent) (2 Vaccum)
+set Boundary_Conditions = 0 0
+
+# Filename where it is stored the material cross section
+set XSECS_Filename      = test/2D_hex_hom/2D_hex.xsec
+
+#
+# OUTPUT
+# True/false - Print the grid in .eps
+set Print_Grid_Flag     = false
+
+# True/false - Make a .vtk file with the output
+set Output_Flag         = false
+
+# Filename where will be written the output
+set Output_Filename     = test/2D_hex_hom/2D_hex_zeroflux.out
+
+
+# SOLVER
+# Solver Type (power_it | slepc_2g | slepc_7g)
+set Solver_Type         = power_it
+
+# True/false - Use FE_Degree=1 Initialization
+set P_Init              = false

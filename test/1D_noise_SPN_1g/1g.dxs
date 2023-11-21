@@ -1,0 +1,8 @@
+dXS
+# MatNum dsigma_t    dnu_sigma_f      dsigma_s=sigma_t-sigma_a
+#       real  imag     real  imag       real  imag     
+1        0.0   0.0      0.0   0.0       0.0   0.0
+2        0.0   0.0      0.0   0.0       0.001   0.0  
+
+
+

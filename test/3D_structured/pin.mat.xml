@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<materials ngroups="2">
+  <!-- 
+    Here we define the different materials associated to the
+    material id specified when defining the geometry 
+  -->
+  <mix id="0">
+    <name>Fuel</name>
+    <SigmaT>
+       1.00000  1.00000;
+     </SigmaT>
+    <Chi>
+       1.00000  0.00000;
+    </Chi>
+    <SigmaS>
+       0.80000  0.00000;  
+       0.10000  0.90000;
+    </SigmaS>
+    <NuSigF>
+       0.2500  0.2500;
+    </NuSigF>
+    <SigF>
+       0.2500  0.2500;
+    </SigF>
+    <Nu>
+       1.0000  1.0000;
+    </Nu>
+    <SigmaA>
+       0.1000  0.1000;
+    </SigmaA>
+  </mix>
+  
+  <mix id="1">
+    <name>Moderator</name>
+      <SigmaT>
+       1.00000  1.00000;
+     </SigmaT>
+    <Chi>
+       1.00000  0.00000;
+    </Chi>
+    <SigmaS>
+       0.80000  0.00000; 
+       0.10000  0.90000;
+    </SigmaS>
+    <NuSigF>
+       0.0000  0.0000;
+    </NuSigF>
+    <SigF>
+       0.0000  0.0000;
+    </SigF>
+    <Nu>
+       1.0000  1.0000;
+    </Nu>
+    <SigmaA>
+       0.1000  0.1000;
+    </SigmaA>
+  </mix>
+</materials>

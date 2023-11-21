@@ -1,0 +1,59 @@
+# Precursors Definition --  C5G7-TD
+# Deterministic Time-Dependent Neutron Transport Benchmark without Spatial Homogenization (Boyarinov et al.), 2016
+
+Velocities
+# Energy_Group mat1       mat2        
+1              2.21473E+09 2.21473E+09     
+2              4.54712E+08 4.54712E+08    
+3              3.84974E+07 3.86595E+07   
+4              5.12639E+06 5.13931E+06
+5              1.67542E+06 1.67734E+06 
+6              7.26031E+05 7.28603E+05 
+7              2.81629E+05 2.92902E+05 
+ 
+
+N_PrecMat 1
+# Materials with neutron precursors
+PrecMat 2 
+N_Delayed_Groups 8
+
+Delayed_Fractions 
+# DelGroup mat2        mat3        mat4        mat5
+# In the same order than PrecMat
+ 1      7.82484E-05 
+ 2      6.40534E-04 
+ 3      2.27884E-04 
+ 4      5.78624E-04 
+ 5      9.97539E-04 
+ 6      4.33265E-04 
+ 7      3.22355E-04 
+ 8      1.23882E-04 
+
+Delayed_Decay_Constants
+# DelGroup mat2      mat3      mat4      mat5
+ 1     1.247E-02  
+ 2     2.829E-02  
+ 3     4.252E-02  
+ 4     1.330E-01  
+ 5     2.925E-01 
+ 6     6.665E-01  
+ 7     1.635E+00  
+ 8     3.555E+00  
+
+Delayed_Spectra
+
+Material 2
+# Energy_group DelGr_1 DelGr_2 DelGr_3 DelGr_4 DelGr_5 DelGr_6 DelGr_7  DelGr_8
+  1            0.00075 0.03069 0.00607 0.01887 0.04990 0.05524 0.10140 0.08055
+  2            0.98512 0.96887 0.97276 0.97282 0.94419 0.93984 0.88508 0.91408
+  3            0.01413 0.00044 0.02117 0.00831 0.00591 0.00492 0.01351 0.00537
+  4            0.00000 0.00000 0.00000 0.00000 0.00000 0.00000 0.00000 0.00000
+  5            0.00000 0.00000 0.00000 0.00000 0.00000 0.00000 0.00000 0.00000
+  6            0.00000 0.00000 0.00000 0.00000 0.00000 0.00000 0.00000 0.00000
+  7            0.00000 0.00000 0.00000 0.00000 0.00000 0.00000 0.00000 0.00000
+
+
+
+
+
+

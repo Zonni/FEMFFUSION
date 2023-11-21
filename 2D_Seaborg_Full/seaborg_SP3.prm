@@ -1,0 +1,65 @@
+# Reactor Roseton 3D. Hexagonal small Reactor  
+# ---------------------------------------------------------------------------
+
+# Dimension of the problem (1, 2 or 3)
+set Dimension           = 2
+
+# Number of eigenvalues
+set N_Eigenvalues       = 1
+
+
+# Transport Approximation used (Diffusion | SPN )
+set Transport_Appr      = SPN
+
+# Set N of the SPN equations used (1, 3 or 5)
+set N_SPN               = 3
+
+#
+# OUTPUT
+# True/false - Print the grid in .eps
+set Print_Grid_Flag     = true
+
+# True/false - Make a .vtk file with the output
+set Output_Flag         = true
+
+# Filename where will be written the output
+set Output_Filename     = 2D_Seaborg_Full/seaborg_SP3.out
+
+# Number of Refinements per cell in the .vtk output
+set Out_Refinements     = 3
+
+#
+# MESH PARAMETERS
+#
+set N_Refinements       = 0
+
+# Finite element Degree
+set FE_Degree           = 3
+
+#
+# GEOMETRY
+# Grid Type, Rectangular, Hexagonal or Unstructured
+set Geometry_Type       = Unstructured
+
+# Number of cells per dimension
+set Mesh_Size           = 382 1
+
+# ".msh File where it is the 2d mesh
+set Mesh_Filename       = 2D_Seaborg_Full/FullCoreReflected2D_hex.msh
+
+# Boundary Conditions  (0 = ZeroFlux) (1  ZeroCurrent) (2 Vaccum)
+set Boundary_Conditions = 2 2 
+
+# XS type file defined (Femfusion | XSEC | XML | Valkin).
+set XSEC_Type           = XML
+
+# Filename where it is stored the material cross section
+set XSECS_Filename      = 2D_Seaborg_Full/seaborg.xsec
+
+# Set the number of neutron energy groups defined in the calculation.
+set Energy_Groups       = 8
+
+# SOLVER
+# Solver Type (power_it | slepc_2g | slepc_7g)
+set Solver_Type         = bifpam
+

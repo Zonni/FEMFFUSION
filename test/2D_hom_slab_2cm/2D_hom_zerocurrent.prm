@@ -1,0 +1,54 @@
+# Reactor 1D SP1 2cm of length
+# ---------------------------------------------------------------------------
+
+# Dimension of the problem (1, 2 or 3)
+set Dimension            = 2
+
+# Number of eigenvalues
+set N_Eigenvalues        = 1
+
+
+# REACTOR DEFINITION
+# Finite element Degree
+set FE_Degree           = 3
+
+# Number of global refinements 
+set N_Refinements       = 3
+
+# Number of cells per dimension
+set Mesh_Size           = 1 1
+  
+# Pitch of the cells in x dimension
+set Cell_Pitch_x        = 2.0
+set Cell_Pitch_y        = 2.0
+
+# Boundary Conditions (0 = ZeroFlux, 1 = ZeroCurrent, 2 = Vacuum)
+#                       LEFT RIGHT DOWN UP
+set Boundary_Conditions = 1    1    1    1
+
+
+# OUT OPTIONS
+# True/false - Make a .vtk file with the output
+set Output_Flag         = false
+
+# True/false - Print the grid in .eps
+set Print_Grid_Flag     = false
+
+# Number of Refinements per cell in the .vtk output
+set Out_Refinements     = 0
+
+# Filename where will be written the output
+set Output_Filename     = test/2D_hom_slab_2cm/2D_hom_zerocurrent.out
+
+
+# CROSS SECTIONS
+# Filename where it is stored the material cross section
+set XSECS_Filename      = test/2D_hom_slab_2cm/2D_hom.xsec
+
+#
+# SOLVER
+# Solver Type (power_it | slepc_2g | slepc_7g)
+set Solver_Type         = power_it
+
+# True/false - Use FE_Degree=1 Initialization
+set P_Init              = false

@@ -1,0 +1,18 @@
+Materials
+ 1    1 1 2 1 1
+
+
+XSecs 2 # N Defined Materials
+# MatNum   sigma_t    chi   nu_sigma_f  sigma_f   sigma_s
+# Homogeneous material
+  1        1.00000   1.00000   0.2500   0.2500   0.7500
+  2        1.00000   1.00000   0.2500   0.2500   0.7500
+
+
+# Information about neutron precursors  
+Precursors 1 
+#    beta    lambda
+1   0.05     0.01
+
+Velocity
+1000

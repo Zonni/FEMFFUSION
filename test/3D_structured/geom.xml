@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<geometry>
+  
+  <!-- 
+    This geometry is composed of nested structures. The first definition
+    is for the core, which is composed by assemblies, which are composed
+    by pins. 
+  -->
+  
+  <!-- Here is the core description-->
+  <core composed="true">
+    <name>One_Pin_Core</name>
+    <dimension> 3 </dimension>
+    <n_planes> 1 </n_planes>
+    <components> 0 </components>
+    <length> 1.0 1.0 </length> <!-- Z AXIS -->  
+    <boundary> <!-- 0-ZeroFlux, 1-ZeroCurrent, 2-Vaccum, 3-Albedo -->
+      2 2; <!-- X- X+ AXIS -->
+      2 2; <!-- Y- Y+ AXIS -->
+      2 2; <!-- Z- Z+ AXIS -->
+    </boundary>
+  </core>
+
+  <!-- Here is the assemblies description -->
+  <planes>
+    <plane id="0">
+      <name>one_pin_plane</name>
+      <n_nodes> 1 1 2 </n_nodes> <!-- xnodes ynodes znodes -->
+      <length>
+        2.0; <!-- X AXIS -->
+        2.0; <!-- Y AXIS -->
+      </length>
+      <components> 
+         0; 
+      </components>
+    </plane>
+  </planes>
+  
+  <!-- Here is the pin description -->
+  <pins>
+    <pin id="0">
+      <name>normal_pin</name>
+      <type>pin</type>  <!-- PIN or BOX -->
+      <pitch>2.0</pitch>
+      <fuel_radius>0.70</fuel_radius>
+      <materials>0 1</materials> <!-- inner_material or outer_material -->
+    </pin>
+  </pins>
+</geometry>

@@ -1,0 +1,48 @@
+# Structured rectangular pin with circular fuel 
+# ---------------------------------------------------------------------------
+
+# Dimension of the problem (1, 2 or 3)
+set Dimension           = 3
+
+# Number of eigenvalues
+set N_Eigenvalues       = 1
+
+#
+# OUTPUT
+# True/false - Print the grid in .eps
+set Print_Grid_Flag     = true
+
+# True/false - Make a .vtk file with the output
+set Output_Flag         = false
+
+# Filename where will be written the output
+set Output_Filename     = test/3D_structured/pin_axialrefs.out
+
+#
+# MESH PARAMETERS
+#
+set N_Refs_Radial       = 1
+
+#
+set N_Refs_Axial        = 1
+
+# Finite element Degree
+set FE_Degree           = 2
+
+#
+# GEOMETRY
+# Grid Type, Rectangular, Hexagonal or Unstructured
+set Geometry_Type       = Composed
+
+# .xml File where it is declared the mesh in dream way
+set Geometry_Filename   = test/3D_structured/geom_pin_axialrefs.xml
+
+# Filename where it is stored the material cross section
+set XSECS_Filename      = test/3D_structured/pin.mat.xml
+
+# XS type file defined (Femfusion | XSEC | XML | Valkin)
+set XSEC_Type           = XML
+
+#
+# Solver Type (power_it | slepc_2g | slepc_7g)
+set Solver_Type         = slepc_2g

@@ -1,0 +1,23 @@
+# A hole is marked with material 0
+Materials
+PLANE 1
+1            1
+2        0 0 1 
+PLANE 2
+1            1
+2        1 1 1 
+PLANE 3
+1            0
+2        1 1 0 
+
+
+XSecs 1 # Number of materials defined
+#    Sigma_tr1    Sigma_a1   nuSigma_f1  kSigma_f1  Sigma_12
+#    Sigma_tr2    Sigma_a2   nuSigma_f2  kSigma_f2                
+# Reflector  
+# EXTERIOR FUEL
+1     0.222222      0.010      0.000      0.000      0.020                                                              
+      0.833333      0.080      0.135      0.135
+
+
+

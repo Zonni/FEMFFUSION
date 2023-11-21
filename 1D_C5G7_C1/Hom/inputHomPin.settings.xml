@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<settings>
+  
+  <!-- 
+    Here we define the different materials associated to the
+    material id specified when defining the geometry 
+  -->
+  
+  <!-- dimension -->
+  <dim>1</dim>
+  
+  <!-- input files -->
+  <input_files>
+    <out>inputHomPin.out.power.xml</out>
+    <geom>inputHomPin.geom.xml</geom>
+    <mat>input.pin.mat.xml</mat>
+    <mesh>inputHomPin.mesh.vtk</mesh>
+  </input_files>
+  
+  <!-- output options -->
+  <output>
+    <print_mesh>true</print_mesh>
+    <vtk_power>true</vtk_power>
+    <vtk_flux>true</vtk_flux>
+    <vtk_mat>true</vtk_mat>
+    <ass_bcs>false</ass_bcs> 
+  </output>
+  
+  <geometry>
+    <n_ref>2</n_ref>
+  </geometry>
+  
+  <!-- problem -->
+  <!--> <problem type="diffusion"> </problem><!--> 
+  <problem type="transport">
+    <approximation type="sn">
+      <quadrature>
+        <name>GaussLegendre</name>
+        <sn>96</sn>
+      </quadrature>
+    </approximation>
+  </problem>
+  
+  <!-- algebra -->
+  <algebra>
+    <matrix_free>true</matrix_free>
+    <eig_solver type="PI" form="FD"><!-->
+    <eig_solver type="PI" form="Standard"><!-->
+      <tol>1.e-7</tol>
+      <max_it>100</max_it>
+    </eig_solver>
+    <inner_solver type="Krylov">
+      <tol>1.e-9</tol>
+      <max_it>2000</max_it>
+    </inner_solver>
+  </algebra>
+  
+  <!-- finite elements -->
+  <fe_settings>
+    <degree>3</degree>
+  </fe_settings>
+  
+</settings>
+
+

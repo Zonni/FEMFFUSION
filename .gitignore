@@ -1,0 +1,64 @@
+# temporal files #
+##################
+*~
+*.swp
+
+# packages #
+############
+# it's better to unpack these files and commit the raw source
+# git has its own built in compression methods
+*.7z
+*.gz
+*.iso
+*.jar
+*.rar
+*.tar
+*.zip
+
+
+# Eclipse generated files and folders #
+#####################################
+.cproject
+.project
+.settings
+
+# CMake generated files and folders #
+#####################################
+CMakeFiles
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+
+# output, figures and executables #
+#####################################
+*.pdf
+*.eps
+*.vtk
+*.out
+*.exe
+*.ico
+*.pdf
+*.svg
+*.log
+*.pyc
+*.sta
+*.nos
+matrices.m
+
+# rigel files #
+###################
+rigel_compila.sh
+rigel_get.sh
+rigel_submit.sh
+rigel_state.sh
+*.sh.e*
+*.sh.o*
+
+# Ignore mesh tri from test #
+###################
+test/2D_pin_save_load/mesh.tri
+
+# Do not ignore doc/ files #
+###########################
+!doc/*
+

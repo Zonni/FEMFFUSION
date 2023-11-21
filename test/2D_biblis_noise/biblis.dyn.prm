@@ -1,0 +1,16 @@
+
+# Dynamic Data for 2D biblis case
+# --------------------------------
+
+# Frequency of the pertubation and flux  
+set Frequency            = 1.0
+
+# Per Group neutron Velocity
+set Neutron_Velocities   = 12500000  250000
+
+# Lambda  effective of neutron precursors 
+set Lambda_eff           = 0.0784
+
+# Beta effective of neutron precursors
+set Beta_eff             = 0.0065
+

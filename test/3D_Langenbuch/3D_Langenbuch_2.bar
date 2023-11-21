@@ -1,0 +1,22 @@
+# Bank_conf represents the position of the bars
+Bank_Configuration
+1          0 0 0 0 0 0 0 0 0 
+2        0 0 0 0 0 0 0 0 0 0 0
+3        0 0 0 0 0 1 0 0 0 0 0
+4        0 0 0 0 0 0 0 0 0 0 0
+5        0 0 0 0 0 0 0 0 0 0 0
+6        0 0 1 0 0 0 0 0 1 0 0
+7        0 0 0 0 0 0 0 0 0 0 0
+8        0 0 0 0 0 0 0 0 0 0 0
+9        0 0 0 0 0 1 0 0 0 0 0 
+10       0 0 0 0 0 0 0 0 0 0 0
+11         0 0 0 0 0 0 0 0 0 
+
+BarsTopPosition  180.0
+
+Move_Banks  1  # n of moveable Bars defined
+#                                    Initial Position    End Position 
+# bar_num   mat_bar    Points_defined    t_0   h_0        t_1      h_1          
+1             3         2                0.0   100        8.0      180      
+
+

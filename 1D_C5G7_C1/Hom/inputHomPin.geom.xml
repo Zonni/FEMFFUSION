@@ -1,0 +1,329 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<geometry>
+  
+  <!-- 
+    This geometry is composed of nested structures. The first definition
+    is for the core, which is composed by assemblies, which are composed
+    by pins. 
+  -->
+  
+  <!-- Here is the core description-->
+  <core composed="true">
+    <name>mini core</name>
+    <dimension> 1 </dimension>
+    <nnodes> 2 </nnodes> <!-- xnodes ynodes znodes -->
+    <length> 
+      21.42 21.42 ; <!-- X- X+ AXIS -->
+    </length>
+    <components> <!-- LAT or BOX or PCNW PCNE PCSW PCSE -->
+      1 2;
+    </components>
+    <boundary> <!-- ALB or VOID or REFL -->
+      2; <!-- X- AXIS -->
+      2; <!-- X+ AXIS -->
+    </boundary>
+  </core>
+
+  <!-- Here is the lattice description -->
+  <lattices>
+    <lattice id="0">
+      <name>MODERATOR</name>
+      <nnodes> 17 </nnodes> <!-- xnodes ynodes znodes -->
+      <components>
+         0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0;
+      </components>
+      <type>pin_map</type>
+      <water_gap>0. 0. 0. 0.;</water_gap>
+      <pitch>1.26</pitch> 
+    </lattice>
+    <lattice id="1">
+      <name>MOX</name>
+      <nnodes> 17 </nnodes> <!-- xnodes ynodes znodes -->
+      <components>
+         0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16;
+      </components>
+      <type>pin_map</type>
+      <water_gap>0. 0. 0. 0.;</water_gap>
+      <pitch>1.26</pitch> 
+    </lattice>
+    <lattice id="2">
+      <name>UO2</name>
+      <nnodes> 17 </nnodes> <!-- xnodes ynodes znodes -->
+      <components>
+         17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33;
+      </components>
+      <type>pin_map</type>
+      <water_gap>0. 0. 0. 0.;</water_gap>
+      <pitch>1.26</pitch> 
+    </lattice>
+    <!-- If we use the following lattice description we do not need
+    the definition of the pins later, but we can not reach the same
+    mesh as before. I just have it here in case it is needed.  -->
+    <lattice id="3">
+      <name>MOX</name>
+      <nnodes> 17 </nnodes> <!-- xnodes ynodes znodes -->
+      <components>
+         0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16;
+      </components>
+      <type>grid</type>
+      <length>
+        1.26 1.26 1.26 1.26 1.26 1.26 1.26 1.26 1.26 1.26 1.26 1.26 1.26 1.26 1.26 1.26 1.26;
+       </length> 
+    </lattice>
+    <lattice id="4">
+      <name>UO2</name>
+      <nnodes> 17 </nnodes> <!-- xnodes ynodes znodes -->
+      <components>
+         17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33;
+      </components>
+      <type>grid</type>
+      <length>
+        1.26 1.26 1.26 1.26 1.26 1.26 1.26 1.26 1.26 1.26 1.26 1.26 1.26 1.26 1.26 1.26 1.26;
+       </length> 
+    </lattice>
+  </lattices>
+  
+  <!-- Here is the pin description -->
+  <pins>
+    <pin id="0">
+      <name>homogenized pin</name>
+      <type>pin</type> 
+      <materials>0 0;</materials>
+      <fuel_radius>0.54</fuel_radius>
+    </pin>
+    
+    <pin id="1">
+      <name>homogenized pin</name>
+      <type>pin</type> 
+      <materials>1 1;</materials>
+      <fuel_radius>0.54</fuel_radius>
+    </pin>
+    
+    <pin id="2">
+      <name>homogenized pin</name>
+      <type>pin</type> 
+      <materials>2 2;</materials>
+      <fuel_radius>0.54</fuel_radius>
+    </pin>
+    
+    <pin id="3">
+      <name>homogenized pin</name>
+      <type>pin</type> 
+      <materials>3 3;</materials>
+      <fuel_radius>0.54</fuel_radius>
+    </pin>
+    
+    <pin id="4">
+      <name>homogenized pin</name>
+      <type>pin</type> 
+      <materials>4 4;</materials>
+      <fuel_radius>0.54</fuel_radius>
+    </pin>
+    
+    <pin id="5">
+      <name>homogenized pin</name>
+      <type>pin</type> 
+      <materials>5 5;</materials>
+      <fuel_radius>0.54</fuel_radius>
+    </pin>
+    
+    <pin id="6">
+      <name>homogenized pin</name>
+      <type>pin</type> 
+      <materials>6 6;</materials>
+      <fuel_radius>0.54</fuel_radius>
+    </pin>
+    
+    <pin id="7">
+      <name>homogenized pin</name>
+      <type>pin</type> 
+      <materials>7 7;</materials>
+      <fuel_radius>0.54</fuel_radius>
+    </pin>
+    
+    <pin id="8">
+      <name>homogenized pin</name>
+      <type>pin</type> 
+      <materials>8 8;</materials>
+      <fuel_radius>0.54</fuel_radius>
+    </pin>
+    
+    <pin id="9">
+      <name>homogenized pin</name>
+      <type>pin</type> 
+      <materials>9 9;</materials>
+      <fuel_radius>0.54</fuel_radius>
+    </pin>
+    
+    <pin id="10">
+      <name>homogenized pin</name>
+      <type>pin</type> 
+      <materials>10 10;</materials>
+      <fuel_radius>0.54</fuel_radius>
+    </pin>
+    
+    <pin id="11">
+      <name>homogenized pin</name>
+      <type>pin</type> 
+      <materials>11 11;</materials>
+      <fuel_radius>0.54</fuel_radius>
+    </pin>
+    
+    <pin id="12">
+      <name>homogenized pin</name>
+      <type>pin</type> 
+      <materials>12 12;</materials>
+      <fuel_radius>0.54</fuel_radius>
+    </pin>
+    
+    <pin id="13">
+      <name>homogenized pin</name>
+      <type>pin</type> 
+      <materials>13 13;</materials>
+      <fuel_radius>0.54</fuel_radius>
+    </pin>
+    
+    <pin id="14">
+      <name>homogenized pin</name>
+      <type>pin</type> 
+      <materials>14 14;</materials>
+      <fuel_radius>0.54</fuel_radius>
+    </pin>
+    
+    <pin id="15">
+      <name>homogenized pin</name>
+      <type>pin</type> 
+      <materials>15 15;</materials>
+      <fuel_radius>0.54</fuel_radius>
+    </pin>
+    
+    <pin id="16">
+      <name>homogenized pin</name>
+      <type>pin</type> 
+      <materials>16 16;</materials>
+      <fuel_radius>0.54</fuel_radius>
+    </pin>
+    
+    <pin id="17">
+      <name>homogenized pin</name>
+      <type>pin</type> 
+      <materials>17 17;</materials>
+      <fuel_radius>0.54</fuel_radius>
+    </pin>
+    
+    <pin id="18">
+      <name>homogenized pin</name>
+      <type>pin</type> 
+      <materials>18 18;</materials>
+      <fuel_radius>0.54</fuel_radius>
+    </pin>
+    
+    <pin id="19">
+      <name>homogenized pin</name>
+      <type>pin</type> 
+      <materials>19 19;</materials>
+      <fuel_radius>0.54</fuel_radius>
+    </pin>
+    
+    <pin id="20">
+      <name>homogenized pin</name>
+      <type>pin</type> 
+      <materials>20 20;</materials>
+      <fuel_radius>0.54</fuel_radius>
+    </pin>
+    
+    <pin id="21">
+      <name>homogenized pin</name>
+      <type>pin</type> 
+      <materials>21 21;</materials>
+      <fuel_radius>0.54</fuel_radius>
+    </pin>
+    
+    <pin id="22">
+      <name>homogenized pin</name>
+      <type>pin</type> 
+      <materials>22 22;</materials>
+      <fuel_radius>0.54</fuel_radius>
+    </pin>
+    
+    <pin id="23">
+      <name>homogenized pin</name>
+      <type>pin</type> 
+      <materials>23 23;</materials>
+      <fuel_radius>0.54</fuel_radius>
+    </pin>
+    
+    <pin id="24">
+      <name>homogenized pin</name>
+      <type>pin</type> 
+      <materials>24 24;</materials>
+      <fuel_radius>0.54</fuel_radius>
+    </pin>
+    
+    <pin id="25">
+      <name>homogenized pin</name>
+      <type>pin</type> 
+      <materials>25 25;</materials>
+      <fuel_radius>0.54</fuel_radius>
+    </pin>
+    
+    <pin id="26">
+      <name>homogenized pin</name>
+      <type>pin</type> 
+      <materials>26 26;</materials>
+      <fuel_radius>0.54</fuel_radius>
+    </pin>
+    
+    <pin id="27">
+      <name>homogenized pin</name>
+      <type>pin</type> 
+      <materials>27 27;</materials>
+      <fuel_radius>0.54</fuel_radius>
+    </pin>
+    
+    <pin id="28">
+      <name>homogenized pin</name>
+      <type>pin</type> 
+      <materials>28 28;</materials>
+      <fuel_radius>0.54</fuel_radius>
+    </pin>
+    
+    <pin id="29">
+      <name>homogenized pin</name>
+      <type>pin</type> 
+      <materials>29 29;</materials>
+      <fuel_radius>0.54</fuel_radius>
+    </pin>
+    
+    <pin id="30">
+      <name>homogenized pin</name>
+      <type>pin</type> 
+      <materials>30 30;</materials>
+      <fuel_radius>0.54</fuel_radius>
+    </pin>
+    
+    <pin id="31">
+      <name>homogenized pin</name>
+      <type>pin</type> 
+      <materials>31 31;</materials>
+      <fuel_radius>0.54</fuel_radius>
+    </pin>
+    
+    <pin id="32">
+      <name>homogenized pin</name>
+      <type>pin</type> 
+      <materials>32 32;</materials>
+      <fuel_radius>0.54</fuel_radius>
+    </pin>
+    
+    <pin id="33">
+      <name>homogenized pin</name>
+      <type>pin</type> 
+      <materials>33 33;</materials>
+      <fuel_radius>0.54</fuel_radius>
+    </pin>
+
+  </pins>
+  
+</geometry>

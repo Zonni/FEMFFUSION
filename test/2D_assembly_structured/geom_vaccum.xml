@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<geometry>
+  
+  <!-- 
+    This geometry is composed of nested structures. The first definition
+    is for the core, which is composed by assemblies, which are composed
+    by pins. 
+  -->
+  
+  <!-- Here is the core description-->
+  <core composed="true">
+    <name>One Assembly Core</name>
+    <dimension> 2 </dimension>
+    <n_planes> 1 </n_planes> <!-- xnodes ynodes znodes -->
+    <components>  0 </components>
+    <boundary> <!-- 0-ZeroFlux, 1-ZeroCurrent, 2-Vaccum, 3-Albedo -->
+      2 2; <!-- X- X+ AXIS -->
+      2 2; <!-- Y- Y+ AXIS -->
+    </boundary>
+  </core>
+
+  <!-- Here is the assemblies description -->
+  <planes>
+    <plane id="0">
+      <name>5x5 Pin Assembly </name>
+      <n_nodes> 5 5 </n_nodes> <!-- xnodes ynodes znodes -->
+      <length>
+        0.4 0.4 0.4 0.4 0.4; <!-- X AXIS -->
+        0.4 0.4 0.4 0.4 0.4; <!-- Y AXIS -->
+      </length>
+      <components> 
+         0 1 1 1 0; 
+         1 0 0 0 1;
+         0 0 0 0 0;
+         1 0 0 0 1;
+         0 1 1 1 0;
+      </components>
+    </plane>
+  </planes>
+
+  
+  <!-- Here is the pin description -->
+  <pins>
+    <pin id="0">
+      <name>normal pin</name>
+      <type>pin</type>  <!-- PIN or BOX -->
+      <pitch>0.4</pitch> 
+      <fuel_radius>0.15</fuel_radius>
+      <materials>1 0</materials> <!-- inner_material or outer_material -->
+    </pin>
+    <pin id="1">
+      <name>moderator</name>
+      <type>box</type> 
+      <pitch>0.4</pitch>
+      <materials>0</materials>
+    </pin>
+  </pins>
+</geometry>

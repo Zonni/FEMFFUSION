@@ -1,0 +1,8 @@
+Materials
+ 1    1
+
+
+XSecs 1 # N Defined Materials
+# MatNum sigma_tr chi nu_sigma_f  sigma_f  sigma_s
+# Homogeneous material
+1     1.00000    1.00    0.250    0.250    0.90

@@ -1,0 +1,74 @@
+# Reactor VVER 1000 : 2D Hexagonal reactor
+# ---------------------------------------------------------------------------
+
+#  Dimensions of the problem (1, 2 or 3)
+set Dimension           = 2
+
+# Number of eigenvalues
+set N_Eigenvalues       = 1
+
+# True/false - Activate Frequency Domain Noise Calculation
+set Noise_Calculation   = true
+
+# Finite element Degree
+set FE_Degree           = 2
+
+# Where it is stored the material coefficients
+set N_Refinements       = 3
+
+#
+# GEOMETRY DEFINITION
+# Grid Type, Rectangular, Hexagonal or Unstructured
+set Geometry_Type       = Hexagonal
+
+# ".msh File where it is the 2d mesh
+set Mesh_Filename       = 2D_VVER1000_vibration/VVER1000.msh
+
+
+# Number of cells per dimension
+set Mesh_Size           = 14  15
+
+# Set the first and last existing cell every row in the reactor plant for output results
+set Geometry_Points     =  1 6 1 9 1 10 1 11 1 12 1 13 1 14 1 13 1 14 1 13 1 12 1 11 1 10 1 9 1 6
+
+# Pitch of the cells in x dimension
+set Cell_Pitch_x        = 14* 23.6
+# Pitch of the cells in y dimension
+set Cell_Pitch_y        = 15* 23.6
+
+# Boundary Conditions (0 = ZeroFlow) (1  Reflection) (2 Albedo) (3 Vaccum)
+set Boundary_Conditions = 2 2 2 2 2 2
+
+# Filename where it is stored the material cross section
+set XSECS_Filename      = 2D_VVER1000_vibration/2D_VVER1000.xsec
+
+# Type of the Pertubation (Cell_Wise | Borders | BordersHex)
+set Perturbation_Type   = BordersHex
+
+# Filename where it is stored the perturbation data
+set DS_Filename         = 2D_VVER1000_vibration/2D_VVER1000.dxs
+
+# Filename where it is stored some dynamic data.
+set DYN_Filename        = 2D_VVER1000_vibration/2D_VVER1000.dyn
+
+# Filename where will be written the output
+set Output_Filename     = 2D_VVER1000_vibration/2D_VVER1000.out
+
+# Filename where the output results are stored in a matlab structure.
+set RESULTS_Filename    = 2D_VVER1000_vibration/2D_VVER1000.mat
+
+#
+# SOLVER
+# Solver Type (power_it | slepc_2g | bifpam)
+set Solver_Type         = slepc_2g
+
+#
+# OUTPUT 
+# True/false - Print the grid 
+set Print_Grid_Flag     = false
+
+# True/false - Make a .vtk file with the output 
+set Output_Flag         = true
+
+# Number of Refinements per cell in the .vtk output
+set Out_Refinements     = 2

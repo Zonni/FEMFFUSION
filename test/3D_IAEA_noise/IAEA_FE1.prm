@@ -1,0 +1,78 @@
+# IAEA 3D REACTOR - NOISE 
+# ---------------------------------------------------------------------------
+# This data comes from: Benchmark Problem Book, ANL-7416, Suppl. 2, Argonne National Laboratory (1977)
+
+# Dimension of the problem (1, 2 or 3)
+set Dimension           = 3
+
+# Number of eigenvalues required
+set N_Eigenvalues       = 1
+
+# True/false - Activate Frequency Domain Noise Calculation
+set Noise_Calculation    = true
+
+
+# REACTOR and MESH DEFINITION
+# Finite element degree
+set FE_Degree           = 1
+
+# Global Refinements of the mesh:
+set N_Refinements       = 0
+
+# Number of cells per dimension
+set Mesh_Size           = 17 17 19
+
+# Pitch of the cells
+set Cell_Pitch_x        = 17* 20.0 
+set Cell_Pitch_y        = 17* 20.0
+set Cell_Pitch_z        = 19* 20.0
+
+# Declare the geometry of a the reactor
+# Set a matrix where, 0 means no materials, 1 nuclear fuel and 2 reflector.
+set Geometry_Matrix     =	0 0 0 0 0 1 1 1 1 1 1 1 0 0 0 0 0;   \
+                            0 0 0 1 1 1 1 1 1 1 1 1 1 1 0 0 0;   \
+                            0 0 1 1 1 1 1 1 1 1 1 1 1 1 1 0 0;   \
+                            0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0;   \
+                            0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0;   \
+                            1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1;   \
+                            1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1;   \
+                            1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1;   \
+                            1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1;   \
+                            1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1;   \
+                            1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1;   \
+                            1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1;   \
+                            0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0;   \
+                            0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0;   \
+                            0 0 1 1 1 1 1 1 1 1 1 1 1 1 1 0 0;   \
+                            0 0 0 1 1 1 1 1 1 1 1 1 1 1 0 0 0;   \
+                            0 0 0 0 0 1 1 1 1 1 1 1 0 0 0 0 0;   
+
+
+# Boundary Conditopns (LEFT  RIGHT TOP BOTTOM UP DOWN)  (0 = ZeroFlux) (1  ZeroCurrent) (2 Vaccum) (3 Albedo) 
+set Boundary_Conditions = 2    2   2    2     2   2
+
+#
+# OUTPUT OPTIONS
+# Filename where will be written the output
+set Output_Filename     = test/3D_IAEA_noise/IAEA_FE1.out
+
+# True/false - Make a .vtk file with the output
+set Output_Flag         = false
+
+# True/false - Print the grid in .eps
+set Print_Grid_Flag     = false
+
+# Number of Refinements per cell in the .vtk output
+set Out_Refinements     = 0
+
+#
+# CROSS SECTIONS
+# Filename where it is stored the material cross section
+set XSECS_Filename      = test/3D_IAEA_noise/IAEA.xsec
+
+# Filename where it is stored the perturbation data
+set DS_Filename         = test/3D_IAEA_noise/IAEA.dxs
+
+# Filename where it is stored some dynamic data.
+set DYN_Filename        = test/3D_IAEA_noise/IAEA.dyn.prm
+

@@ -1,0 +1,68 @@
+# C5G7 Reactor
+# ---------------------------------------------------------------------------
+
+# Dimension of the problem (1, 2 or 3)
+set Dimension           = 2
+
+# Number of eigenvalues
+set N_Eigenvalues       = 1
+
+# Transport Approximation used (Diffusion | SPN )
+set Transport_Appr       = Full_SPN
+set N_SPN                = 3
+
+#
+# MESH PARAMETERS
+#
+set N_Refs_Radial       = 1
+
+# Finite element Degree
+set FE_Degree           = 2
+
+# True/false - Activate Frequency Domain Noise Calculation
+set Noise_Calculation    = true
+
+#
+# GEOMETRY
+# Grid Type, Rectangular, Hexagonal, Composed or Unstructured
+set Geometry_Type       = Composed
+
+
+
+# Filename where the triangulation is saved/loaded the output
+set Triangulation_Filename = 2D_C5G7_noise/NN1.1/mesh_ref1.tri
+
+#
+# CROSS SECTIONS
+# XS type file defined (Femfusion | XSEC | XML | Valkin)
+set XSEC_Type           = XML
+
+
+# Set the number of neutron energy groups defined in the calculation.
+set Energy_Groups       = 7
+
+#
+# OUTPUT
+# True/false - Print the grid in .eps
+set Print_Grid_Flag     = true
+
+# True/false - Make a .vtk file with the output
+set Output_Flag         = true
+
+# Filename where will be written the output
+set Output_Filename     = 2D_C5G7_noise/NN1.1/c5g7_ref1_FE2_FSP3.out
+
+# .xml File where it is declared the mesh in dream way
+set Geometry_Filename   = 2D_C5G7_noise/NN1.1/input.geom.xml
+
+# Filename where it is stored the material cross section
+set XSECS_Filename      = 2D_C5G7_noise/NN1.1/input.xs.xml
+
+# Filename where it is stored the perturbation data
+set DS_Filename         = 2D_C5G7_noise/NN1.1/input.dxs.xml
+
+# Filename where it is stored some dynamic data.
+set DYN_Filename        = 2D_C5G7_noise/NN1.1/c5g7.dyn
+
+# Filename where it is stored some dynamic data.
+set PREC_Filename        = 2D_C5G7_noise/NN1.1/c5g7.prec

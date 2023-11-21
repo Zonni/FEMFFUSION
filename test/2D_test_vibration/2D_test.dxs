@@ -1,0 +1,22 @@
+# Definition of Perturbes Faces at different Materials
+# 0  - No Pertubed Face
+# Lexicographic Order: 
+# Left Right Down Up
+#    4 _
+#   1 |*| 2
+#    3 ⎻
+# 
+Perturbed_Faces  
+1    0 0 0 0
+2    1 2 0 0
+
+dXS_Faces   2
+# dXS of each face
+#  dSigma_t1       dSigma_a1        dSigma_f1    dSigma_12
+#  real  imag      real  imag      real  imag   real  imag
+#  dSigma_t2       dSigma_a2        dSigma_f2
+#  real  imag      real  imag      real  imag 
+1  0.000  0.000    0.000  0.000      0.000 0.000   0.000 0.000
+   0.000  0.000    0.000 +5.0e-04    0.000 0.000 
+2  0.000  0.000    0.000  0.000      0.000 0.000   0.000 0.000
+   0.000  0.000    0.000 -5.0e-04    0.000 0.000    

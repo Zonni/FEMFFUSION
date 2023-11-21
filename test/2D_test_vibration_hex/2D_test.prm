@@ -1,0 +1,71 @@
+# 2D TEST VIBRATION REFERENCE
+# ---------------------------------------------------------------------------
+#
+
+# Dimension of the problem (1, 2 or 3)
+set Dimension           = 2
+
+# Number of eigenvalues required
+set N_Eigenvalues       = 1
+
+
+# True/false - Activate Frequency Domain Noise Calculation
+set Noise_Calculation   = true
+
+# REACTOR and MESH DEFINITION
+# Finite element degree
+set FE_Degree           = 2
+ 
+# Number of global refinements 
+set N_Refinements       = 1
+
+#
+# GEOMETRY DEFINITION
+# Grid Type, Rectangular, Hexagonal or Unstructured
+set Geometry_Type       = Hexagonal
+
+# Number of cells per dimension
+set Mesh_Size           = 3 3
+
+# ".msh File where it is the 2d mesh
+set Mesh_Filename       = test/2D_test_vibration_hex/2D_hex_test.msh
+
+# Pitch of the cells
+set Cell_Pitch_x        = 3* 15.0
+set Cell_Pitch_y        = 3* 15.0
+
+# Declare the geometry of a the reactor
+# Set a matrix where, 0 means no materials, 1 nuclear fuel and 2 reflector.
+set Geometry_Matrix     =	1 1 0;   \
+				            1 1 1;   \
+		               		1 1 0;     
+
+# Boundary Conditopns (LEFT RIGHT DOWN UP)   (0 = ZeroFlux) (1 ZeroCurrent) (2 Vaccum) (3 Albedo) 
+set Boundary_Conditions = 2 2 2 2
+ 
+
+# OUT OPTIONS
+# True/false - Make a .vtk file with the output
+set Output_Flag         = false
+
+# FILENAMES
+# Filename where it is stored the material cross section
+set XSECS_Filename      = test/2D_test_vibration_hex/2D_test.xsec
+
+# Type of the Pertubation (Cell_Wise | Borders | BordersHex)
+set Perturbation_Type   = BordersHex
+
+# Filename where it is stored the perturbation data
+set DS_Filename         = test/2D_test_vibration_hex/2D_test.dxs
+
+# Filename where it is stored some dynamic data.
+set DYN_Filename        = test/2D_test_vibration_hex/2D_test.dyn.prm
+
+# Filename where will be written the output
+set Output_Filename     = test/2D_test_vibration_hex/2D_test.out
+
+
+#
+# Solver Type (power_it | slepc_2g | bifpam)
+set Solver_Type         = slepc_2g
+

@@ -1,0 +1,70 @@
+# Reactor Roseton 3D. Hexagonal small Reactor  
+# ---------------------------------------------------------------------------
+
+# Dimension of the problem (1, 2 or 3)
+set Dimension            = 3
+
+# Number of eigenvalues
+set NEigenvalues         = 1
+
+# Rod Cusping Method -- 1 - Volume Homogenized | 2 - Move All Plane
+set RodCuspingMethod     = 1
+
+
+# FLAGS
+# True/false - Print the grid in .eps
+set Print_Grid_Flag     = false
+
+# True/false - Make a .vtk file with the output
+set Output_Flag         = false
+
+# 3 3 3 3 !  (0 = ZeroFlow) (1  Simetria) (2 Albedo)
+set Boundary_Conditions = 1
+
+# Finite element Degree
+set FE_Degree           = 2
+
+# Number of cells per dimension
+set Mesh_Size           = 3 3 12
+
+# Pitch of the cells in x dimension
+set Cell_Pitch_x        = 1.00 1.00 1.00
+# Pitch of the cells in y dimension
+set Cell_Pitch_y        = 1.00 1.00 1.00
+# Pitch of the cells in z dimension
+set Cell_Pitch_z        = 12* 25.00
+
+
+# TIME - Dependent Problem
+set Time_Step           = 0.25
+set Time_End            = 10.00
+
+
+set Out_Refinements     = 0
+
+
+# REINIT
+# File where it is saved the reinit info
+set Reinit_Load_File    = rectangular/recangular_FE2_fix.rin
+
+# Save reinit every N steps. (0 do not save)
+<<<<<<< HEAD
+set N_Reinit_Steps      = 0
+=======
+set N_Reinit_Steps      = 30
+>>>>>>> 97b8abf1ec290f5eaad9ace4186b8793b8ec8118
+
+
+
+# Filename where it is stored the material cross section
+set XSECS_Filename      = rectangular/rectangular.xsec
+
+# Filename where it is defined the movement of the banks
+set Bar_Filename        = rectangular/rectangular.bar
+
+# Filename where will be written the output
+set Output_Filename     = rectangular/rectangular_fix.out
+
+
+
+

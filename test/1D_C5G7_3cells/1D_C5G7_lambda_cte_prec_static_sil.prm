@@ -1,0 +1,90 @@
+# 1D  REACTOR -- Heterogenous -- C5G7 C1
+# ---------------------------------------------------------------------------
+#
+# Dimension of the problem (1, 2 or 3)
+set Dimension             = 1
+
+
+# True/false - Make a .vtk file with the output
+set Output_Flag         = false
+
+# True/false - Print the grid in .eps
+set Print_Grid_Flag       = false
+
+set Transient             = true
+
+
+# CALCULATION PARAMETRES 
+# Number of eigenvalues required
+set N_Eigenvalues         = 1
+
+
+# Transport Approximation used (Diffusion | SPN )
+set Transport_Appr       = Diffusion
+
+# Set N of the SPN equations used (1, 3 or 5)
+set N_SPN                = 1
+
+# Set the number of neutron energy groups defined in the calculation
+set Energy_Groups         = 7
+
+# Finite Element Degree
+set FE_Degree             = 3
+
+# Global Refinements of the mesh:
+set N_Refinements         = 0
+
+#
+# REACTOR DEFINITION
+# Number of cells per dimension 
+set Mesh_Size             = 3
+
+
+# Boundary Conditopns (LEFT RIGHT)   (0 = ZeroFlow) (1  Reflective) (2 Albedo) (3 Vaccum beta=0) 
+set Boundary_Conditions   = 1   1
+
+# Pitch of the cells in x dimension  34* (1.158 3.231 3.231 3.231 3.231 1.158 )
+set Cell_Pitch_x          = 0.09 1.08 0.09     
+ 
+
+
+# FILEAMES
+# Filename where it is stored the material cross section
+set XSECS_Filename        =  test/1D_C5G7_3cells/het_small_lambda_cte.xsec
+
+# XS type file defined (Femfusion | XSEC | XML | Valkin)
+set XSEC_Type           = XSEC
+
+# Filename where will be written the output
+set Output_Filename       =  test/1D_C5G7_3cells/het_small_lambda_cte.out
+
+# Solver Type (power_it | bifpam | bifpam)
+set Solver_Type         = gd
+set P_Init		= false
+
+set EPS_Tolerance=1e-13
+set KSP_Tolerance=1e-14
+
+# TIME PARAMETERS
+
+# Delta time of the iteration
+set Time_Delta          = 0.01
+
+# Final time of the computation
+set Time_End            = 0.1
+set Distributed_Time_Scheme = Semi-Implicit-Euler 
+
+# Cross Section where the Sigma_f1/Sigma_a1
+set XS_Name             = Sigma_f
+
+# Distribution of the instability: Flux_Distributed or Single_Material
+set Type_Perturbation   = Single_Material
+set Material_Changing = 2
+
+
+# Type of instability Constant | Ramp
+set Perturbation_Function   = Ramp
+set Slope_Up =0.00
+
+
+
