@@ -364,6 +364,23 @@ void InputMat::calc_sigmat (XS_single &xs_)
   }
 }
 
+void InputMat::calc_chid (XS_single &xs_)
+{
+
+  double betaeff;
+  xs_.chi_d.resize(n_precursors);
+
+
+    for (unsigned int p = 0; p < n_precursors; p++)
+    {
+      xs_.chi_d[p].resize(n_groups);
+      xs_.chi_d[p]=xs_.chi;
+    }
+
+
+
+}
+
 void InputMat::calc_chip (XS_single &xs_)
 {
 
@@ -440,6 +457,10 @@ void InputMat::check ()
     if (mat->second.exist_chi)
     {
       norm_chi(xs[mat->second.id]);
+
+      if (!(mat->second.exist_chi_d))
+    	  calc_chid(xs[mat->second.id]);
+
       calc_chip(xs[mat->second.id]);
       calc_betaeff(xs[mat->second.id]);
     }

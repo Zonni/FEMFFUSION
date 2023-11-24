@@ -219,6 +219,9 @@ private:
   calc_sigmat(XS_single & xs_);
   /** @todo document me */
   void
+  calc_chid(XS_single & xs_);
+  /** @todo document me */
+  void
   calc_chip(XS_single & xs_);
   /** @todo document me */
   void

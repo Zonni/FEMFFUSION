@@ -70,7 +70,7 @@ set EPS_Tolerance       = 1e-10
 # Delta time of the iteration
 set Transient           = true
 set Time_Delta          = 0.01
-set Distributed_Time_Scheme = Semi-Implicit-Euler
+set Distributed_Time_Scheme = Semi-Implicit-Exponential
 
 # Final time of the computation
 set Time_End            = 1.0
@@ -89,7 +89,7 @@ set Bar_Filename     = 3D_Seaborg/3D_Seaborg.bar
 
 # Filename where it is defined the movement of the banks
 set STA_Filename     = 3D_Seaborg/3D_Seaborg_SP1_fe2.sta
-set Save_Static      = true
+set Save_Static      = false
 
 
 
