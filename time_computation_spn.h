@@ -212,7 +212,7 @@ template <int dim, int n_fe_degree>
     // Time data
     std::string type_perturbation;
     unsigned int n_prec;
-    double beta;
+//    double beta;
     MatrixFreeType matrixfree_type;
     bool listen_to_material_id;
 

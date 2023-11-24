@@ -591,7 +591,7 @@ template <int dim, int n_fe_degree>
     unsigned int n_blocks;
     unsigned int n_dofs_block;
 
-    std::vector<double> velocities;
+    std::vector<std::vector<double>> velocities;
 
     // Allocate Matrices Structures
     std::vector<std::vector<PETScWrappers::MPI::SparseMatrix*> > matrix_blocks;

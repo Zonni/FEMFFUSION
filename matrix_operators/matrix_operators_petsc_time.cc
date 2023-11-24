@@ -553,6 +553,7 @@ template <int dim, int n_fe_degree>
                             * materials.get_prompt_spectra(mat, gi)
                             * materials.get_nu_sigma_f(gi, mat);
 
+          if (this->type_scheme == "implicit-exponential")
           for (unsigned int np = 0; np < materials.get_n_precursors();
               np++)
           {

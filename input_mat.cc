@@ -148,7 +148,7 @@ void InputMat::load (const std::string &filename)
       bin = v.second.get<std::string>("ChiD", std::string(""));
       if (bin != std::string(""))
       {
-        str_to_vector<double>(bin, mat.chi_d);
+        str_to_vector(bin, mat.chi_d);
         bin.clear();
         mat.exist_chi_d = true;
       }
@@ -180,7 +180,9 @@ void InputMat::load (const std::string &filename)
     }
   }
   n_mat = xs.size();
+
   check();
+
 }
 
 void InputMat::save (const std::string &filename)
@@ -379,6 +381,8 @@ void InputMat::calc_chip (XS_single &xs_)
     }
 
     xs_.chi_p[g] = (xs_.chi[g] - sum_del_beta) / (1 - betaeff);
+
+
   }
 
 }
@@ -418,13 +422,13 @@ void InputMat::check ()
 {
   for (typename XS_map::iterator mat = xs.begin(); mat != xs.end(); ++mat)
   {
-
     if (mat->second.exist_nu_sigma_f && mat->second.exist_nu
         && mat->second.exist_sigma_f)
     {
       check_nusigf(xs[mat->second.id]);
       calc_nusigf(xs[mat->second.id]);
     }
+
 
     if (mat->second.exist_sigma_t && mat->second.exist_sigma_s
         && mat->second.exist_sigma_a)

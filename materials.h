@@ -616,9 +616,9 @@ class Materials
   // Group-to-group assemblies  XS[from_group][to_group][material]
   std::vector<std::vector<std::vector<double> > > init_sigma_s;
 
-  std::vector<double> velocities;
-  std::vector<double> beta_prec, lambda_prec;
-  double beta_total;
+//  std::vector<double> velocities;
+//  std::vector<double> beta_prec, lambda_prec;
+//  double beta_total;
 
   unsigned int n_prec_mat;
   std::vector<unsigned int> precursors_materials;

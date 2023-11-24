@@ -14,10 +14,10 @@ set N_SPN                = 1
 
 # MESH PARAMETERS
 #
-set N_Refs_Radial       = 1
+set N_Refs_Radial       = 0
 
 # Finite element Degree
-set FE_Degree           = 2
+set FE_Degree           = 1
 
 #
 # GEOMETRY
@@ -36,10 +36,8 @@ set Triangulation_Filename = 2D_C5G7-TD/mesh_ref1.tri
 set XSEC_Type           = XML
 
 # Filename where it is stored the material cross section
-set XSECS_Filename      = 2D_C5G7-TD/input.mat.xml
+set XSECS_Filename      = 2D_C5G7-TD/input.mat.prec.xml
 
-# Filename where it is stored some dynamic data.
-set PREC_Filename        = 2D_C5G7-TD/c5g7.prec
 
 # Set the number of neutron energy groups defined in the calculation.
 set Energy_Groups       = 7

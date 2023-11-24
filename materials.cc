@@ -36,7 +36,7 @@ Materials::Materials (ConditionalOStream &verbose_cout) :
   diffusions_coefficient_computed = false;
   listen_to_material_id = false;
   n_precursors = 0;
-  beta_total = 0.0;
+//  beta_total = 0.0;
   n_mats_init = 0;
   n_total_assemblies = 0;
   n_prec_mat = 0;
@@ -205,41 +205,41 @@ unsigned int Materials::get_n_precursors () const
   return n_precursors;
 }
 
-/**
- *
- */
-double Materials::get_velocitiy (const unsigned int group) const
-{
-  AssertIndexRange(group, velocities.size());
-  return velocities[group];
-}
-
-/**
- *
- */
-double Materials::get_lambda_prec (const unsigned int group) const
-{
-  AssertIndexRange(group, lambda_prec.size());
-  return lambda_prec[group];
-}
-
-/**
- *
- */
-double Materials::get_beta_prec (const unsigned int group) const
-{
-  AssertIndexRange(group, beta_prec.size());
-  return beta_prec[group];
-}
-
-/**
- *
- */
-double Materials::get_beta_total () const
-{
-
-  return beta_total;
-}
+///**
+// *
+// */
+//double Materials::get_velocitiy (const unsigned int group) const
+//{
+//  AssertIndexRange(group, velocities.size());
+//  return velocities[group];
+//}
+//
+///**
+// *
+// */
+//double Materials::get_lambda_prec (const unsigned int group) const
+//{
+//  AssertIndexRange(group, lambda_prec.size());
+//  return lambda_prec[group];
+//}
+//
+///**
+// *
+// */
+//double Materials::get_beta_prec (const unsigned int group) const
+//{
+//  AssertIndexRange(group, beta_prec.size());
+//  return beta_prec[group];
+//}
+//
+///**
+// *
+// */
+//double Materials::get_beta_total () const
+//{
+//
+//  return beta_total;
+//}
 
 /**
  *  Generalization of precursors
@@ -275,8 +275,8 @@ double Materials::get_velocitiy (const unsigned int mat,
 void Materials::set_n_precursors (const unsigned int n_prec)
 {
   n_precursors = n_prec;
-  lambda_prec.resize(n_prec);
-  beta_prec.resize(n_prec);
+//  lambda_prec.resize(n_prec);
+//  beta_prec.resize(n_prec);
 
   delayed_decay_constants.resize(n_mats);
   for (unsigned int mat = 0; mat < n_mats; mat++)
@@ -296,9 +296,9 @@ void Materials::set_n_precursors (const unsigned int n_prec)
 void Materials::set_velocity (const unsigned int group,
   double vel)
 {
-  velocities.resize(n_groups);
+//  velocities.resize(n_groups);
   AssertIndexRange(group, n_groups);
-  velocities[group] = vel;
+//  velocities[group] = vel;
 
   velocities_vector.resize(n_mats);
   for (unsigned int mat = 0; mat < n_mats; mat++)
@@ -316,7 +316,7 @@ void Materials::set_lambda_prec (const unsigned int group,
   double lambda)
 {
   AssertIndexRange(group, lambda_prec.size());
-  lambda_prec[group] = lambda;
+//  lambda_prec[group] = lambda;
 
   for (unsigned int mat = 0; mat < n_mats; mat++)
     delayed_decay_constants[mat][group] = lambda;
@@ -358,8 +358,8 @@ void Materials::set_beta_prec (const unsigned int group,
   double beta)
 {
   AssertIndexRange(group, beta_prec.size());
-  beta_prec[group] = beta;
-  beta_total = sum_vector(beta_prec);
+//  beta_prec[group] = beta;
+//  beta_total = sum_vector(beta_prec);
 
   for (unsigned int mat = 0; mat < n_mats; mat++)
   {
@@ -415,7 +415,7 @@ void Materials::remove_precursors ()
 {
 
   n_precursors = 0;
-  beta_total = 0;
+//  beta_total = 0;
 
   for (unsigned int mat = 0; mat < n_mats; mat++)
     delayed_fraction_sum[mat] = 0.0;
@@ -1064,8 +1064,7 @@ void Materials::create_new_mixed_mat_toni (const unsigned int new_mat,
  */
 void Materials::make_critical (const double &keffective)
 {
-  std::cout << " make_critical!!!!!!! " << std::endl;
-  std::cout << " n_mats" << n_mats << std::endl;
+
   // Compute diffusion Coefficients
   for (unsigned int g = 0; g < n_groups; ++g)
     for (unsigned int mat = 0; mat < n_mats; ++mat)
@@ -1749,8 +1748,8 @@ void Materials::parse_xsec_2g (const std::string &xs_file,
         ExcMessage("It must be defined the number of materials defined!"));
       Assert(n_precursors>0,
         ExcMessage("It must be defined the number of precursors defined!"));
-      beta_prec.resize(n_precursors);
-      lambda_prec.resize(n_precursors);
+//      beta_prec.resize(n_precursors);
+//      lambda_prec.resize(n_precursors);
 
       delayed_fractions.resize(n_mats, std::vector<double>(n_precursors));
       delayed_decay_constants.resize(n_mats,
@@ -1782,19 +1781,19 @@ void Materials::parse_xsec_2g (const std::string &xs_file,
         iss >> num;
         Assert(! iss.fail(),
           ExcMessage("There are not enough (well) precursors specified"));
-        beta_prec[prec_name] = num;
+//        beta_prec[prec_name] = num;
         for (unsigned int mat = 0; mat < n_mats; mat++)
           delayed_fractions[mat][prec_name] = num;
 
         iss >> num;
         Assert(! iss.fail(),
           ExcMessage("There are not enough (well) precursors specified"));
-        lambda_prec[prec_name] = num;
+//        lambda_prec[prec_name] = num;
         for (unsigned int mat = 0; mat < n_mats; mat++)
           delayed_decay_constants[mat][prec_name] = num;
       }
 
-      beta_total = sum_vector(beta_prec);
+//      beta_total = sum_vector(beta_prec);
 
       delayed_fraction_sum.resize(n_mats);
       for (unsigned int mat = 0; mat < n_mats; mat++)
@@ -1807,21 +1806,20 @@ void Materials::parse_xsec_2g (const std::string &xs_file,
     else if (keyword == "Velocity")
     {
       verbose_cout << "  Parsing velocities..." << std::flush;
-      velocities.resize(n_groups);
+//      velocities.resize(n_groups);
       velocities_vector.resize(n_mats, std::vector<double>(n_groups));
       getline(input, line);
       std::istringstream iss(line);
       iss >> num;
-      velocities[0] = num;
+//      velocities[0] = num;
+      for (unsigned int mat = 0; mat < n_mats; mat++)
+              velocities_vector[mat][0] = num;
+
       Assert(! iss.fail(), ExcMessage("Velocity v1 not (well) defined"));
       iss >> num;
-      velocities[1] = num;
-
+//      velocities[1] = num;
       for (unsigned int mat = 0; mat < n_mats; mat++)
-      {
-        velocities_vector[mat][0] = velocities[0];
-        velocities_vector[mat][1] = velocities[1];
-      }
+                   velocities_vector[mat][1] = num;
 
       Assert(! iss.fail(), ExcMessage("Velocity v2 not (well) defined"));
       verbose_cout << " Done!" << std::endl;
@@ -1864,7 +1862,7 @@ void Materials::parse_xsec_2g (const std::string &xs_file,
   std::string precursors_file(xs_file.begin(), xs_file.end() - 4);
   precursors_file += "prec";
 
-  if (beta_prec.empty() and transient)
+  if (velocities_vector[0].size()==0 and transient)
     parse_precursors_file(precursors_file);
 
 }
@@ -2039,8 +2037,8 @@ void Materials::parse_xsec (const std::string &xsec_file,
       iss >> n_precursors;
       Assert(!iss.fail(),
         ExcMessage("It must be defined the number of materials defined!"));
-      beta_prec.resize(n_precursors);
-      lambda_prec.resize(n_precursors);
+//      beta_prec.resize(n_precursors);
+//      lambda_prec.resize(n_precursors);
 
       delayed_fractions.resize(n_mats, std::vector<double>(n_precursors));
       delayed_decay_constants.resize(n_mats,
@@ -2073,19 +2071,19 @@ void Materials::parse_xsec (const std::string &xsec_file,
 
         Assert(! iss.fail(),
           ExcMessage("There are not enough (well) precursors specified"));
-        beta_prec[prec_name] = num;
+//        beta_prec[prec_name] = num;
         for (unsigned int mat = 0; mat < n_mats; mat++)
           delayed_fractions[mat][prec_name] = num;
 
         iss >> num;
         Assert(! iss.fail(),
           ExcMessage("There are not enough (well) precursors specified"));
-        lambda_prec[prec_name] = num;
+//        lambda_prec[prec_name] = num;
         for (unsigned int mat = 0; mat < n_mats; mat++)
           delayed_decay_constants[mat][prec_name] = num;
       }
 
-      beta_total = sum_vector(beta_prec);
+//      beta_total = sum_vector(beta_prec);
 
       delayed_fraction_sum.resize(n_mats);
       for (unsigned int mat = 0; mat < n_mats; mat++)
@@ -2097,14 +2095,14 @@ void Materials::parse_xsec (const std::string &xsec_file,
     }
     else if (word == "Velocity")
     {
-      velocities.resize(n_groups);
+//      velocities.resize(n_groups);
       velocities_vector.resize(n_mats, std::vector<double>(n_groups));
       getline(input, line);
       std::istringstream iss(line);
       for (unsigned int g = 0; g < n_groups; g++)
       {
         iss >> num;
-        velocities[g] = num;
+//        velocities[g] = num;
         for (unsigned int mat = 0; mat < n_mats; mat++)
           velocities_vector[mat][g] = num;
         Assert(! iss.fail(),
@@ -2189,7 +2187,7 @@ void Materials::parse_xsec (const std::string &xsec_file,
   std::string precursors_file(xsec_file.begin(), xsec_file.end() - 4);
   precursors_file += "prec";
 
-  if (beta_prec.empty() and transient)
+  if (velocities_vector[0].size()==0 and transient)
     parse_precursors_file(precursors_file);
 
 }
@@ -2637,8 +2635,12 @@ void Materials::parse_forest_xs (const std::string &xml_file)
       {
         verbose_cout << "       prompt_spectra " << from_g + 1 << " = " << std::flush;
         prompt_spectra[mat][from_g] = input.xs[mat].chi_p[from_g];
-        verbose_cout << prompt_spectra[mat][from_g] << std::endl;
       }
+    }
+
+    double sum = 0;
+    for (unsigned int to_g = 0; to_g < n_groups; ++to_g){
+          sum += chi[to_g][mat];
     }
 
     // Transient data
@@ -2674,7 +2676,19 @@ void Materials::parse_forest_xs (const std::string &xml_file)
     }
 
     delayed_fraction_sum[mat] = input.xs[mat].beta_eff;
+
+    // Check spectra relation (1-beta)*chip+sum_k betak*chidk =chi
+    for (unsigned int g = 0; g < n_groups; ++g){
+    double chi_computed=0;
+    for (unsigned int p = 0; p < n_precursors; ++p)
+    	chi_computed+=delayed_spectra[mat][p][g]*delayed_fractions[mat][p];
+    chi_computed+=prompt_spectra[mat][g]*(1.-delayed_fraction_sum[mat]);
+    AssertRelease(chi_computed-chi[g][mat]<1e-10, "The relation between the spectral is not satisfied.");
+    }
   }
+
+
+
 
   //// Calculate sigma_r
   //  for (unsigned int mat = 0; mat < n_mats; ++mat)

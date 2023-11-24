@@ -374,8 +374,11 @@ int run_tests ()
     power_double + sizeof(power_double) / sizeof(double));
 
   input_file = "test/rectangular/rectangular_mov.prm";
+  std::cout<<"keff"<<std::endl;
   test_keff_problem(input_file, 0.978199);
+  std::cout<<"test_power_evolution"<<std::endl;
   test_power_evolution(input_file, power_rect, 1e-4);
+  std::cout<<"end"<<std::endl;
 
   // Test hexagonal mesh + distributed + Rods:"
   double power_double_hex_ds[] =

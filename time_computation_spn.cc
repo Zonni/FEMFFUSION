@@ -111,7 +111,7 @@ template <int dim, int n_fe_degree>
     albedo_factors = static_problem.albedo_factors;
     prec_flag = prm.get_bool("Precursors_Flag");
     n_prec = materials.get_n_precursors();
-    beta = materials.get_beta_total();
+//    beta = materials.get_beta_total();
     listen_to_material_id = static_problem.listen_to_material_id;
 
     // 	Time parameters
@@ -140,8 +140,8 @@ template <int dim, int n_fe_degree>
 
     if (prec_flag == false)
     {
-      n_prec = 0;
-      beta = 0.0;
+//      n_prec = 0;
+//      beta = 0.0;
       materials.remove_precursors();
 
     }

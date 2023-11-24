@@ -379,13 +379,13 @@ template <int dim, int n_fe_degree>
       if (static_file == "none.sta" or save_static == true)
       {
         run();
+
+        if (static_file != "none.sta" and save_static == false)
+              load_static_calculation(static_file);
+
+            if (save_static == true)
+              save_static_calculation(static_file);
       }
-
-    if (static_file != "none.sta" and save_static == false)
-      load_static_calculation(static_file);
-
-    if (save_static == true)
-      save_static_calculation(static_file);
 
   }
 
@@ -895,7 +895,7 @@ template <int dim, int n_fe_degree>
     // Erase the content of output file
     std::ofstream out(file.c_str(), std::ios::out);
 
-    const unsigned int precision = 12;
+    const unsigned int precision = 15;
     print_in_file(eigenvalues[0], out, "keff\n", precision);
 
     print_vector_in_file(phi[0], out, "phi " + num_to_str(n_dofs * n_groups) + "\n", true,
@@ -1313,7 +1313,7 @@ template <int dim, int n_fe_degree>
       for (unsigned int g = 0; g < n_groups; g++)
         phi[eig].block(g) /= norm[eig];
 
-    postprocess2();
+//    postprocess2();
   }
 
 /**
@@ -1651,7 +1651,7 @@ template <int dim, int n_fe_degree>
     {
       verbose_cout << "   move_bars...  " << std::flush;
       perturbation.move_bars_static();
-      verbose_cout << "  Done! " << std::endl;
+      verbose_cout << "  Done bars! " << std::endl;
     }
     if (type_perturbation == "Mechanical_Vibration")
     {

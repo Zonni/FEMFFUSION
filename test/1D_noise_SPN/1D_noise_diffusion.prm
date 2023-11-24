@@ -23,7 +23,7 @@ set Noise_Calculation    = true
 set FE_Degree            = 1
  
 # Number of global refinements
-set N_Refinements        = 6
+set N_Refinements        = 0
 
 # Number of cells per dimension
 set Mesh_Size            = 60

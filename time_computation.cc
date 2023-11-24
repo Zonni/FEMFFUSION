@@ -388,6 +388,9 @@ template <int dim, int n_fe_degree>
     if (n_prec > 0 and time_scheme == "semi-implicit-euler")
     {
       assemble_small_time_decay_matrix();
+//      assemble_spectrum_matrices();
+//      assemble_small_mass_matrix();
+//      assemble_small_decay_matrix();
     }
 
     verbose_cout << "Tfree..." << std::endl;
@@ -502,7 +505,7 @@ template <int dim, int n_fe_degree>
 
       KSPCreate(comm, &kspLP[np]);
       KSPGetPC(kspLP[np], &pcLP[np]);
-      KSPSetTolerances(kspLP[np], tol_ksp, 0.0, PETSC_DEFAULT, 200);
+      KSPSetTolerances(kspLP[np], tol_ksp, tol_ksp, PETSC_DEFAULT, 200);
       KSPSetType(kspLP[np], KSPCG);
       PCSetType(pcLP[np], PCBJACOBI);
       PCFactorSetShiftType(pcLP[np], MAT_SHIFT_NONZERO);
@@ -1222,7 +1225,7 @@ template <int dim, int n_fe_degree>
 
       for (unsigned int p = 0; p < n_prec; p++)
       {
-        PCk[p] = 0.0;
+        PCk[p] *= 0.0;
         P.vmult(PCk[p], Ck[p]);
         PCk[p] /= delta_t[step];
       }
@@ -1733,8 +1736,10 @@ template <int dim, int n_fe_degree>
     cout << "------------ START OF THE TIME LOOP ------------------"
          << std::endl;
 
-    cout << "Type of distributed scheme: " << time_scheme << std::endl
-         << std::endl;
+    cout << "Type of distributed scheme: " << time_scheme          << std::endl;
+
+    cout << "Type of perturbation: " << type_perturbation << std::endl
+             << std::endl;
 
     verbose_cout << std::fixed
                  << "   Init time computation...                CPU Time = "
@@ -1765,6 +1770,7 @@ template <int dim, int n_fe_degree>
       verbose_cout << "   Update the cross-section...    " << std::endl;
       if (type_perturbation != "Step_Change_Material" or step < 2)
         update_xsec();
+      //materials.remove_precursors();
       verbose_cout << "                                          CPU Time = "
                    << timer.cpu_time()
                    << " s" << std::endl;

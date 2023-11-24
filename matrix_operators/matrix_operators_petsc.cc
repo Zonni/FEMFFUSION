@@ -2051,12 +2051,14 @@ template <int dim, int n_fe_degree>
     else
       AssertRelease(false, "Invalid matrixfree_type: " + this->matrixfree_type);
 
-    // Reinit de velocities
-    this->velocities.resize(materials.get_n_groups());
-    for (unsigned int gi = 0; gi < materials.get_n_groups(); ++gi)
-    {
-      this->velocities[gi] = materials.get_velocitiy(gi);
-    }
+	// Reinit de velocities
+	this->velocities.resize(materials.get_n_mats());
+	for (unsigned int mat = 0; mat < materials.get_n_mats(); mat++) {
+		this->velocities[mat].resize(materials.get_n_groups());
+		for (unsigned int gi = 0; gi < materials.get_n_groups(); ++gi) {
+			this->velocities[mat][gi] = materials.get_velocitiy(mat, gi);
+		}
+	}
 
   }
 
@@ -2198,7 +2200,7 @@ template <int dim, int n_fe_degree>
           for (unsigned int mat = 0; mat < n_mats; mat++)
           {
             if (to_g == from_g)
-              coeffs[to_g][from_g][mat] = 1.0 / materials.get_velocitiy(to_g);
+              coeffs[to_g][from_g][mat] = 1.0 / materials.get_velocitiy(mat,to_g);
           }
         }
 
@@ -2256,11 +2258,14 @@ template <int dim, int n_fe_degree>
       AssertRelease(false, "Invalid matrixfree_type: " + this->matrixfree_type);
 
     // Reinit de velocities
-    this->velocities.resize(materials.get_n_groups());
-    for (unsigned int gi = 0; gi < materials.get_n_groups(); ++gi)
-    {
-      this->velocities[gi] = materials.get_velocitiy(gi);
-    }
+	// Reinit de velocities
+	this->velocities.resize(materials.get_n_mats());
+	for (unsigned int mat = 0; mat < materials.get_n_mats(); mat++) {
+		this->velocities[mat].resize(materials.get_n_groups());
+		for (unsigned int gi = 0; gi < materials.get_n_groups(); ++gi) {
+			this->velocities[mat][gi] = materials.get_velocitiy(mat, gi);
+		}
+	}
 
   }
 
@@ -2293,6 +2298,8 @@ template <int dim, int n_fe_degree>
       {
         fe_values.reinit(cell);
 
+        unsigned int mat = materials.get_material_id<dim>(cell);
+
         cell_val = 0;
         cell->get_dof_indices(local_dof_indices);
         for (unsigned int i = 0; i < dofs_per_cell; ++i)
@@ -2312,7 +2319,7 @@ template <int dim, int n_fe_degree>
             if (gi == gj)
             {
               // Get the material coefficients:
-              cell_M.equ(1.0 / materials.get_velocitiy(gi), cell_val);
+              cell_M.equ(1.0 / materials.get_velocitiy(mat, gi), cell_val);
               constraints.distribute_local_to_global(cell_M, local_dof_indices,
                 *(this->matrix_blocks[gi][gj]));
             }

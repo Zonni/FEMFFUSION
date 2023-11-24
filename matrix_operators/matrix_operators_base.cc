@@ -896,24 +896,24 @@ template <int dim, int n_fe_degree>
 /**
  * @brief Complete matrix-vector multiplication.
  * dst = TimeMassMatrix * src
- */
-template <int dim, int n_fe_degree>
-  void FisionMatrixBase<dim, n_fe_degree>::vmult_velocities (
-    PETScWrappers::MPI::BlockVector &dst,
-    const PETScWrappers::MPI::BlockVector &src) const
-  {
-    AssertDimension(dst.n_blocks(), n_blocks);
-
-    for (unsigned int i = 0; i < n_blocks; i++)
-      dst.block(i) = 0.0;
-
-    for (unsigned int i = 0; i < n_blocks; i++)
-    {
-      this->vmult_add(i, i, dst.block(i), src.block(i));
-      dst.block(i) /= velocities[i];
-    }
-
-  }
+// */
+//template <int dim, int n_fe_degree>
+//  void FisionMatrixBase<dim, n_fe_degree>::vmult_velocities (
+//    PETScWrappers::MPI::BlockVector &dst,
+//    const PETScWrappers::MPI::BlockVector &src) const
+//  {
+//    AssertDimension(dst.n_blocks(), n_blocks);
+//
+//    for (unsigned int i = 0; i < n_blocks; i++)
+//      dst.block(i) = 0.0;
+//
+//    for (unsigned int i = 0; i < n_blocks; i++)
+//    {
+//      this->vmult_add(i, i, dst.block(i), src.block(i));
+//      dst.block(i) /= velocities[i];
+//    }
+//
+//  }
 
 // ----------------------------------------------------------------- //
 // --- PETScWrappers::MPI::BlockVector Transpose Multiplications --- //
@@ -982,26 +982,26 @@ template <int dim, int n_fe_degree>
  * @brief Complete matrix-vector multiplication.
  * dst = FisionMatrixBase * src
  */
-template <int dim, int n_fe_degree>
-  double FisionMatrixBase<dim, n_fe_degree>::vmult_dot_velocities (
-    PETScWrappers::MPI::BlockVector &dst,
-    const PETScWrappers::MPI::BlockVector &src) const
-  {
-    AssertDimension(dst.n_blocks(), n_blocks);
-
-    PETScWrappers::MPI::BlockVector inter(src);
-    vmult(inter, src);
-    for (unsigned int nb = 0; nb < n_blocks; nb++)
-      inter.block(nb) /= velocities[nb];
-
-    double val = dst * inter;
-
-    for (unsigned int g = 0; g < inter.n_blocks(); g++)
-      inter.block(g).clear();
-
-    return val;
-
-  }
+//template <int dim, int n_fe_degree>
+//  double FisionMatrixBase<dim, n_fe_degree>::vmult_dot_velocities (
+//    PETScWrappers::MPI::BlockVector &dst,
+//    const PETScWrappers::MPI::BlockVector &src) const
+//  {
+//    AssertDimension(dst.n_blocks(), n_blocks);
+//
+//    PETScWrappers::MPI::BlockVector inter(src);
+//    vmult(inter, src);
+//    for (unsigned int nb = 0; nb < n_blocks; nb++)
+//      inter.block(nb) /= velocities[nb];
+//
+//    double val = dst * inter;
+//
+//    for (unsigned int g = 0; g < inter.n_blocks(); g++)
+//      inter.block(g).clear();
+//
+//    return val;
+//
+//  }
 
 // ----------------------------------------------------------------- //
 // --------- ParallelBlockVector Complete Multiplications  --------- //
@@ -1046,22 +1046,22 @@ template <int dim, int n_fe_degree>
  * @brief Complete matrix-vector multiplication.
  * dst = FisionMatrixBase * src
  */
-template <int dim, int n_fe_degree>
-  void FisionMatrixBase<dim, n_fe_degree>::vmult_velocities (
-    ParallelBlockVector &dst,
-    const ParallelBlockVector &src) const
-  {
-    AssertDimension(dst.n_blocks(), n_blocks);
-
-    for (unsigned int i = 0; i < n_blocks; i++)
-      dst.block(i) = 0.0;
-
-    for (unsigned int i = 0; i < n_blocks; i++)
-    {
-      this->vmult_add(i, i, dst.block(i), src.block(i));
-      dst.block(i) /= velocities[i];
-    }
-  }
+//template <int dim, int n_fe_degree>
+//  void FisionMatrixBase<dim, n_fe_degree>::vmult_velocities (
+//    ParallelBlockVector &dst,
+//    const ParallelBlockVector &src) const
+//  {
+//    AssertDimension(dst.n_blocks(), n_blocks);
+//
+//    for (unsigned int i = 0; i < n_blocks; i++)
+//      dst.block(i) = 0.0;
+//
+//    for (unsigned int i = 0; i < n_blocks; i++)
+//    {
+//      this->vmult_add(i, i, dst.block(i), src.block(i));
+//      dst.block(i) /= velocities[i];
+//    }
+//  }
 
 /**
  * @brief Complete matrix-vector multiplication.
@@ -1085,22 +1085,22 @@ template <int dim, int n_fe_degree>
  * @brief Complete matrix-vector multiplication.
  * dst = FisionMatrixBase * src
  */
-template <int dim, int n_fe_degree>
-  double FisionMatrixBase<dim, n_fe_degree>::vmult_dot_velocities (
-    ParallelBlockVector &dst,
-    const ParallelBlockVector &src) const
-  {
-    AssertDimension(dst.n_blocks(), n_blocks);
-
-    ParallelBlockVector inter(src);
-    vmult(inter, src);
-    for (unsigned int nb = 0; nb < n_blocks; nb++)
-      inter.block(nb) /= velocities[nb];
-
-    double val = dst * inter;
-    return val;
-
-  }
+//template <int dim, int n_fe_degree>
+//  double FisionMatrixBase<dim, n_fe_degree>::vmult_dot_velocities (
+//    ParallelBlockVector &dst,
+//    const ParallelBlockVector &src) const
+//  {
+//    AssertDimension(dst.n_blocks(), n_blocks);
+//
+//    ParallelBlockVector inter(src);
+//    vmult(inter, src);
+//    for (unsigned int nb = 0; nb < n_blocks; nb++)
+//      inter.block(nb) /= velocities[nb];
+//
+//    double val = dst * inter;
+//    return val;
+//
+//  }
 
 // ----------------------------------------------------------------- //
 // --------- ParallelBlockVector Complete Multiplications  --------- //

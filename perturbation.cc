@@ -471,12 +471,6 @@ template <int dim>
             materials.create_new_mixed_mat(averaged_mat, frac, mat_bar,
               mat_no_bar, cell->user_index());
 
-            std::cout << " frac " << frac << std::endl;
-            std::cout << " mat_no_bar " << mat_no_bar << std::endl;
-            std::cout << " Averaged R " << materials.get_sigma_r(7, averaged_mat) << std::endl;
-            std::cout << " BAR R " << materials.get_sigma_r(7, mat_bar) << std::endl;
-            std::cout << " No Bar R " << materials.get_sigma_r(7, mat_no_bar) << std::endl;
-
           }
 
           // The bar occupy all the cell
