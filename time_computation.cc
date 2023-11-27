@@ -159,6 +159,11 @@ template <int dim, int n_fe_degree>
     its = 0;
     old_its = 0;
     totalits = 0;
+    reinit_step= 0;
+
+    save_time = prm.get_bool("Save_Time");
+    load_time = prm.get_bool("Load_Time");
+    reinit_file = prm.get("Reinit_File");
 
     get_parameters_from_command_line();
 
@@ -388,9 +393,7 @@ template <int dim, int n_fe_degree>
     if (n_prec > 0 and time_scheme == "semi-implicit-euler")
     {
       assemble_small_time_decay_matrix();
-//      assemble_spectrum_matrices();
-//      assemble_small_mass_matrix();
-//      assemble_small_decay_matrix();
+
     }
 
     verbose_cout << "Tfree..." << std::endl;
@@ -1134,11 +1137,13 @@ template <int dim, int n_fe_degree>
     PETScWrappers::MPI::Vector Evec(comm, n_groups * n_dofs,
       n_groups * locally_owned_dofs.n_elements());
 
-    if (type_perturbation != "Step_Change_Material" or step < 2)
+    if (type_perturbation != "Step_Change_Material" or step < 2 or reinit_step< 2)
     {
 
       // Setup the preconditioner
+      cout << "   setup_preconditioner... "  << std::flush;
       setup_preconditioner();
+      cout << "   Done!!: "  << std::endl;
 
       // Setup the solver
       KSPCreate(comm, &ksp);
@@ -1177,7 +1182,7 @@ template <int dim, int n_fe_degree>
     phivec.clear();
     Evec.clear();
 
-    if (type_perturbation != "Step_Change_Material" or step < 1)
+    if (type_perturbation != "Step_Change_Material" or step < 1 or reinit_step< 1)
     {
       Tfree.clear();
       MatDestroy(&shell_T);
@@ -1248,7 +1253,7 @@ template <int dim, int n_fe_degree>
 
       Mxphi.clear();
 
-      if (type_perturbation != "Step_Change_Material" or step < 1)
+      if (type_perturbation != "Step_Change_Material" or step < 1 or reinit_step< 1)
       {
         for (unsigned int np = 0; np < n_prec; np++)
         {
@@ -1283,9 +1288,9 @@ template <int dim, int n_fe_degree>
     {
       AssertRelease(matrixfree_type_time != full_matrixfree,
         "The gs-gcilu preconditioner is not compatible with full_matrixfree format");
-      if (step == 0 or its > 100)
+      if (step == 0 or reinit_step==0 or its > 100)
       {
-        if (step != 0)
+        if (reinit_step != 0)
           preconditioner.ksp_destroy();
         preconditioner.pc_gs_setup();
       }
@@ -1344,17 +1349,17 @@ template <int dim, int n_fe_degree>
   {
 
     unsigned int dim_subs = 5;
-    if (step == 0)
+    if (reinit_step == 0)
     {
       vectors_sols.resize(1);
-      vectors_sols[step].reinit(phi);
-      vectors_sols[step] = phi;
+      vectors_sols[reinit_step].reinit(phi);
+      vectors_sols[reinit_step] = phi;
     }
-    else if (step < dim_subs + 1)
+    else if (reinit_step < dim_subs + 1)
     {
-      vectors_sols.resize(step);
-      vectors_sols[step - 1].reinit(phi);
-      vectors_sols[step - 1] = phi;
+      vectors_sols.resize(reinit_step);
+      vectors_sols[reinit_step - 1].reinit(phi);
+      vectors_sols[reinit_step - 1] = phi;
     }
     else
     {
@@ -1728,6 +1733,143 @@ template <int dim, int n_fe_degree>
   }
 
 /**
+ *
+ */
+template<int dim, int n_fe_degree>
+void TimeNeutronDiffusion<dim, n_fe_degree>::load_time_calculation(
+		std::string &file) {
+
+	if (!fexists(file))
+		return;
+
+	cout << "   Reinit file read: " << std::endl;
+	std::ifstream input(file.c_str(), std::ios::in);
+	std::string keyword;
+	std::vector<double> phi_critic;
+	unsigned int n_dofs_total;
+	unsigned int n_blocks;
+
+	// for every line
+	for (std::string line; getline(input, line);) {
+		std::istringstream iss(line);
+		keyword.clear();
+		iss >> keyword;
+
+		if (is_commentary(keyword))
+			continue;
+		// First definition Material and XSecs:
+		else if (keyword == "step") {
+			get_new_valid_line(input, line);
+			std::istringstream iss(line);
+			cout << "     step: " << std::flush;
+			iss >> step;
+			AssertRelease(!iss.fail(), "step must be defined in Reinit file!");
+			cout << step << std::endl;
+		}	else if (keyword == "sim_time") {
+			get_new_valid_line(input, line);
+			std::istringstream iss(line);
+			cout << "     sim_time: " << std::flush;
+			iss >> sim_time;
+			AssertRelease(!iss.fail(), "sim_time must be defined in Reinit file!");
+			cout << sim_time << std::endl;
+		}
+		else if (keyword == "delta_t") {
+			iss >> n_dofs_total;
+			AssertRelease(!iss.fail(),
+					"The size of the vector delta_t must be after delta_t in Reinit file!");
+			get_new_valid_line(input, line); // Next line
+			delta_t.clear();
+			parse_vector(line, delta_t, n_dofs_total);
+			print_vector(delta_t);
+				}
+		else if (keyword == "phi") {
+			iss >> n_blocks;
+			iss >> n_dofs_total;
+			AssertRelease(!iss.fail(),
+					"The size of the vector phi must be after phi in Reinit file!");
+
+			get_new_valid_line(input, line); // Next line
+			parse_vector(line, phi, n_blocks, n_dofs_total);
+
+			cout << "     phi: " << phi[0] << " ... "
+					<< phi[n_dofs_total * n_blocks - 1] << std::endl;
+			phi.compress(VectorOperation::insert);
+
+		}
+		else if (keyword == "Ck")
+		{
+			iss >> n_prec;
+			iss >> n_dofs_total;
+			AssertRelease(!iss.fail(),
+					"The size of the vector phi must be after phi in Reinit file!");
+			for (unsigned int p=0; p<n_prec; p++)
+			{
+			get_new_valid_line(input, line); // Next line
+			parse_vector(line, Ck[p], n_dofs_total);
+			cout << "     Ck[" << p<< "]>" << Ck[p][0] << " ... "
+										<< Ck[p][n_dofs_total - 1] << std::endl;
+			Ck[p].compress(VectorOperation::insert);
+			}
+
+		}
+		else if (keyword == "PCk")
+		{
+			iss >> n_prec;
+			iss >> n_dofs_total;
+			AssertRelease(!iss.fail(),
+					"The size of the vector phi must be after phi in Reinit file!");
+			for (unsigned int p=0; p<n_prec; p++)
+			{
+			get_new_valid_line(input, line); // Next line
+			parse_vector(line, PCk[p], n_dofs_total);
+			cout << "     PCk[" << p<< "]>" << PCk[p][0] << " ... "
+										<< PCk[p][n_dofs_total - 1] << std::endl;
+			PCk[p].compress(VectorOperation::insert);
+			}
+		}
+	}
+}
+
+/**
+ *
+ */
+template<int dim, int n_fe_degree>
+void TimeNeutronDiffusion<dim, n_fe_degree>::save_time_calculation(
+		std::string &file) {
+	// Erase the content of output file
+	std::ofstream out(file.c_str(), std::ios::out);
+
+	const unsigned int precision = 18;
+
+	print_in_file(step, out, "step\n", precision);
+	print_in_file(sim_time, out, "sim_time\n", precision);
+
+	print_vector_in_file(delta_t, out,
+				"delta_t " + num_to_str(static_cast<unsigned int>(delta_t.size())) + "\n", true, precision);
+
+	print_vector_in_file(phi, out,
+			"phi " + num_to_str(n_groups) + "  " + num_to_str(n_dofs) + "\n", true, precision);
+
+	if (!Ck.empty()){
+	print_in_file(n_dofs, out, "Ck " + num_to_str(n_prec)+ "  ", 9);
+	for (unsigned int p=0; p<Ck.size(); p++)
+	{
+		print_vector_in_file(Ck[p], out,			"", true, precision);
+	}
+	}
+
+	if (!PCk.empty()){
+	print_in_file(n_dofs, out, "PCk " + num_to_str(n_prec)+ "  ", 9);
+	for (unsigned int p=0; p<PCk.size(); p++)
+	{
+		print_vector_in_file(PCk[p], out,			"", true, precision);
+	}
+	}
+
+	out.close();
+}
+
+/**
  * @brief
  */
 template <int dim, int n_fe_degree>
@@ -1759,6 +1901,14 @@ template <int dim, int n_fe_degree>
       filename_time.erase(filename_time.end() - 4, filename_time.end());
       filename_time = filename_time + "_time.out";
       std::ofstream out(filename_time.c_str(), std::ios::out);
+    }
+
+    if (load_time){
+  	  cout << "   Load time step...    "
+  	               << std::flush;
+  	load_time_calculation(reinit_file);
+    cout << "   Done  "
+								    	               << std::endl;
     }
 
     while (t_end - sim_time > -1e-12)
@@ -1840,6 +1990,8 @@ template <int dim, int n_fe_degree>
       power_vector.push_back(power_total);
       delta_t.push_back(init_delta_t);
 
+
+      reinit_step++;
       step++;
 
       if (step % out_interval == 0)
@@ -1849,6 +2001,14 @@ template <int dim, int n_fe_degree>
       sim_time += delta_t[step];
 
       MPI_Barrier(comm);
+
+      if (save_time){
+    	  cout << "   Save time step...    "
+    	               << std::flush;
+      save_time_calculation(reinit_file);
+      cout << "   Done  "
+								    	               << std::endl;
+      }
 
     }
 

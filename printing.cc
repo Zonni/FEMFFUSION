@@ -295,7 +295,7 @@ void print_vector_in_file (const PETScWrappers::MPI::Vector &vect,
     for (unsigned int i = 0; i < vect.size(); i++)
       out << vect[i] << " \n";
   }
-  out << "\n \n";
+  out << "\n";
 }
 
 /**

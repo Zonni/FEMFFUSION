@@ -240,6 +240,15 @@ void prm_declare_entries (ParameterHandler &prm)
     Patterns::Selection("volhom | fluxwei "),
     "Rod cusping method: volhom or fluxwei");
 
+
+  prm.declare_entry("Save_Time", "false", Patterns::Bool(),
+    "# True/false - Activate Save_Time");
+  prm.declare_entry("Load_Time", "false", Patterns::Bool(),
+    "# True/false - Activate Load_Time");
+  prm.declare_entry("Reinit_File", "nofile", Patterns::FileName(),
+    "# Filename where the reinit is saved/loaded");
+
+
   // Perturbations
   prm.declare_entry("Vibrating_Material", "0", Patterns::Integer(),
     "Material of the  assembly that is vibrating");

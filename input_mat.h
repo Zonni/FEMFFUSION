@@ -228,6 +228,9 @@ private:
   calc_betaeff (XS_single &xs_);
   /** @todo document me */
   void
+  check_no_delay_material (XS_single &xs_);
+  /** @todo document me */
+  void
   norm_chi(XS_single & xs_);
 
 };

@@ -367,17 +367,13 @@ void InputMat::calc_sigmat (XS_single &xs_)
 void InputMat::calc_chid (XS_single &xs_)
 {
 
-  double betaeff;
   xs_.chi_d.resize(n_precursors);
-
 
     for (unsigned int p = 0; p < n_precursors; p++)
     {
       xs_.chi_d[p].resize(n_groups);
       xs_.chi_d[p]=xs_.chi;
     }
-
-
 
 }
 
@@ -400,6 +396,25 @@ void InputMat::calc_chip (XS_single &xs_)
     xs_.chi_p[g] = (xs_.chi[g] - sum_del_beta) / (1 - betaeff);
 
 
+  }
+
+}
+
+void InputMat::check_no_delay_material (XS_single &xs_)
+{
+
+  double chisum = 0.0;
+  for (unsigned int g = 0; g < n_groups; g++)
+	  chisum += xs_.chi[g];
+
+  if (chisum<1e-12)
+  {
+	  double betlamsum=0.0;
+	  for (unsigned int p = 0; p < n_precursors; p++)
+		  betlamsum+=xs_.beta[p]+xs_.lambda[p];
+
+		AssertRelease(betlamsum < 1e-12,
+				"There is a material with fission spectrum 0.0, but beta and lambda is different to zero.");
   }
 
 }
@@ -463,6 +478,7 @@ void InputMat::check ()
 
       calc_chip(xs[mat->second.id]);
       calc_betaeff(xs[mat->second.id]);
+      check_no_delay_material(xs[mat->second.id]);
     }
 
 #ifdef DEBUG

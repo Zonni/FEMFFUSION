@@ -674,6 +674,21 @@ void parse_vector (std::string input,
 /**
  *
  */
+void parse_vector (std::string input,
+  PETScWrappers::MPI::BlockVector &out,
+  unsigned int n_blocks,
+  unsigned int n_dofs_per_block);
+
+/**
+ *
+ */
+void parse_vector (std::string input,
+  PETScWrappers::MPI::Vector &out,
+  unsigned int n_dofs);
+
+/**
+ *
+ */
 void parse_materials (std::string XECSFile,
   std::vector<unsigned int> &n_cells_per_dim,
   unsigned int n_assemblies,

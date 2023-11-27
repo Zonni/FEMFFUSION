@@ -444,6 +444,25 @@ int run_tests ()
 
   //
   // --------------------------------------------------------------- //
+  // TEST REINIT
+  double power_langenbuch_reinit[] =
+                                { 1, 1.06485, 1.15686 };
+  std::vector<double> power_langen_reinit(power_langenbuch_reinit,
+		  power_langenbuch_reinit + sizeof(power_langenbuch_reinit) / sizeof(double));
+
+  input_file = "test/3D_Langenbuch/3D_Langenbuch_ds_reinit.prm";
+  test_power_evolution(input_file, power_langen_reinit, 1e-4);
+
+  double power_langenbuch_load[] =
+                                { 1.25088, 1.37291};
+  std::vector<double> power_langen_load(power_langenbuch_load,
+		  power_langenbuch_load + sizeof(power_langenbuch_load) / sizeof(double));
+
+  input_file = "test/3D_Langenbuch/3D_Langenbuch_ds_reinit_load.prm";
+  test_power_evolution(input_file, power_langen_load, 1e-4);
+
+  //
+  // --------------------------------------------------------------- //
   // TEST 1D_C5G7 7 ENERGY GROUPS
   // 7 energy group tests. Distributed TS. 1D_C5G7 Benchmark (3 cells)
 

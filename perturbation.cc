@@ -320,7 +320,7 @@ template <int dim>
         }
         Assert(bar_pos < 9e5,
           ExcMessage("Error in time of the bars definition"));
-        std::cout << "  Bar " << bar + 1 << " in pos " << bar_pos << " cm "
+        verbose_cout << "  Bar " << bar + 1 << " in pos " << bar_pos << " cm "
                      << std::endl;
 
         move_bar_volume_homogenized(plant_pos, bar_pos, bar_materials[bar], bar);
@@ -436,8 +436,6 @@ template <int dim>
     double frac;
     std::vector<bool> is_done(materials.n_assemblies, false);
     unsigned int averaged_mat = materials.get_n_mats();
-    std::cout << "plant_pos " << plant_pos << std::endl;
-    std::cout << "mat_bar " << mat_bar << std::endl;
 
     typename DoFHandler<dim>::active_cell_iterator cell =
                                                           dof_handler.begin_active(),
@@ -860,7 +858,6 @@ template <int dim>
     }
     else if (perturbation_function == "Noise_7g")
     {
-      std::cout << "n_mat" << nmat << std::endl;
       materials.modify_xsec_7g(xs_pert_name, sim_time, amplitudes, nmat);
     }
 

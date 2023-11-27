@@ -112,6 +112,10 @@ template <int dim, int n_fe_degree>
     void postprocess_noise ();
     void output_results ();
 
+    // Reinit
+    void save_time_calculation(std::string &file);
+    void load_time_calculation(std::string &file);
+
     // Parallel
     MPI_Comm comm;
     const unsigned int n_mpi_processes;
@@ -147,6 +151,7 @@ template <int dim, int n_fe_degree>
 
     Preconditioner<dim, n_fe_degree> preconditioner;
 
+
     PETScWrappers::MPI::SparseMatrix P;
     std::vector<PETScWrappers::MPI::SparseMatrix*> LP, M, L;
     std::vector<std::vector<PETScWrappers::MPI::SparseMatrix*>> X;
@@ -180,6 +185,12 @@ template <int dim, int n_fe_degree>
     bool print_timefile;
     bool print_rhs;
     std::ofstream out_matlab;
+
+    // Reinit
+    bool save_time;
+    bool load_time;
+    std::string reinit_file;
+    unsigned int reinit_step; // Step after the reinit
 
     unsigned int step;
     unsigned int print_step;

@@ -1918,6 +1918,59 @@ void parse_vector (std::string input,
   return;
 }
 
+/**
+ * Same as before but for double vector. There is not default values in this case.
+ * It exist an special character in order to repeat number:
+ * 4* 10.0 = 10.0 10.0 10.0 10.0
+ * 2.0 2*1.0 2.0 = 2.0 1.0 1.0 2.0
+ */
+void parse_vector (std::string input,
+  PETScWrappers::MPI::BlockVector &out,
+  unsigned int n_blocks,
+  unsigned int n_dofs_per_block)
+{
+  Assert(out.size()==0, ExcMessage("Vector not empty"));
+  trim(input);
+  std::istringstream iss(input);
+
+  double num;
+  out.reinit(n_blocks, PETSC_COMM_WORLD,  n_dofs_per_block, n_dofs_per_block);
+  for (unsigned int i=0; i< n_blocks *n_dofs_per_block; i++)
+  {
+    iss >> num;
+     out[i] = num;
+  }
+
+
+  return;
+}
+
+/**
+ * Same as before but for double vector. There is not default values in this case.
+ * It exist an special character in order to repeat number:
+ * 4* 10.0 = 10.0 10.0 10.0 10.0
+ * 2.0 2*1.0 2.0 = 2.0 1.0 1.0 2.0
+ */
+void parse_vector (std::string input,
+  PETScWrappers::MPI::Vector &out,
+  unsigned int n_dofs)
+{
+  Assert(out.size()==0, ExcMessage("Vector not empty"));
+  trim(input);
+  std::istringstream iss(input);
+
+  double num;
+  out.reinit(PETSC_COMM_WORLD,  n_dofs, n_dofs);
+  for (unsigned int i=0; i< n_dofs; i++)
+  {
+    iss >> num;
+     out[i] = num;
+  }
+
+
+  return;
+}
+
 template <int dim>
   void extrude_triangulation (const Triangulation<2, 2>&,
     const unsigned int,

@@ -1594,6 +1594,7 @@ void Materials::parse_xsec_2g (const std::string &xs_file,
   unsigned int mat;
   double num;
 
+
   // for every line
   for (std::string line; getline(input, line);)
   {
@@ -1862,7 +1863,7 @@ void Materials::parse_xsec_2g (const std::string &xs_file,
   std::string precursors_file(xs_file.begin(), xs_file.end() - 4);
   precursors_file += "prec";
 
-  if (velocities_vector[0].size()==0 and transient)
+  if (velocities_vector.empty() and transient)
     parse_precursors_file(precursors_file);
 
 }
@@ -2187,7 +2188,7 @@ void Materials::parse_xsec (const std::string &xsec_file,
   std::string precursors_file(xsec_file.begin(), xsec_file.end() - 4);
   precursors_file += "prec";
 
-  if (velocities_vector[0].size()==0 and transient)
+  if (velocities_vector.empty() and transient)
     parse_precursors_file(precursors_file);
 
 }

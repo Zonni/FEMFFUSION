@@ -43,6 +43,7 @@ Makefile
 *.pyc
 *.sta
 *.nos
+*.rnt
 matrices.m
 
 # rigel files #
