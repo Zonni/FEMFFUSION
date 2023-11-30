@@ -124,15 +124,23 @@ template <int dim, int n_fe_degree>
     // Mesh File
     if (geo_type == "Unstructured")
     {
-      std::string mesh_file = prm.get("Mesh_Filename");
-      verbose_cout << "mesh_file " << mesh_file << std::endl;
-      get_unstructured_grid(mesh_file);
+		std::string mesh_file = prm.get("Mesh_Filename");
+		verbose_cout << "mesh_file " << mesh_file << std::endl;
 
-      verbose_cout << "parsing Boundary_Conditions... " << std::flush;
-      parse_vector(prm.get("Boundary_Conditions"), boundary_conditions);
-      if (verbose_cout.is_active())
-        print_vector(boundary_conditions, false);
-      verbose_cout << "Done!" << std::endl;
+		verbose_cout << "parsing Boundary_Conditions... " << std::flush;
+		parse_vector(prm.get("Boundary_Conditions"), boundary_conditions);
+		if (verbose_cout.is_active())
+			print_vector(boundary_conditions, false);
+		verbose_cout << "Done!" << std::endl;
+
+		// Get the z information to extrude
+		assembly_pitch.resize(dim);
+		if (dim >= 3)
+			parse_vector(prm.get("Cell_Pitch_z"), assembly_pitch[2],
+					assem_per_dim[2]);
+		// TODO Make the possibility to read a 3D gmsh mesh.
+		get_unstructured_grid(mesh_file);
+
     }
     else if (geo_type == "Hexagonal")
     {
