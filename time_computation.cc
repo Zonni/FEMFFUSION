@@ -143,10 +143,8 @@ template <int dim, int n_fe_degree>
     init_delta_t = prm.get_double("Time_Delta");
     tol_ksp = static_problem.tol_ksp;
 
-    // Type of preconditioner: "fixed" or "good-broyden" or "bad-broyden"
-    type_preconditioner = "fixed";
-    // Initial preconditioner: "gs-cgilu" or "gs-ilu" or "diagonal "
-    initial_preconditioner = "gs-cgilu";
+    type_preconditioner = prm.get("Type_Time_Preconditioner");
+    initial_preconditioner = prm.get("Initial_Time_Preconditioner");
 
     // Adaptive timestep
     adaptive_timestep = false;
@@ -1555,6 +1553,8 @@ template <int dim, int n_fe_degree>
       // flux weighting method
       if (dim == 3 and perturbation.rod_cusping_treat == "fluxwei")
       {
+    	  std::cout<<"power.. "<<std::endl;
+    	  std::cout<<"assem_per_dim[2]: "<<assem_per_dim[2]<<std::endl;
         volume_per_plane.resize(assem_per_dim[2], 0.0);
         unsigned int plane;
         power_axial.resize(assem_per_dim[2], 0.0);

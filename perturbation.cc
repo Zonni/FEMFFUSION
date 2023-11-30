@@ -517,6 +517,8 @@ template <int dim>
 //	AssertRelease(false,
 //			"We must obtain the vectors volume_per_plane and power_axial");
 
+	std::cout<<"move_bar_flux_weighting"<<std::endl;
+
     const unsigned int move_dim = dim - 1;
     unsigned int n_assemblies_per_plane = materials.n_assemblies
                                           / materials.assem_per_dim[move_dim];
@@ -562,12 +564,15 @@ template <int dim>
                                  / n_assemblies_per_plane;
 
             // Compute flux_nobar
+            if (plane>0 and plane<volume_per_plane.size()-1){
             flux_nobar = (volume_per_plane[plane - 1]
                           * power_axial[plane - 1]
                           + (1 - frac) * volume_per_plane[plane]
                             * power_axial[plane])
                          / (volume_per_plane[plane - 1]
                             + (1 - frac) * volume_per_plane[plane]);
+
+            std::cout<<"2: "<<std::endl;
 
             flux_bar = (volume_per_plane[plane + 1]
                         * power_axial[plane + 1]
@@ -576,11 +581,21 @@ template <int dim>
                        / (volume_per_plane[plane + 1]
                           + frac * volume_per_plane[plane]);
 
+
             mat_no_bar = materials_no_bars[cell->user_index()];
+
 
             materials.create_new_mixed_mat_flux(averaged_mat, frac,
               mat_bar, mat_no_bar, flux_bar, flux_nobar,
               cell->user_index());
+            }
+            else{
+            	 // For plane==0 and the last plane flux wei cannot be applied
+				frac = (maxp - bar_pos) / (maxp - minp);
+				mat_no_bar = materials_no_bars[cell->user_index()];
+				materials.create_new_mixed_mat(averaged_mat, frac, mat_bar,
+				  mat_no_bar, cell->user_index());
+            }
 
             averaged_mat++;
 

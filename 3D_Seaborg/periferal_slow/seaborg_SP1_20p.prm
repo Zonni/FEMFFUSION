@@ -1,0 +1,98 @@
+# Reactor Roseton 3D. Hexagonal small Reactor  
+# ---------------------------------------------------------------------------
+
+# Dimension of the problem (1, 2 or 3)
+set Dimension           = 3
+
+# Number of eigenvalues
+set N_Eigenvalues       = 1
+
+#
+# OUTPUT
+# True/false - Print the grid in .eps
+set Print_Grid_Flag     = false
+
+# True/false - Make a .vtk file with the output
+set Output_Flag         = true
+
+# Filename where will be written the output
+set Output_Filename     = 3D_Seaborg/periferal_slow/seaborg_SP1.out
+
+# Number of Refinements per cell in the .vtk output
+set Out_Refinements     = 0
+
+#
+# MESH PARAMETERS
+#
+set N_Refinements       = 0
+
+# Finite element Degree
+set FE_Degree           = 1
+
+#
+# GEOMETRY
+# Grid Type, Rectangular, Hexagonal or Unstructured
+set Geometry_Type       = Unstructured
+
+# Number of cells per dimension
+set Mesh_Size           = 382 1 20 
+
+# Pitch of the cells in x dimension - FAKE
+set Cell_Pitch_x        = 382* 1.0
+# Pitch of the cells in y dimension - FAKE
+set Cell_Pitch_y        = 1* 1.0
+# Pitch of the cells in z dimension
+set Cell_Pitch_z        = 20* 10.0
+
+
+# ".msh File where it is the 2d mesh
+set Mesh_Filename       = 3D_Seaborg/FullCoreReflected2D_hex.msh
+
+# Boundary Conditions  (0 = ZeroFlux) (1  ZeroCurrent) (2 Vaccum)
+set Boundary_Conditions = 2 2 2 2 
+
+# XS type file defined (Femfusion | XSEC | XML | Valkin).
+set XSEC_Type           = XML
+
+# Filename where it is stored the material cross section
+set XSECS_Filename      = 3D_Seaborg/periferal_slow/seaborg_periferal_slow_p20.xsec
+
+# Set the number of neutron energy groups defined in the calculation.
+set Energy_Groups       = 8
+
+# SOLVER
+# Solver Type (power_it | slepc_2g | slepc_7g)
+set Solver_Type         = bifpam
+
+#
+# TIME PARAMETERS
+# Delta time of the iteration
+set Transient           = true
+set Time_Delta          = 0.01
+set Distributed_Time_Scheme = Semi-Implicit-Euler
+set Type_Time_Preconditioner = bad-broyden
+set Initial_Time_Preconditioner = gs-cgilu
+
+# Final time of the computation
+set Time_End            = 2.0
+set Out_Interval        = 1
+
+# INSTABILITY
+# Time Scheme used to solve the time equation Distributed or Modal_Kinetics
+
+
+# Distribution of the instability: Flux_Distributed or Single_Material or Rods
+set Type_Perturbation   = Rods
+# set Rod_Cusping_Method  = fluxwei
+
+# Filename where it is defined the movement of the banks
+set Bar_Filename     = 3D_Seaborg/periferal_slow/periferal_3D_Seaborg.bar
+
+# Filename where it is defined the movement of the banks
+# set STA_Filename     = 3D_Seaborg/periferal_slow/periferal_3D_Seaborg_SP1.sta
+
+
+
+
+
+

@@ -8,11 +8,11 @@ Created on Fri Apr 14 13:56:49 2023
 import scipy.io as sio
 import numpy
 
-out_file = 'seaborg_p10.xsec'
+out_file = 'seaborg_periferal_p10.xsec'
 
 
 # mat = sio.loadmat('AutoGenFullCoreReflected_res.mat')
-mat = sio.loadmat('AutoGenFullCoreReflectedWithSmearedRodMovement_res.mat')
+mat = sio.loadmat('AutoGenFullCoreReflectedWithPeripheralSmearedRodMovement_res.mat')
 ng = len(mat['INF_TRANSPXS'][0])//2 # 
 np = 6
 print('Number of energy groups:', ng)
@@ -29,6 +29,8 @@ lambda_p_zero = [0.00, 0.00,0.00,0.00,0.00,0.00];
 #chid=numpy.array([ 1.77957E-01,  8.18626E-01,   3.41793E-03,   0.0E+00,  0.0E+00, 0.0E+00, 0.0E+00, 0.0E+00]);
 
 n_planes = 10
+central_rod=66; #63 for central rodd
+
 
 def print_vector_xml(name, lis, file):
     """
@@ -46,7 +48,7 @@ with open(out_file, 'w') as f:
     # Replace 63 for 382
     for i in range(len(mats)):
         # replace hardik with shardul
-        if mats[i] == 63:
+        if mats[i] == central_rod:
             mats[i] = 382
  
     
@@ -63,7 +65,7 @@ with open(out_file, 'w') as f:
 
 
         print_vector_xml('Chi', mat['INF_CHIT'][mt][::2], file=f)
-        #print_vector_xml('ChiP', mat['INF_CHID'][mt][::2], file=f) Calculated in FEMFFUSION
+        #print_vector_xml('ChiP', mat['INF_CHIP'][mt][::2], file=f) Calculated in FEMFFUSION
         print_vector_xml('Nu', mat['INF_NUBAR'][mt][::2], file=f)
         print_vector_xml('NuSigF', mat['INF_NSF'][mt][::2], file=f)
         print_vector_xml('SigF', mat['INF_FISS'][mt][::2], file=f)

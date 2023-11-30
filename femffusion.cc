@@ -192,6 +192,12 @@ void prm_declare_entries (ParameterHandler &prm)
   prm.declare_entry("TS_Solver", "petsc",
     Patterns::Selection("euler | arkode | dealii | petsc"),
     "TS_Solver defined euler | arkode | dealii | petsc");
+  prm.declare_entry("Type_Time_Preconditioner", "fixed",
+      Patterns::Selection("fixed | good-broyden | bad-broyden "),
+      "Time Preconditioner defined fixed | good-broyden | bad-broyden");
+  prm.declare_entry("Initial_Time_Preconditioner", "gs-cgilu",
+      Patterns::Selection("gs-cgilu | gs-ilu | diagonal"),
+      "Time Preconditioner defined fixed | good-broyden | bad-broyden");
 
   // Time Variables
   prm.declare_entry("Frequency", "1.0", Patterns::Double(),
