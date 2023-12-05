@@ -7,6 +7,10 @@ set Dimension           = 3
 # Number of eigenvalues
 set N_Eigenvalues       = 1
 
+# Transport Approximation used (Diffusion | SPN )
+set Transport_Appr       = SPN
+set N_SPN                = 5
+
 #
 # OUTPUT
 # True/false - Print the grid in .eps
@@ -16,7 +20,7 @@ set Print_Grid_Flag     = false
 set Output_Flag         = true
 
 # Filename where will be written the output
-set Output_Filename     = 3D_Seaborg/periferal_seaborg_SP1.out
+set Output_Filename     = 3D_Seaborg_static/seaborg_SP5_20p.out
 
 # Number of Refinements per cell in the .vtk output
 set Out_Refinements     = 0
@@ -35,18 +39,18 @@ set FE_Degree           = 1
 set Geometry_Type       = Unstructured
 
 # Number of cells per dimension
-set Mesh_Size           = 382 1 5 
+set Mesh_Size           = 382 1 20 
 
 # Pitch of the cells in x dimension - FAKE
 set Cell_Pitch_x        = 382* 1.0
 # Pitch of the cells in y dimension - FAKE
 set Cell_Pitch_y        = 1* 1.0
 # Pitch of the cells in z dimension
-set Cell_Pitch_z        = 5* 40.0
+set Cell_Pitch_z        = 20* 10.0
 
 
 # ".msh File where it is the 2d mesh
-set Mesh_Filename       = 3D_Seaborg/FullCoreReflected2D_hex.msh
+set Mesh_Filename       = 3D_Seaborg_static/FullCoreReflected2D_hex.msh
 
 # Boundary Conditions  (0 = ZeroFlux) (1  ZeroCurrent) (2 Vaccum)
 set Boundary_Conditions = 2 2 2 2 
@@ -55,7 +59,7 @@ set Boundary_Conditions = 2 2 2 2
 set XSEC_Type           = XML
 
 # Filename where it is stored the material cross section
-set XSECS_Filename      = 3D_Seaborg/seaborg_periferal_p5.xsec
+set XSECS_Filename      = 3D_Seaborg_static/seaborg_20p_static.xsec
 
 # Set the number of neutron energy groups defined in the calculation.
 set Energy_Groups       = 8
@@ -64,32 +68,6 @@ set Energy_Groups       = 8
 # Solver Type (power_it | slepc_2g | slepc_7g)
 set Solver_Type         = bifpam
 
-#
-# TIME PARAMETERS
-# Delta time of the iteration
-set Transient           = true
-set Time_Delta          = 0.01
-set Distributed_Time_Scheme = Semi-Implicit-Euler
-set Type_Time_Preconditioner = bad-broyden
-set Initial_Time_Preconditioner = gs-cgilu
-
-# Final time of the computation
-set Time_End            = 2.0
-set Out_Interval        = 1
-
-# INSTABILITY
-# Time Scheme used to solve the time equation Distributed or Modal_Kinetics
-
-
-# Distribution of the instability: Flux_Distributed or Single_Material or Rods
-set Type_Perturbation   = Rods
-# set Rod_Cusping_Method  = fluxwei
-
-# Filename where it is defined the movement of the banks
-set Bar_Filename     = 3D_Seaborg/periferal_3D_Seaborg.bar
-
-# Filename where it is defined the movement of the banks
-# set STA_Filename     = 3D_Seaborg/periferal_3D_Seaborg_SP1.sta
 
 
 

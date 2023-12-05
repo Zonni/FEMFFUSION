@@ -63,8 +63,7 @@ set Energy_Groups       = 8
 # SOLVER
 # Solver Type (power_it | slepc_2g | slepc_7g)
 set Solver_Type         = bifpam
-set Type_Time_Preconditioner = bad-broyden
-set Initial_Time_Preconditioner = gs-cgilu
+
 #
 # TIME PARAMETERS
 # Delta time of the iteration

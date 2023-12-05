@@ -2574,7 +2574,7 @@ void Materials::parse_forest_xs (const std::string &xml_file)
         "Nu Sigma_f does not exist");
 
       // sigma_t
-      sigma_t[from_g][mat] = input.xs[mat].sigma_t[from_g];
+      sigma_t[from_g][mat] = input.xs[mat].sigma_tr[from_g]; // TODO
       verbose_cout << "        sigma_t_" << from_g + 1 << " = "
                    << sigma_t[from_g][mat]
                    << std::endl;
@@ -2689,12 +2689,6 @@ void Materials::parse_forest_xs (const std::string &xml_file)
   }
 
 
-
-
-  //// Calculate sigma_r
-  //  for (unsigned int mat = 0; mat < n_mats; ++mat)
-  //    for (unsigned int g = 0; g < n_groups; ++g)
-  //      sigma_r[g][mat] = sigma_t[g][mat] - sigma_s[g][g][mat];
   verbose_cout << "materials_vector: " << std::flush;
   if (verbose_cout.is_active())
     print_vector(materials_vector, false);
