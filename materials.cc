@@ -501,6 +501,17 @@ double Materials::get_sigma_t (unsigned int group,
 /**
  *
  */
+double Materials::get_sigma_tr (unsigned int group,
+  unsigned int mat) const
+{
+  AssertIndexRange(group, sigma_t.size());
+  AssertIndexRange(mat, sigma_t[group].size());
+  return sigma_t[group][mat]; // TODO
+}
+
+/**
+ *
+ */
 double Materials::get_chi (unsigned int group,
   unsigned int mat) const
 {

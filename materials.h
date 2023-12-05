@@ -277,6 +277,13 @@ class Materials
     const unsigned int mat) const;
 
   /**
+   * @brief Get the transport cross section given energy group and the material id.
+   * @return sigma_t
+   */
+  double get_sigma_tr (const unsigned int group,
+    const unsigned int mat) const;
+
+  /**
    *
    */
   double get_chi (const unsigned int group,

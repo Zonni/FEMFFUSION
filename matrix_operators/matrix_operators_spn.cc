@@ -139,10 +139,9 @@ template <int dim, int n_fe_degree>
                                                 * materials.get_sigma_r(gi, mat);
                 for (unsigned int m3 = 1; m3 < n_moments; m3++)
                 {
-                  coeffs_L[gi][gj][mi][mj][mat] +=
-                                                   sp_coeff[m3][mi][mj]
-                                                   * materials.get_sigma_t(gi,
-                                                     mat);
+                  coeffs_L[gi][gj][mi][mj][mat] += sp_coeff[m3][mi][mj]
+                      * (materials.get_sigma_r(gi, mat)
+                         + materials.get_sigma_s(gi, gi, mat));
                 }
               }
               else
@@ -475,7 +474,7 @@ template <int dim, int n_fe_degree>
           for (unsigned int mi = 0; mi < n_moments; ++mi)
           {
             // Get the material coefficients:
-            D = diff_coeff[mi] / (materials.get_sigma_t(gi, mat));
+            D = diff_coeff[mi] / (materials.get_sigma_tr(gi, mat));
             sigma = coeffs_L[gi][gi][mi][mi][mat];
             bc_coeff = marshack_coeff[mi][mi];
             cell_L.equ(D, cell_grad, sigma, cell_val, bc_coeff,

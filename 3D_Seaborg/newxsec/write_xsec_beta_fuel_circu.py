@@ -65,13 +65,13 @@ with open(out_file, 'w') as f:
         print('</name>', file=f)
 
 
-        print_vector_xml('Chi', mat['INF_CHIT'][mt][::2], file=f)
-        #print_vector_xml('ChiP', mat['INF_CHIP'][mt][::2], file=f) Calculated in FEMFFUSION
+        print_vector_xml('Chi', mat['INF_CHIP'][mt][::2], file=f)# CAMBIO A MARIO GENFOAM
+        #print_vector_xml('ChiP', mat['INF_CHIP'][mt][::2], file=f) Calculated in FEMFFUSION 
         print_vector_xml('Nu', mat['INF_NUBAR'][mt][::2], file=f)
         print_vector_xml('NuSigF', mat['INF_NSF'][mt][::2], file=f)
         print_vector_xml('SigF', mat['INF_FISS'][mt][::2], file=f)
         print_vector_xml('SigmaA', mat['INF_ABS'][mt][::2], file=f)
-        print_vector_xml('SigmaR', mat['INF_REMXS'][mt][::2], file=f)
+        #print_vector_xml('SigmaR', mat['INF_TOT'][mt][::2], file=f)
         print_vector_xml('SigmaTR', mat['INF_TRANSPXS'][mt][::2], file=f)
         print_vector_xml('SigmaT', mat['INF_TOT'][mt][::2], file=f)
 #        print_vector_xml('Chi', chi[:], file=f)
@@ -85,7 +85,12 @@ with open(out_file, 'w') as f:
             print_vector_xml('Lambda', lambda_p[:], file=f)
         
         scat = mat['INF_SP0'][mt][::2]
-        chid = mat['INF_CHID'][mt][::2]
+        chid = mat['INF_CHIP'][mt][::2] # CAMBIO A MARIO GENFOAM
+        REM = mat['INF_TOT'][mt][::2].copy()
+        for g in range(ng):
+            REM[g] -=  scat[g*ng+g]
+        #print(REM)
+        print_vector_xml('SigmaR', REM, file=f)
         
         print('<SigmaS>', file=f)
         for g1 in range(ng):

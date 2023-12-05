@@ -1,0 +1,59 @@
+# C5G7 Reactor
+# ---------------------------------------------------------------------------
+
+# Dimension of the problem (1, 2 or 3)
+set Dimension           = 2
+
+# Number of eigenvalues
+set N_Eigenvalues       = 1
+
+
+#
+# MESH PARAMETERS
+#
+set N_Refs_Radial       = 1
+
+# Finite element Degree
+set FE_Degree           = 2
+
+#
+# GEOMETRY
+# Grid Type, Rectangular, Hexagonal or Unstructured
+set Geometry_Type       = Composed
+
+# .xml File where it is declared the mesh in dream way
+set Geometry_Filename   = 2D_C5G7/input.geom.xml
+
+# Filename where the triangulation is saved/loaded the output
+set Triangulation_Filename = 2D_C5G7/mesh_ref1.tri
+
+#
+# CROSS SECTIONS
+# XS type file defined (Femfusion | XSEC | XML | Valkin)
+set XSEC_Type           = XML
+
+# Filename where it is stored the material cross section
+set XSECS_Filename      = 2D_C5G7/input.mat.xml
+
+# Set the number of neutron energy groups defined in the calculation.
+set Energy_Groups       = 7
+
+#
+# OUTPUT
+# True/false - Print the grid in .eps
+set Print_Grid_Flag     = false
+
+# True/false - Make a .vtk file with the output
+set Output_Flag         = true
+
+
+# True/false - Make a .vtk file with the output
+set Out_Refinements        = 3
+
+# Filename where will be written the output
+set Output_Filename     = 2D_C5G7/c5g7_ref1_FE2.out
+
+#
+# Solver Type (power_it | slepc_2g | bifpam)
+set Solver_Type         = bifpam
+
