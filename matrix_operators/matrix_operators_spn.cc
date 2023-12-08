@@ -251,8 +251,8 @@ template <int dim, int n_fe_degree>
                 {
                   coeffs_L[gi][gj][mi][mj][mat] +=
                                                    sp_coeff[m3][mi][mj]
-                                                   * materials.get_sigma_t(gi,
-                                                     mat);
+                                                   * (materials.get_sigma_r(gi, mat)
+                                                           + materials.get_sigma_s(gi, gi, mat));
                 }
               }
               else
@@ -332,7 +332,7 @@ template <int dim, int n_fe_degree>
         for (unsigned int mat = 0; mat < materials.get_n_mats(); mat++)
         {
           coeffs_grad[b][mat] = diff_coeff[m]
-                                / (materials.get_sigma_t(g, mat));
+                                / (materials.get_sigma_tr(g, mat));
           coeffs_val[b][mat] = coeffs_L[g][g][m][m][mat];
         }
       }
@@ -607,12 +607,13 @@ template <int dim, int n_fe_degree>
                 if (mi == mj)
                 {
                   D = diff_coeff[mi]
-                      / (materials.get_sigma_t(gi, mat));
+                      / (materials.get_sigma_tr(gi, mat));
                   sigma = sp_coeff[0][mi][mj]
                           * materials.get_sigma_r(gi, mat);
                   for (unsigned int m3 = 1; m3 < n_moments; ++m3)
                     sigma += sp_coeff[m3][mi][mj]
-                             * materials.get_sigma_t(gi, mat);
+                             * (materials.get_sigma_r(gi, mat)
+                                     + materials.get_sigma_s(gi, gi, mat));
                   bc_coeff = marshack_coeff[mi][mj];
                   cell_L.equ(D, cell_grad, sigma, cell_val,
                     bc_coeff, cell_bound);
@@ -626,7 +627,8 @@ template <int dim, int n_fe_degree>
                           * materials.get_sigma_r(gi, mat);
                   for (unsigned int m3 = 1; m3 < n_moments; ++m3)
                     sigma += sp_coeff[m3][mi][mj]
-                             * materials.get_sigma_t(gi, mat);
+                             * (materials.get_sigma_r(gi, mat)
+                                     + materials.get_sigma_s(gi, gi, mat));
                   bc_coeff = marshack_coeff[mi][mj];
                   cell_L.equ(sigma, cell_val, bc_coeff,
                     cell_bound);
