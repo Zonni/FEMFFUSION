@@ -1,0 +1,79 @@
+# IAEA 3D REACTOR
+# ---------------------------------------------------------------------------
+# This data comes from: Benchmark Problem Book, ANL-7416, Suppl. 2, Argonne National Laboratory (1977)
+
+####
+# M A N D A T O R Y    I N P U T S   P A R A M E T E R S
+####
+
+# Dimension of the problem (1, 2 or 3)
+set Dimension           = 3
+# Number of eigenvalues required
+set N_Eigenvalues       = 1
+set Energy_Groups	= 2
+
+####
+# O P T I O N A L    I N P U T S    P A R A M E T E R S
+####
+
+####
+# R E A C T O R    and    M E S H    D E F I N I T I O N
+####
+
+# Finite element degree
+set FE_Degree           = 3
+# Global Refinements of the mesh:
+set N_Refinements       = 0
+# Number of cells per dimension
+set Mesh_Size           = 11 11 10
+
+# Pitch of the cells
+set Cell_Pitch_x        = 11* 20.0
+set Cell_Pitch_y        = 11* 20.0
+set Cell_Pitch_z        = 10* 20.0
+# Set the first and last existing cell every row in the reactor plant
+set Geometry_Points     = 2 10 1 11 1 11 1 11 1 11 1 11 1 11 1 11 1 11 1 11 2 10
+# Boundary Conditopns (LEFT  RIGHT FRONT BACK TOP BOTTOM)  (0 = ZeroFlux) (1  Simetria) (2 Albedo) (3 Vaccum, beta=0) 
+set Boundary_Conditions = 0 0 0 0 0 0
+
+####
+# O U T P U T
+#### 
+
+# true/false - Make a .vtk file with the output
+set Output_Flag         = false
+# true/false - Print the grid in .eps
+set Print_Grid_Flag     = false
+# Number of Refinements per cell in the .vtk output
+set Out_Refinements     = 0
+
+####
+# F I L E N A M E S            
+#### 
+
+# Filename where it is stored the material cross section
+set XSECS_Filename      = examples/3D_Langenbuch/3D_Langenbuch.xsec
+# Filename where will be written the output
+set Output_Filename     = examples/3D_Langenbuch/output/3D_Langenbuch_ds_bars.out
+# Filename where it is defined the movement of the banks
+set Bar_Filename     = examples/3D_Langenbuch/3D_Langenbuch.bar
+
+####
+# T I M E    P A R A M E T E R S
+####
+
+# Delta time of the iteration
+set Time_Delta          = 0.1
+# Final time of the computation
+set Time_End            = 60.0
+# true/false - Active transient
+set Transient           = false
+
+####
+# I N S T A B I L I T Y
+####
+
+# Distribution of the instability: Flux_Distributed or Single_Material or Rods
+set Type_Perturbation   = Rods
+# Relative tolerance of the Eigenvalue problem solver
+#set EPS_Tolerance           = 1e-3

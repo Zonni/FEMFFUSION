@@ -1,0 +1,26 @@
+The Eigenvalues are:
+1.302134e+00
+
+Problem File: test1
+CPU Time: 4.62e-03
+Global Refinements: 0
+Degree of FE: 3
+DoFs per Group: 24
+Number of active cells: 6
+
+Neutron Power
+ 0.0000000e+00  1.3261513e+00  1.0322517e+00  1.0322517e+00  1.3261513e+00  0.0000000e+00
+
+
+Group 1 flux
+ 2.675256e+01  2.780513e+01  2.837990e+01  2.837990e+01  2.780513e+01  2.675256e+01
+
+
+Group 2 flux
+ 1.402774e+01  9.184987e+00  6.785708e+00  6.785708e+00  9.184987e+00  1.402774e+01
+
+
+Volume per Assembly
+ 1.1580000e+00  3.2310000e+00  3.2310000e+00  3.2310000e+00  3.2310000e+00  1.1580000e+00
+
+

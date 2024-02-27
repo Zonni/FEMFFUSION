@@ -6,7 +6,7 @@
      | _| | _| | \_/ || _| | _| | U |\_ \| ( o ) \\ |  
      |_|  |___||_| |_||_|  |_|  |___||__/|_|\_/|_|\_|  
      
-                    BASIC VERSION   0.2  
+                    BASIC VERSION   1.0  
 ```
 [**FEMFFUSION**](https://bitbucket.org/Zonni/femffusion/) is an open source C++ neutronic code that solves the multigroup neutron transport equation using the diffusion approximation or the SPN approximation. The code uses the continuous Galerkin finite element method to be able to deal with any type of geometry and problem dimension (1D, 2D and 3D problems). It works on top of [deal.II](https://www.dealii.org/) library, which provides supporting and advances in the finite element method. 
 

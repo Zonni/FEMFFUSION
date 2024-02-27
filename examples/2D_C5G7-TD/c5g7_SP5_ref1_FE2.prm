@@ -1,0 +1,89 @@
+# C5G7 Reactor
+# ---------------------------------------------------------------------------
+
+# Dimension of the problem (1, 2 or 3)
+set Dimension           = 2
+
+# Number of eigenvalues
+set N_Eigenvalues       = 1
+
+# Transport Approximation used (Diffusion | SPN )
+set Transport_Appr       = SPN
+# Set N of the SPN equations used (1, 3 or 5)
+set N_SPN                = 5
+
+# MESH PARAMETERS
+#
+set N_Refs_Radial       = 1
+
+# Finite element Degree
+set FE_Degree           = 2
+
+#
+# GEOMETRY
+# Grid Type, Rectangular, Hexagonal, Unstructured or Composed
+set Geometry_Type       = Composed
+
+# .xml File where it is declared the mesh in dream way
+set Geometry_Filename   = examples/2D_C5G7-TD/input.geom.xml
+
+# Filename where the triangulation is saved/loaded the output
+set Triangulation_Filename = examples/2D_C5G7-TD/mesh_ref1.tri
+
+#
+# CROSS SECTIONS
+# XS type file defined (XS2G | XSEC | XML)
+set XSEC_Type           = XML
+
+# Filename where it is stored the material cross section
+set XSECS_Filename      = examples/2D_C5G7-TD/input.mat.xml
+
+# Filename where it is stored some dynamic data.
+set PREC_Filename        = examples/2D_C5G7-TD/c5g7.prec
+
+# Set the number of neutron energy groups defined in the calculation.
+set Energy_Groups       = 7
+
+#
+# OUTPUT
+# true/false - Make a .vtk file with the output
+set Output_Flag         = true
+
+# true/false - Print the grid in .eps
+set Print_Grid_Flag     = false
+
+# Filename where will be written the output
+set Output_Filename     = examples/2D_C5G7-TD/output/c5g7_SP5_ref1_FE2.out
+
+# STATIC SOLVER
+# Solver Type (power_it | slepc_2g | bifpam)
+set Solver_Type         = bifpam
+
+# Relative tolerance of the Eigenvalue problem solver
+set EPS_Tolerance           = 1e-12
+
+####
+# T I M E    P A R A M E T E R S
+####
+# true/false - Active transient
+set Transient           = true
+
+
+
+# Delta time of the iteration
+set Time_Delta          = 0.0025
+# Final time of the computation
+set Time_End            = 10.0
+set Out_Interval = 10
+
+set Distributed_Time_Scheme = Semi-Implicit-Euler
+
+# INESTABILITY
+# Distribution of the instability: Flux_Distributed or Single_Material or Rods
+set Type_Perturbation   = C5G7-TD1.1
+
+
+
+
+
+

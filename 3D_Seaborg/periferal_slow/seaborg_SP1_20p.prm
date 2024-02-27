@@ -75,7 +75,7 @@ set Initial_Time_Preconditioner = gs-cgilu
 
 # Final time of the computation
 set Time_End            = 2.0
-set Out_Interval        = 1
+set Out_Interval        = 5
 
 # INSTABILITY
 # Time Scheme used to solve the time equation Distributed or Modal_Kinetics

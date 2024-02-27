@@ -8,7 +8,7 @@ Created on Fri Apr 14 13:56:49 2023
 import scipy.io as sio
 import numpy
 
-out_file = '../periferal_fast/seaborg_periferal_p20.xsec'
+out_file = '../periferal_fast/seaborg_periferal_p10.xsec'
 
 
 # mat = sio.loadmat('AutoGenFullCoreReflected_res.mat')
@@ -28,7 +28,7 @@ lambda_p_zero = [0.00, 0.00,0.00,0.00,0.00,0.00];
 #chi=[0.761563, 0.23826, 0.00017742, 0.0, 0.0, 0.0, 0.0, 0.0 ];
 #chid=numpy.array([ 1.77957E-01,  8.18626E-01,   3.41793E-03,   0.0E+00,  0.0E+00, 0.0E+00, 0.0E+00, 0.0E+00]);
 
-n_planes = 20
+n_planes = 10
 central_rod=66; #63 for central rodd
 
 
