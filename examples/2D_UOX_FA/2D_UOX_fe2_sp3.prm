@@ -1,0 +1,87 @@
+# Benchmark 2D Simple UOX assembly
+# ---------------------------------------------------------------------------
+#
+
+# Dimension of the problem (1, 2 or 3)
+set Dimension            = 2
+
+# Number of eigenvalues required
+set N_Eigenvalues        = 1
+
+# REACTOR and MESH DEFINITION
+# Finite element degree
+set FE_Degree            = 2
+ 
+# Number of global refinements 
+set N_Refinements        = 0
+
+# Transport Approximation used (Diffusion | SPN )
+set Transport_Appr       = Diffusion
+
+# Set N of the SPN equations used (1, 3 or 5)
+set N_SPN                = 3
+
+# Number of cells per dimension
+set Mesh_Size           = 138 138
+
+# Pitch of the cells    waterStrip   -------------------------  Pin 1      -------------------------   -------------------------  Pin 2      -------------------------   -------------------------  Pin 3      -------------------------   -------------------------  Pin 4      -------------------------   -------------------------  Pin 5      -------------------------   -------------------------  Pin 6      -------------------------   -------------------------  Pin 7      -------------------------   -------------------------  Pin 8      -------------------------   -------------------------  Pin 9      -------------------------   -------------------------  Pin 10     -------------------------   -------------------------  Pin 11     -------------------------   -------------------------  Pin 12     -------------------------   -------------------------  Pin 13     -------------------------   -------------------------  Pin 14     -------------------------   -------------------------  Pin 15     -------------------------   -------------------------  Pin 16     -------------------------   -------------------------  Pin 17     -------------------------  waterstrip
+set Cell_Pitch_x        = 0.08       0.13215 0.13215 0.18285 0.18285 0.18285 0.18285 0.13215 0.13215   0.13215 0.13215 0.18285 0.18285 0.18285 0.18285 0.13215 0.13215   0.13215 0.13215 0.18285 0.18285 0.18285 0.18285 0.13215 0.13215   0.13215 0.13215 0.18285 0.18285 0.18285 0.18285 0.13215 0.13215   0.13215 0.13215 0.18285 0.18285 0.18285 0.18285 0.13215 0.13215   0.13215 0.13215 0.18285 0.18285 0.18285 0.18285 0.13215 0.13215   0.13215 0.13215 0.18285 0.18285 0.18285 0.18285 0.13215 0.13215   0.13215 0.13215 0.18285 0.18285 0.18285 0.18285 0.13215 0.13215   0.13215 0.13215 0.18285 0.18285 0.18285 0.18285 0.13215 0.13215   0.13215 0.13215 0.18285 0.18285 0.18285 0.18285 0.13215 0.13215   0.13215 0.13215 0.18285 0.18285 0.18285 0.18285 0.13215 0.13215   0.13215 0.13215 0.18285 0.18285 0.18285 0.18285 0.13215 0.13215   0.13215 0.13215 0.18285 0.18285 0.18285 0.18285 0.13215 0.13215   0.13215 0.13215 0.18285 0.18285 0.18285 0.18285 0.13215 0.13215   0.13215 0.13215 0.18285 0.18285 0.18285 0.18285 0.13215 0.13215   0.13215 0.13215 0.18285 0.18285 0.18285 0.18285 0.13215 0.13215   0.13215 0.13215 0.18285 0.18285 0.18285 0.18285 0.13215 0.13215   0.08
+set Cell_Pitch_y        = 0.08       0.13215 0.13215 0.18285 0.18285 0.18285 0.18285 0.13215 0.13215   0.13215 0.13215 0.18285 0.18285 0.18285 0.18285 0.13215 0.13215   0.13215 0.13215 0.18285 0.18285 0.18285 0.18285 0.13215 0.13215   0.13215 0.13215 0.18285 0.18285 0.18285 0.18285 0.13215 0.13215   0.13215 0.13215 0.18285 0.18285 0.18285 0.18285 0.13215 0.13215   0.13215 0.13215 0.18285 0.18285 0.18285 0.18285 0.13215 0.13215   0.13215 0.13215 0.18285 0.18285 0.18285 0.18285 0.13215 0.13215   0.13215 0.13215 0.18285 0.18285 0.18285 0.18285 0.13215 0.13215   0.13215 0.13215 0.18285 0.18285 0.18285 0.18285 0.13215 0.13215   0.13215 0.13215 0.18285 0.18285 0.18285 0.18285 0.13215 0.13215   0.13215 0.13215 0.18285 0.18285 0.18285 0.18285 0.13215 0.13215   0.13215 0.13215 0.18285 0.18285 0.18285 0.18285 0.13215 0.13215   0.13215 0.13215 0.18285 0.18285 0.18285 0.18285 0.13215 0.13215   0.13215 0.13215 0.18285 0.18285 0.18285 0.18285 0.13215 0.13215   0.13215 0.13215 0.18285 0.18285 0.18285 0.18285 0.13215 0.13215   0.13215 0.13215 0.18285 0.18285 0.18285 0.18285 0.13215 0.13215   0.13215 0.13215 0.18285 0.18285 0.18285 0.18285 0.13215 0.13215   0.08
+
+
+# Boundary Conditopns (LEFT RIGHT DOWN UP)   (0 = ZeroFlux) (1 ZeroCurrent) (2 Vaccum) (3 Albedo) 
+set Boundary_Conditions = 1 1 1 1
+ 
+
+# OUT OPTIONS
+# true/false - Make a .vtk file with the output
+set Output_Flag         = false
+
+# true/false - Print the grid in .eps
+set Print_Grid_Flag     = false
+
+# Number of Refinements per cell in the .vtk output
+set Out_Refinements     = 2
+
+# Filename where will be written the output
+set Output_Filename     = examples/2D_UOX_FA/output/2D_UOX_sp3.out
+
+
+# CROSS SECTION
+# Filename where it is stored the material cross section
+set XSECS_Filename      = examples/2D_UOX_FA/2D_UOX_fa.xsec
+
+# SOLVER 
+# Solver Type (Power_it, Slepc_2g or Slepc_7g)
+set Solver_Type         = gd
+set EPS_Tolerance = 1e-10
+set KSP_Tolerance = 1e-11
+set P_Init        = false
+
+# TIME PARAMETERS
+# Delta time of the iteration
+set Time_Delta          = 0.01
+
+# Final time of the computation
+set Time_End            = 3.0
+
+# Cross Section where the Sigma_f1/Sigma_a1/All
+set XS_Name             = All
+
+
+
+
+# Distribution of the instability: Flux_Distributed or Single_Material
+set Type_Perturbation   = Single_Material
+set Material_Changing = 3
+
+
+# Type of instability Constant | Ramp | Cosinus
+set Perturbation_Function   = Sinus
+
+# Amplitudes proportion of fluctuation
+#                   t1           r1           f1              s12           t2          r2            f2            
+set Amplitudes =  0.00000000 3.550370e-03  3.137549e-04  2.940014e-05 0.00000000 9.222400e-03 5.778823e-03 
+
+# Relative tolerance of the Eigenvalue problem solver
+set EPS_Tolerance           = 1e-3

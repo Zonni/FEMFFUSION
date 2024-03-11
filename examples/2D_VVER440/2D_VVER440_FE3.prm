@@ -1,0 +1,68 @@
+# Reactor VVER 440 2D Hexagonal
+# ---------------------------------------------------------------------------
+
+#  Dimensions of the problem (1, 2 or 3)
+set Dimension           = 2
+
+# Number of eigenvalues
+set N_Eigenvalues       = 1
+
+# Finite element Degree
+set FE_Degree           = 3
+
+# Where it is stored the material coefficients
+set N_Refinements       = 0
+
+#
+# GEOMETRY
+# Grid Type (Rectangular | Hexagonal | Unstructured)
+set Geometry_Type       = Hexagonal
+
+# ".msh File where is the mesh
+set Mesh_Filename       = examples/2D_VVER440/VVER440.msh
+ 
+# Boundary Conditions (0 = ZeroFlow) (1  Reflection) (2 Vaccum) (3 Albedo)
+set Boundary_Conditions = 2 2
+
+# Number of cells per dimension
+set Mesh_Size           = 22 25 
+
+# Set the first and last existing cell every row in the reactor plant for output results
+set Geometry_Points     =  1 5 1 10 1 13 1 14 1 17 1 18 1 19 1 20 1 21 1 20 1 21 1 22 1 21 1 22 1 21 1 20 1 21 1 20 1 19 1 18 1 17 1 14 1 13 1 10 1 5 
+
+# Pitch of the cells in x dimension
+set Cell_Pitch_x        = 22* 14.7
+# Pitch of the cells in y dimension
+set Cell_Pitch_y        = 25* 14.7
+
+# Filename where it is stored the material cross section
+set XSECS_Filename      = examples/2D_VVER440/2D_VVER440.xsec
+
+#
+# OUTPUT
+# true/false - Print the grid 
+set Print_Grid_Flag     = false
+
+# true/false - Make a .vtk file with the output 
+set Output_Flag         = false
+
+# Number of Refinements per cell in the .vtk output
+set Out_Refinements     = 2
+
+# Filename where will be written the output
+set Output_Filename     = examples/2D_VVER440/output/2D_VVER440_FE3.out
+
+
+# Cross Section where the Sigma_f/Sigma_a
+set XS_Name             = Sigma_a
+
+# Distribution of the instability: Flux_Distributed or Single_Material
+set Type_Perturbation   = Single_Material
+set Material_Changing   = 8
+
+# Type of instability
+set Perturbation_Function   = Ramp_hex
+
+# Relative tolerance of the Eigenvalue problem solver
+set EPS_Tolerance           = 5e-4
+

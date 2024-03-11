@@ -53,7 +53,7 @@ set Output_Flag         = false
 set Print_Grid_Flag     = false
 
 # Filename where will be written the output
-set Output_Filename     = 2D_C5G7-TD/Output/c5g7_SP1_ref1_FE2.out
+set Output_Filename     = 2D_C5G7-TD/output/c5g7_SP1_ref1_FE2.out
 
 # STATIC SOLVER
 # Solver Type (power_it | slepc_2g | bifpam)

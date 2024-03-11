@@ -68,7 +68,7 @@ set Solver_Type         = bifpam
 # TIME PARAMETERS
 # Delta time of the iteration
 set Transient           = true
-set Time_Delta          = 0.1
+set Time_Delta          = 0.01
 set Distributed_Time_Scheme = Semi-Implicit-Euler
 set Type_Time_Preconditioner = bad-broyden
 set Initial_Time_Preconditioner = gs-cgilu
@@ -76,7 +76,7 @@ set Initial_Time_Preconditioner = gs-cgilu
 # Final time of the computation
 set Time_End            = 1.0
 
-set Out_Interval        = 1
+set Out_Interval        = 10
 
 # INSTABILITY
 # Time Scheme used to solve the time equation Distributed or Modal_Kinetics

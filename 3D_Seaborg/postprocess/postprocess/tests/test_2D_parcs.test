@@ -1,0 +1,425 @@
+
+
+
+      PPPPPPPPPPPPP          AAA         RRRRRRRRRRRRRR          CCCCCCCCCC         SSSSSSSSSS   
+      PPPPPPPPPPPPPPP       AAAAA        RRRRRRRRRRRRRRRR       CCCCCCCCCCCCC     SSSSSSSSSSSSS  
+       PPPP      PPPP      AAAAAAA        RRRR       RRRRR     CCCC      CCCCC    SSSS      SSSSS
+       PPPP       PPPP     AAA AAA        RRRR        RRRR    CCCC        CCCC   SSSS       SSSSS
+       PPPP       PPPP    AAAA AAAA       RRRR        RRRR   CCCC                SSSSS           
+       PPPP      PPPPP   AAAA   AAAA      RRRR       RRRR    CCCC                 SSSSSSSSSS     
+       PPPPPPPPPPPPPP   AAAA     AAAA     RRRRRRRRRRRRRR     CCCC                   SSSSSSSSSSS  
+       PPPPPPPPPPPP     AAAA     AAAA     RRRRRRRRRRR        CCCC                       SSSSSSSS 
+       PPPP            AAAAAAAAAAAAAAA    RRRR    RRRRR      CCCC          CCC               SSSS
+       PPPP            AAAAAAAAAAAAAAA    RRRR      RRRR     CCCC         CCCC   SSSS        SSSS
+       PPPP           AAAA         AAAA   RRRR       RRRR     CCCC        CCCC   SSSS        SSSS
+       PPPP           AAAA         AAAA   RRRR        RRRR    CCCCC      CCCC    SSSSS      SSSSS
+      PPPPPP         AAAAA         AAAAA RRRRRR       RRRRRR   CCCCCCCCCCCCC      SSSSSSSSSSSSSS 
+      PPPPPP         AAAAA         AAAAA RRRRRR       RRRRRR     CCCCCCCCCC         SSSSSSSSSS   
+
+
+
+                              (Purdue Advanced Reactor Core Simulator)
+
+                                          NRC - v32m19co                                                                 
+
+
+           Executing Case 2D_CROCUS/2D_CROCUS_uniform
+           by xxx on xxx at 10:56:44, July  8, 2019...                         
+ 
+
+
+                                      Echo of Input Deck 2D_CROCUS/2D_CROCUS_uniform.inp
+=====================================================================================================
+CASEID '2D_CROCUS/2D_CROCUS_uniform'
+!******************************************************************************
+CNTL
+      core_power   1.0
+      TRANSIENT   T
+      TH_FDBK F F
+!                    input  iteration     planar                   adj
+!                     edit      table      power        pin       reac
+      print_opt          F          F          F          F          F
+!                     fdbk       flux     planar
+!                      rho    precurs       flux         Xe        T/H
+      print_opt          F          F          T          F          F
+      print_opt          F          F          F          F          F
+!                               print_xs
+      print_opt          F          F          F          F          F
+!******************************************************************************
+PARAM
+ conv_ss    1.e-16 1.e-15 1.e-15 1.e-15   !epseig epsl2 epslinf epstf
+ nodal_kern fdm
+!******************************************************************************
+XSEC
+!******************************************************************************
+ fichero '2D_test/2D_CROCUS_uniform.xs'
+!******************************************************************************
+GEOM
+ file '2D_test/2D_test.gm'
+ Reading from 2D_test/2D_test.inp...                                
+ geo_dim  3 3 1
+ rad_conf
+ 2 2 2 
+ 2 2 2 
+ 2 2 2 
+ grid_x 1*10.000 1*10.000 1*10.000
+ neutmesh_x 4 4 4
+ grid_y 1*10.000 1*10.000 1*10.000
+ neutmesh_y 4 4 4
+ boun_cond  2 2 2 2 0 0       ! ibcw ibce ibcn ibcs ibcb ibct
+ grid_z     10000
+ Planar_Reg 1
+ 1 2 3 
+ 4 5 6
+ 7 8 9
+ PR_Assign 1
+ Reading from 2D_CROCUS/2D_CROCUS_uniform.inp...                                
+!******************************************************************************
+TRAN
+ time_step    0.01 1.0e-3  !tend delt0 tswitch texpand
+ conv_tr 1e-15 1e-15  1e-15   1e-15 !epsr2  epsl2t  epslinft  epstft
+ sum_edit F F F F
+.
+ 00:00.75  Input Processing Completed.
+ 00:01.02  Performing Steady-State Eigenvalue Calculation...                
+
+     ***************************************************************
+                            Problem Description
+     ***************************************************************
+
+ 
+= Geometry : Cartesian
+ 
+= Core Radial Configuration
+ 
+          1  2  3  
+         ---------
+       1  F  F  F
+       2  F  F  F
+       3  F  F  F
+     
+            F : Fuel Assembly,  R : Reflector
+ 
+= Boundary Conditions: 0 - Reflective, 1 - Zero Flux, 2 - Zero Incoming Current
+   axial boundary, bottom and top                :   0  0
+   x-direction, west and east                    :   2  2
+   y-direction, north and south                  :   2  2
+
+= Radial Nodes Per Assembly                      :  4 x 4
+= Number of Planes in the Active Core            :   1
+= Number of Planes including Axial Reflectors    :   1
+= Assembly Pitch                                 :   0.000
+= Radial Node Size                               :   0.729
+ 
+= Assembly Grid Sizes in x-direction
+   10.0   10.0   10.0 
+
+= Assembly Grid Sizes in y-direction
+   10.0   10.0   10.0 
+ 
+= Axial Mesh Structure
+    Plane    Mesh      Mid 
+    Number   Size     Point
+       1 10000.000  5000.000
+ 
+= Number of Fuel Assemblies and Radial Fuel Nodes :    156925104
+= Number of Radial Nodes :                            25104
+= Active Core Height and Volume :                     10000.00    1.33504E+08
+ 
+= Planar Regions
+     Number of Planar Regions                    :    1
+ 
+     Planar Region  1
+       1  2  3
+       4  5  6
+       7  8  0
+ 
+= Assignment of Planar Regions to Planes 
+      Plane      Plane  Planar Region 
+      Number     Type      Number
+         1   Fuel Region      1
+
+= Control Rod Description
+    Core Type                                    : PWR (control rod traveling from top to bottom)
+   Number of control rod banks                   :    1
+   Fully inserted position
+   from the bottom reflector (cm)                :     0.000
+   Step Size (cm)                                :     1.000
+ 
+   Initial control bank position (steps)
+ 
+ 1.10000E+08
+ 
+          0 means fully inserted
+
+   Control Bank Configuration
+   0 0 0
+   0 0 0
+   0 0 0
+ 
+ 
+= External T/H On?                                         [X]
+= T/H feedback On?                                         [X]
+= Decay Heat On?                                           [X]
+= Transient On?                                            [O]
+= Restart?                                                 [X]
+= Pin Power On?                                            [X]
+= Xe/Sm Calculation                                        No
+= Problem type                                             Eigenvalue Problem
+  Initial Soluble Boron guess                                  0.000
+ 
+= Print Options
+  Detailed input explanation?                              [X]
+  Display screen output?                                   [X]
+  Planar power distribution?                               [X]
+  Detailed pin power edits?                                [X]
+  Adjoint flux and reactivity?                             [X]
+  Feedback component reactivity?                           [X]
+  Integrated flux/precursor distribution?                  [X]
+  Planar flux distribution?                                [O]
+  Planar Xe/Sm distribution?                               [X]
+  T/H outputs?                                             [X]
+  Collapsed One-D Xsecs?                                   [X]
+  Point Kinetics Parameters?                               [X]
+ 
+= Iteration control parameters
+   Maximum number of inner iteration             :    1
+   Maximum number of outer iteration             :  500
+   Criterion for convergence check
+      eigenvalue convergence                     :  1.00000E-16
+      relative residual 2-norm                   :  1.00000E-15
+      maximum relative residual                  :  1.00000E-15
+   Data for Wielandt shift acceleration
+      Eigenvalue estimation error factor for Wiel:  1.00000E+01
+      Parameter for Wielandt shift fraction      :  4.00000E-02
+   Nodal kernel                                  : FDM   
+ 
+= Transient Calculation Control Parameters
+   Total transient duration time (sec)               0.010
+   Initial time step size (sec)                      0.001
+   The second time step size (sec)                   0.001
+   Switch time for the second time step size     *********
+ 
+   Boron -> constant during the transient
+   Control rod position -> constant during the transient
+ 
+   Scram on trip set point?                                [X]
+   Exponetial transformation of the flux used?             [X]
+   Fission source extrapolation?                           [O]
+   Order of precursor integration method                    2
+   Theta for time differencing kinetics                   0.500
+   Theta for time differencing coolant T/H                1.000
+   Theta for time differencing fuel heat conduction       0.500
+   Check full nodal convergence?                           [X]
+   Multiple T/H updates at each time step?                 [O]
+     Frequency of the T/H calculation                       1
+     Maximum number of T/H update                          10
+     Criterion for fuel temperature convergence           0.000
+ 
+ 
+ 
+ ================================================
+   Steady State Eigenvalue Calculation Results
+ ================================================
+ 
+ leakage fraction from fuel region: 0.0201%,  absorption fraction in reflector 0.0000%,  leakage fraction from system: 0.0201%
+ 
+   K-Effective:     1.000000
+   Boron Conc:       0.00
+   Core Power Level: 1.000000E-02
+ 
+ Assembly Power Distribution
+ 
+     #.####   box power
+ 
+            1       2       3      
+           1  1.000000000000000E+000  2.000000000000000E+000  3.000000000000000E+000  
+           2  4.000000000000000E+000  5.000000000000000E+000  6.000000000000000E+000
+           3  7.000000000000000E+000  8.000000000000000E+000  9.000000000000000E+000
+
+        Maximum Pos.   Maximum Value 
+         ( 1, 2 )   9.0000
+ 
+ Axial Power Distribution
+ 
+ Distance(cm)  Power       Plane     Mesh
+ from Bottom               Number    (cm)
+   5000.00     1.000          1   10000.00
+ 
+  Maximum Pos.    Maximum Value 
+       1              1.0000
+ 
+
+  Fq (Pin)   8.9376
+
+
+ Planar Flux at Plane           1
+ 
+            1         2         3        
+           1  1.000000000000000E+000  1.000000000000000E+000  1.000000000000000E+000
+              3.000000000000000E+000  1.000000000000000E+000  3.000000000000000E+000   
+ 
+           2  1.000000000000000E+000  1.000000000000000E+000  1.000000000000000E+000
+              3.000000000000000E+000  3.000000000000000E+000  3.000000000000000E+000
+ 
+           3  1.000000000000000E+000  1.000000000000000E+000  8.000000000000000E+000
+              3.000000000000000E+000  7.000000000000000E+000  3.000000000000000E+000         
+            
+        Maximum Pos.   Maximum Value 
+         ( 1, 1 )  1.0000
+         ( 1, 1 )  3.0000
+ 
+===============================================================================
+ 00:02.45  Performing Transient Calculation...
+ 00:02.45  @ 0.00E+00s, P= 1.000E+00%, Tout=   0.0K, Tf=    0.0K, rho=  0.00c  
+
+
+ At Simulation Time =  1.00E-03 ( Time Step     1 )
+
+   Core Condition Change Summary
+   -----------------------------
+     Boron     :   not changed
+     Boron     :       0.000
+      Bank   1 :************
+ 
+ Max.   Xsec  Change  1.00E+00 T
+   itr      r2/r0          r2/b2           l2            linf     psil1*psil10  iin Pos.FLux
+    1   9.4100E-01 F   1.2739E-09 F   9.4526E-11 F   1.9927E-07 F 1.000000E+00    1 T
+    2   1.0657E+00 F   1.3576E-09 F   2.9870E-11 F   2.9771E-07 F 1.000000E+00    1 T
+  172   8.4477E-01 F   1.6284E-12 F   3.1931E-14 F   3.7014E-12 F 1.000000E+00    1 T
+  173   8.4570E-01 F   1.5942E-12 F   3.0684E-14 F   2.7499E-12 F 1.000000E+00    1 T
+  174   8.4118E-01 F   1.5742E-12 F   3.0105E-14 F   1.0154E-12 F 1.000000E+00    1 T
+  175   8.3964E-01 F   1.5208E-12 F   2.8171E-14 F   1.5196E-12 F 1.000000E+00    1 T
+  176   8.2460E-01 F   1.4762E-12 F   2.6029E-14 F   1.0664E-12 F 1.000000E+00    1 T
+  177   8.3073E-01 F   1.4832E-12 F   2.6298E-14 F   2.5367E-13 F 1.000000E+00    1 T
+  178   8.1914E-01 F   1.4249E-12 F   2.4191E-14 F   8.9805E-14 F 1.000000E+00    1 T
+ 00:03.04   P=  0.999999978668516                                              
+ 
+   Reactivity($):     0.000000
+   Core beta    :       760.00
+   Boron Conc:       0.00
+   Core Power Level: 1.000000E-02
+ 
+ Assembly Power Distribution
+ 
+     #.####   box power
+ 
+            1       2       3
+           1  1.000000000000000E+000  1.000000000000000E+000  1.000000000000000E+000  
+           2  1.000000000000000E+000  1.000000000000000E+000  1.000000000000000E+000   
+           3  1.000000000000000E+000  2.000000000000000E+000  1.000000000000000E+000  
+            
+        Maximum Pos.   Maximum Value 
+         ( 3, 2 )   2.0000
+ 
+ Axial Power Distribution
+ 
+ Distance(cm)  Power       Plane     Mesh
+ from Bottom               Number    (cm)
+   5000.00     1.000          1   10000.00
+ 
+  Maximum Pos.    Maximum Value 
+       1              1.0000
+ 
+
+  Fq (Pin)   8.9376
+
+
+ Planar Flux at Plane           1
+ 
+            1         2         3        
+           1  1.000000000000000E+000  1.000000000000000E+000  1.000000000000000E+000
+              3.000000000000000E+000  1.000000000000000E+000  3.000000000000000E+000   
+ 
+           2  1.000000000000000E+000  1.000000000000000E+000  1.000000000000000E+000
+              3.000000000000000E+000  3.000000000000000E+000  3.000000000000000E+000
+ 
+           3  1.000000000000000E+000  1.000000000000000E+000  6.000000000000000E+000
+              3.000000000000000E+000  3.000000000000000E+000  3.000000000000000E+000         
+            
+        Maximum Pos.   Maximum Value 
+         ( 1, 1 )  1.0000
+         ( 1, 1 )  3.0000
+ 
+
+
+ At Simulation Time =  2.00E-03 ( Time Step     2 )
+
+   Core Condition Change Summary
+   -----------------------------
+     Boron     :   not changed
+     Boron     :       0.000
+      Bank   1 :************
+ 
+ Doubling Time & Theta 6.794E+05     0.500 1.00000E-02    0
+ Max.   Xsec  Change  1.00E+00 T
+   itr      r2/r0          r2/b2           l2            linf     psil1*psil10  iin Pos.FLux
+    1   1.6130E-01 F   1.3275E-10 F   2.4912E-11 F   2.5683E-08 F 1.000000E+00    1 T
+    2   4.3609E+00 F   5.7894E-10 F   6.0070E-11 F   1.7252E-07 F 1.000000E+00    1 T
+    3   4.1043E-01 F   2.3761E-10 F   1.9092E-11 F   1.7255E-07 F 1.000000E+00    1 T
+    4   2.1299E+00 F   5.0612E-10 F   4.7352E-11 F   3.0455E-08 F 1.000000E+00    1 T
+   92   7.9729E-01 F   6.7457E-13 F   2.0641E-14 F   9.2686E-13 F 1.000000E+00    1 T
+   93   7.8666E-01 F   6.5932E-13 F   1.9374E-14 F   3.4921E-13 F 1.000000E+00    1 T
+   94   7.7652E-01 F   6.3047E-13 F   1.7755E-14 F   2.2541E-13 F 1.000000E+00    1 T
+   95   7.7668E-01 F   6.2146E-13 F   1.7524E-14 F   2.0467E-14 F 1.000000E+00    1 T
+ 00:03.37   P=  0.999999979577374                                              
+ 
+   Reactivity($):     0.000000
+   Core beta    :       760.00
+   Boron Conc:       0.00
+   Core Power Level: 1.000000E-02
+ 
+ Assembly Power Distribution
+ 
+     #.####   box power
+ 
+            1       2       3
+           1  1.000000000000000E+000  1.000000000000000E+000  1.000000000000000E+000  
+           2  1.000000000000000E+000  9.000000000000000E+000  1.000000000000000E+000
+           3  1.000000000000000E+000  1.000000000000000E+000  1.000000000000000E+000
+            
+        Maximum Pos.   Maximum Value 
+         ( 2, 2 )   8.9376
+ 
+ Axial Power Distribution
+ 
+ Distance(cm)  Power       Plane     Mesh
+ from Bottom               Number    (cm)
+   5000.00     1.000          1   10000.00
+ 
+  Maximum Pos.    Maximum Value 
+       1              1.0000
+ 
+
+  Fq (Pin)   8.9376
+
+
+ Planar Flux at Plane           1
+ 
+            1         2         3        
+           1  1.000000000000000E+000  1.000000000000000E+000  1.000000000000000E+000
+              3.000000000000000E+000  1.000000000000000E+000  3.000000000000000E+000   
+ 
+           2  1.000000000000000E+000  1.000000000000000E+000  1.000000000000000E+000
+              3.000000000000000E+000  3.000000000000000E+000  3.000000000000000E+000
+ 
+           3  1.000000000000000E+000  1.000000000000000E+000  1.000000000000000E+000
+              3.000000000000000E+000  3.000000000000000E+000  6.000000000000000E+000         
+            
+        Maximum Pos.   Maximum Value 
+         ( 1, 1 )  1.0000
+         ( 1, 1 )  3.0000
+  
+ Number of CMFD/Nodal/TH Updates/Inners and Sweeps:      1403        0        0     1403        0
+
+  Time for Init.          0.076
+           CMFD           5.525
+           Nodal          0.000
+           T/H            0.000
+           Xsec           0.036
+           Pin Power      0.000
+                          -----
+           Total          5.561
+
+
+ 00:05.57  Job Finished at 10:56:49.                                                       
