@@ -315,7 +315,7 @@ void Materials::set_velocity (const unsigned int group,
 void Materials::set_lambda_prec (const unsigned int group,
   double lambda)
 {
-  AssertIndexRange(group, lambda_prec.size());
+  AssertIndexRange(group, delayed_decay_constants[0].size());
 //  lambda_prec[group] = lambda;
 
   for (unsigned int mat = 0; mat < n_mats; mat++)
@@ -357,7 +357,7 @@ void Materials::set_default_spectra ()
 void Materials::set_beta_prec (const unsigned int group,
   double beta)
 {
-  AssertIndexRange(group, beta_prec.size());
+  AssertIndexRange(group, delayed_fractions[0].size());
 //  beta_prec[group] = beta;
 //  beta_total = sum_vector(beta_prec);
 

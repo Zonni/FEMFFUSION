@@ -55,7 +55,7 @@ set Boundary_Conditions = 2 2 2 2
 set XSEC_Type           = XML
 
 # Filename where it is stored the material cross section
-set XSECS_Filename      = 3D_Seaborg/seaborg.xsec
+set XSECS_Filename      = 3D_Seaborg/seaborg_p5.xsec
 
 # Set the number of neutron energy groups defined in the calculation.
 set Energy_Groups       = 8
@@ -76,7 +76,7 @@ set Initial_Time_Preconditioner = gs-cgilu
 # Final time of the computation
 set Time_End            = 1.0
 
-set Out_Interval        = 1
+set Out_Interval        = 5
 
 # INSTABILITY
 # Time Scheme used to solve the time equation Distributed or Modal_Kinetics

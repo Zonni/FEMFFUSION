@@ -19,6 +19,7 @@
 #include "noise_full_spn.h"
 #include "time_computation.h"
 #include "time_computation_spn.h"
+#include "rom_kinetics.h"
 
 /**
  * Print the FEMFFUSION logo.
@@ -267,6 +268,11 @@ void prm_declare_entries (ParameterHandler &prm)
   prm.declare_entry("Read_XS_Filename", " ",
     Patterns::FileName(Patterns::FileName::FileType::input),
     "Filename where the xsec of the read_xs_file perturbation.");
+
+  // ROM variables
+  prm.declare_entry("ROM_Transient", "false", Patterns::Bool(),
+      "# True/false - Activate ROM Calculation");
+
 }
 
 /**
@@ -381,6 +387,9 @@ int main (int argc,
       // Get Noise Calculation
       bool noise = prm.get_bool("Noise_Calculation");
 
+      // Get ROM Calculation
+      bool rom_transient = prm.get_bool("ROM_Transient");
+
       AssertRelease(dim >= 0 and dim <= 3,
         "Spatial dimension not valid,  dim = " + num_to_str(dim));
 
@@ -402,6 +411,8 @@ int main (int argc,
               TimeNeutronDiffusion<1, 1> time_pro(prm, static_prob, verbose, silent);
             else if (noise)
               NoiseDiffusion<1, 1> noise_prob(prm, static_prob, verbose, silent);
+            else if (rom_transient)
+              ROMKinetics<1, 1> rom_pro(prm, static_prob, verbose, silent);
           }
           else if (fe_degree == 2)
           {
@@ -411,6 +422,8 @@ int main (int argc,
               TimeNeutronDiffusion<1, 2> time_pro(prm, static_prob, verbose, silent);
             else if (noise)
               NoiseDiffusion<1, 2> noise_prob(prm, static_prob, verbose, silent);
+            else if (rom_transient)
+			  ROMKinetics<1, 2> rom_pro(prm, static_prob, verbose, silent);
           }
           else if (fe_degree == 3)
           {
@@ -419,6 +432,8 @@ int main (int argc,
               TimeNeutronDiffusion<1, 3> time_pro(prm, static_prob, verbose, silent);
             else if (noise)
               NoiseDiffusion<1, 3> noise_prob(prm, static_prob, verbose, silent);
+            else if (rom_transient)
+			  ROMKinetics<1, 3> rom_pro(prm, static_prob, verbose, silent);
 
           }
           else if (fe_degree == 4)
@@ -429,6 +444,8 @@ int main (int argc,
               TimeNeutronDiffusion<1, 4> time_pro(prm, static_prob, verbose, silent);
             else if (noise)
               NoiseDiffusion<1, 4> noise_prob(prm, static_prob, verbose, silent);
+            else if (rom_transient)
+			  ROMKinetics<1, 4> rom_pro(prm, static_prob, verbose, silent);
           }
           else if (fe_degree == 5)
           {
@@ -438,6 +455,8 @@ int main (int argc,
               TimeNeutronDiffusion<1, 5> time_pro(prm, static_prob, verbose, silent);
             else if (noise)
               NoiseDiffusion<1, 5> noise_prob(prm, static_prob, verbose, silent);
+            else if (rom_transient)
+			  ROMKinetics<1, 5> rom_pro(prm, static_prob, verbose, silent);
           }
         }
         else if (dim == 2)
@@ -449,6 +468,8 @@ int main (int argc,
               TimeNeutronDiffusion<2, 1> time_pro(prm, static_prob, verbose, silent);
             else if (noise)
               NoiseDiffusion<2, 1> noise_prob(prm, static_prob, verbose, silent);
+            else if (rom_transient)
+			  ROMKinetics<2, 1> rom_pro(prm, static_prob, verbose, silent);
           }
           else if (fe_degree == 2)
           {
@@ -457,6 +478,8 @@ int main (int argc,
               TimeNeutronDiffusion<2, 2> time_pro(prm, static_prob, verbose, silent);
             else if (noise)
               NoiseDiffusion<2, 2> noise_prob(prm, static_prob, verbose, silent);
+            else if (rom_transient)
+			  ROMKinetics<2, 2> rom_pro(prm, static_prob, verbose, silent);
           }
           else if (fe_degree == 3)
           {
@@ -465,6 +488,8 @@ int main (int argc,
               TimeNeutronDiffusion<2, 3> time_pro(prm, static_prob, verbose, silent);
             else if (noise)
               NoiseDiffusion<2, 3> noise_prob(prm, static_prob, verbose, silent);
+            else if (rom_transient)
+			  ROMKinetics<2, 3> rom_pro(prm, static_prob, verbose, silent);
           }
           else if (fe_degree == 4)
           {
@@ -473,6 +498,8 @@ int main (int argc,
               TimeNeutronDiffusion<2, 4> time_pro(prm, static_prob, verbose, silent);
             else if (noise)
               NoiseDiffusion<2, 4> noise_prob(prm, static_prob, verbose, silent);
+            else if (rom_transient)
+			  ROMKinetics<2, 4> rom_pro(prm, static_prob, verbose, silent);
           }
           else if (fe_degree == 5)
           {
@@ -481,6 +508,8 @@ int main (int argc,
               TimeNeutronDiffusion<2, 5> time_pro(prm, static_prob, verbose, silent);
             else if (noise)
               NoiseDiffusion<2, 5> noise_prob(prm, static_prob, verbose, silent);
+            else if (rom_transient)
+			  ROMKinetics<2, 5> rom_pro(prm, static_prob, verbose, silent);
           }
         }
         else if (dim == 3)
@@ -492,6 +521,8 @@ int main (int argc,
               TimeNeutronDiffusion<3, 1> time_pro(prm, static_prob, verbose, silent);
             else if (noise)
               NoiseDiffusion<3, 1> noise_prob(prm, static_prob, verbose, silent);
+            else if (rom_transient)
+			  ROMKinetics<3, 1> rom_pro(prm, static_prob, verbose, silent);
           }
           else if (fe_degree == 2)
           {
@@ -501,6 +532,8 @@ int main (int argc,
               TimeNeutronDiffusion<3, 2> time_pro(prm, static_prob, verbose, silent);
             else if (noise)
               NoiseDiffusion<3, 2> noise_prob(prm, static_prob, verbose, silent);
+            else if (rom_transient)
+			  ROMKinetics<3, 2> rom_pro(prm, static_prob, verbose, silent);
           }
           else if (fe_degree == 3)
           {
@@ -509,6 +542,8 @@ int main (int argc,
               TimeNeutronDiffusion<3, 3> time_pro(prm, static_prob, verbose, silent);
             else if (noise)
               NoiseDiffusion<3, 3> noise_prob(prm, static_prob, verbose, silent);
+            else if (rom_transient)
+			  ROMKinetics<3, 3> rom_pro(prm, static_prob, verbose, silent);
           }
           else if (fe_degree == 4)
           {
@@ -517,7 +552,8 @@ int main (int argc,
               TimeNeutronDiffusion<3, 4> time_pro(prm, static_prob, verbose, silent);
             else if (noise)
               NoiseDiffusion<3, 4> noise_prob(prm, static_prob, verbose, silent);
-
+            else if (rom_transient)
+			  ROMKinetics<3, 4> rom_pro(prm, static_prob, verbose, silent);
           }
           else if (fe_degree == 5)
           {
@@ -526,6 +562,8 @@ int main (int argc,
               TimeNeutronDiffusion<3, 5> time_pro(prm, static_prob, verbose, silent);
             else if (noise)
               NoiseDiffusion<3, 5> noise_prob(prm, static_prob, verbose, silent);
+            else if (rom_transient)
+			  ROMKinetics<3, 5> rom_pro(prm, static_prob, verbose, silent);
           }
         }
       }

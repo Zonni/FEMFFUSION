@@ -16,7 +16,7 @@ set Print_Grid_Flag     = false
 set Output_Flag         = true
 
 # Filename where will be written the output
-set Output_Filename     = 3D_Seaborg/periferal_slow/seaborg_SP1_20p.out
+set Output_Filename     = 3D_Seaborg/periferal_slow/seaborg_SP1.out
 
 # Number of Refinements per cell in the .vtk output
 set Out_Refinements     = 0
@@ -35,14 +35,14 @@ set FE_Degree           = 1
 set Geometry_Type       = Unstructured
 
 # Number of cells per dimension
-set Mesh_Size           = 382 1 20 
+set Mesh_Size           = 382 1 10 
 
 # Pitch of the cells in x dimension - FAKE
 set Cell_Pitch_x        = 382* 1.0
 # Pitch of the cells in y dimension - FAKE
 set Cell_Pitch_y        = 1* 1.0
 # Pitch of the cells in z dimension
-set Cell_Pitch_z        = 20* 10.0
+set Cell_Pitch_z        = 10* 20.0
 
 
 # ".msh File where it is the 2d mesh
@@ -55,7 +55,7 @@ set Boundary_Conditions = 2 2 2 2
 set XSEC_Type           = XML
 
 # Filename where it is stored the material cross section
-set XSECS_Filename      = 3D_Seaborg/periferal_slow/seaborg_periferal_slow_p20.xsec
+set XSECS_Filename      = 3D_Seaborg/periferal_slow/seaborg_periferal_slow_p10.xsec
 
 # Set the number of neutron energy groups defined in the calculation.
 set Energy_Groups       = 8

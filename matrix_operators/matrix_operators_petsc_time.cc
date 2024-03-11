@@ -1219,6 +1219,11 @@ template <int dim, int n_fe_degree>
     return memory;
   }
 
+
+
+
+
+
 // ----------- Explicit Instantations ----------- //
 
 template class SystemMatrixTime<1, 1> ;
@@ -1274,3 +1279,5 @@ template class MassMatrixTime<3, 2> ;
 template class MassMatrixTime<3, 3> ;
 template class MassMatrixTime<3, 4> ;
 template class MassMatrixTime<3, 5> ;
+
+

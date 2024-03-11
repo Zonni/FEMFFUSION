@@ -42,9 +42,9 @@ set Out_Refinements     = 0
 
 # EIGENVALUE PROBLEM 
 # Number of eigenvalues
-set N_Eigenvalues        = 10
-set Solver_Type           = gd
-set P_Init                = false
+set N_Eigenvalues       = 10
+set Solver_Type         = gd
+set P_Init              = false
 
 #
 # TIME PARAMETERS
@@ -61,7 +61,7 @@ set Time_End            = 1.0
 set Frequency           = 1.0 
 
 # Amplitude instability in %
-set Amplitude           = 0.1
+set Amplitude           = 10
 
 # Cross Section where the Sigma_f1/Sigma_a1...
 set XS_Name             = Sigma_f1
@@ -75,4 +75,4 @@ set Type_Perturbation   = Flux_Distributed
 set XSECS_Filename      = test/1D_hom_5cells_mov_prec/1D_5cells.xsec
 
 # Filename where will be written the output
-set Output_Filename     = test/1D_hom_5cells_mov_prec/1D_5cells_f1.out
+set Output_Filename     = test/1D_hom_5cells_mov_prec/1D_5cells_f1_rom.out

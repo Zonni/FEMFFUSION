@@ -351,6 +351,53 @@ template <int dim, int n_fe_degree>
     std::vector<std::vector<Vector<double> > > coeffs;
   };
 
+/**
+ *
+ */
+template <int dim, int n_fe_degree>
+  class FisionDelayedMatrix : public FisionMatrixBase<dim, n_fe_degree>
+  {
+    public:
+
+    /**
+     * @brief Constructor associate the object to a DoFHandler and a AffineConstraints<double>.
+     * It stores references to this objects
+     */
+	FisionDelayedMatrix (
+      const MPI_Comm& comm,
+      const DoFHandler<dim> & dof_handler,
+      const AffineConstraints<double> & constraints);
+
+    /**
+     * @brief Allocate and assemble the matrix associated to this materials and fission
+     * cross sections.
+     */
+    void reinit (const Materials & materials,
+      const MatrixFreeType & matrix_free_type = non_diagonal,
+      bool listen_to_material_id = false);
+
+    /**
+     * @brief
+     */
+    std::size_t memory_consumption () const;
+
+    void clear();
+
+    dealii::MatrixFree<dim, double> matfree_data;
+
+    private:
+
+    /**
+     * @brief
+     */
+    void assemble_full_matrices (const Materials &materials);
+
+    const DoFHandler<dim> &dof_handler;
+    const AffineConstraints<double> &constraints;
+
+    std::vector<std::vector<Vector<double> > > coeffs;
+  };
+
 // -------------------------------------------------------------------------------------------------------//
 // -------------------------------------------------------------------------------------------------------//
 // -------------------------------------------------------------------------------------------------------//
@@ -503,5 +550,50 @@ template <int dim, int n_fe_degree>
 
     std::vector<std::vector<Vector<double> > > coeffs;
   };
+
+/**
+ *
+ */
+template<int dim, int n_fe_degree>
+class SpectraBetaFission: public FisionMatrixBase<dim, n_fe_degree> {
+public:
+
+	/**
+	 * @brief Constructor associate the object to a DoFHandler and a AffineConstraints<double>.
+	 * It stores references to this objects
+	 */
+	SpectraBetaFission(const MPI_Comm &comm, const DoFHandler<dim> &dof_handler,
+			const AffineConstraints<double> &constraints);
+
+	/**
+	 * @brief Allocate and assemble the matrix associated to this materials and fission
+	 * cross sections.
+	 */
+	void reinit(const Materials &materials,
+			const MatrixFreeType &matrix_free_type = non_diagonal, const unsigned int _type_precursor=0,
+			bool listen_to_material_id = false);
+
+	void clear();
+	/**
+	 * @brief
+	 */
+	std::size_t memory_consumption() const;
+
+	dealii::MatrixFree<dim, double> matfree_data;
+
+private:
+
+	/**
+	 * @brief
+	 */
+	void assemble_full_matrices(const Materials &materials);
+
+	const DoFHandler<dim> &dof_handler;
+	const AffineConstraints<double> &constraints;
+
+	std::vector<std::vector<Vector<double> > > coeffs;
+	unsigned int type_precursor;
+
+};
 
 #endif /* EPS_MATFREE_SOLVER_H_ */

@@ -127,7 +127,6 @@ template <int dim, int n_fe_degree>
 
     // Solver parameters
     init_delta_t = prm.get_double("Time_Delta");
-    tol_ksp = static_problem.tol_ksp;
 
     step = 0;
     delta_t.push_back(init_delta_t);
@@ -806,7 +805,7 @@ template <int dim, int n_fe_degree>
   {
     ksp_blocks.resize(n_groups * n_moments);
     std::vector<PC> pc_blocks(n_groups * n_moments);
-    double tol_ksp_block = 1e-8;
+    double tol_ksp_block = 1e-6;
 
     // Set up the GS Preconditioner
     for (unsigned int i = 0; i < n_groups * n_moments; ++i)
@@ -970,7 +969,7 @@ template <int dim, int n_fe_degree>
       // Setup the solver
       KSPCreate(comm, &ksp);
       KSPGetPC(ksp, &pc);
-      KSPSetTolerances(ksp, tol_ksp, tol_ksp, PETSC_DEFAULT, 1000);
+      KSPSetTolerances(ksp, tol_ksp, tol_ksp, PETSC_DEFAULT, 200);
       KSPSetType(ksp, KSPFGMRES);
       PCSetType(pc, PCSHELL);
       PCShellSetApply(pc, apply_preconditioner_spn<dim, n_fe_degree>);

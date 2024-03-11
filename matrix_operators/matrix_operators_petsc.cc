@@ -1743,6 +1743,212 @@ template <int dim, int n_fe_degree>
   }
 
 //-------------------------------------------------------------------------------------------//
+//  ------------------- FissionMatrix    ------------------
+//-------------------------------------------------------------------------------------------//
+/**
+ * @brief Constructor of FissionMatrix. Just copy references to DoFHandler and AffineConstraints<double>
+ */
+template <int dim, int n_fe_degree>
+  FisionDelayedMatrix<dim, n_fe_degree>::FisionDelayedMatrix (
+    const MPI_Comm &comm,
+    const DoFHandler<dim> &dof_handler,
+    const AffineConstraints<double> &constraints) :
+      FisionMatrixBase<dim, n_fe_degree>(comm, dof_handler, constraints),
+      dof_handler(dof_handler),
+      constraints(constraints)
+  {
+  }
+
+/**
+ *
+ */
+template <int dim, int n_fe_degree>
+  void FisionDelayedMatrix<dim, n_fe_degree>::reinit (
+    const Materials &materials,
+    const MatrixFreeType &_matrixfree_type,
+    bool listen_to_material_id)
+  {
+    const unsigned int n_groups = materials.get_n_groups();
+    this->n_blocks = n_groups;
+    this->matrixfree_type = _matrixfree_type;
+    this->n_dofs_block = dof_handler.n_dofs();
+
+    if (this->matrixfree_type == non_diagonal or this->matrixfree_type
+                                                 == full_matrixfree)
+    {
+      const unsigned int n_mats = materials.get_n_mats();
+      this->mass_mf_blocks.resize(this->n_blocks,
+        std::vector<MassOperator<dim, n_fe_degree, double>*>(this->n_blocks));
+      coeffs.resize(n_groups,
+        std::vector<Vector<double> >(n_groups));
+      // Fill coeffs
+      for (unsigned int from_g = 0; from_g < n_groups; from_g++)
+        for (unsigned int to_g = 0; to_g < n_groups; to_g++)
+        {
+          coeffs[to_g][from_g].reinit(n_mats);
+          for (unsigned int mat = 0; mat < n_mats; mat++)
+          {
+					coeffs[to_g][from_g][mat] = materials.get_prompt_spectra(
+							mat, to_g) * materials.get_nu_sigma_f(from_g, mat)
+							* (1.0 - materials.get_delayed_fraction_sum(mat));
+          }
+        }
+
+      //  --------- Matrix-Free Blocks  ---------
+      //  Initialize Matrix free data
+      typename dealii::MatrixFree<dim, double>::AdditionalData additional_data;
+      additional_data.tasks_parallel_scheme =
+          dealii::MatrixFree<dim, double>::AdditionalData::none;
+      additional_data.mapping_update_flags = (update_values | update_JxW_values);
+      matfree_data.reinit(dof_handler, constraints, QGauss<1>(n_fe_degree + 1),
+        additional_data);
+
+      for (unsigned int gi = 0; gi < n_groups; gi++)
+        for (unsigned int gj = 0; gj < n_groups; gj++)
+        {
+          this->mass_mf_blocks[gi][gj] =
+                                         new MassOperator<dim, n_fe_degree, double>(
+                                           matfree_data);
+          this->mass_mf_blocks[gi][gj]->reinit(constraints,
+            materials.get_materials_vector(),
+            coeffs[gi][gj],
+            listen_to_material_id);
+        }
+    }
+    else if (this->matrixfree_type == full_allocated)
+    {
+      // Resize matrix_blocks
+      this->matrix_blocks.resize(n_groups,
+        std::vector<PETScWrappers::MPI::SparseMatrix*>(n_groups));
+
+      DoFTools::extract_locally_relevant_dofs(dof_handler, this->locally_relevant_dofs);
+      this->locally_owned_dofs = dof_handler.locally_owned_dofs();
+      DynamicSparsityPattern dsp(this->locally_relevant_dofs);
+
+      DoFTools::make_sparsity_pattern(dof_handler, dsp, constraints, true);
+      this->local_dofs_per_process = dof_handler.n_locally_owned_dofs_per_processor();
+
+      SparsityTools::distribute_sparsity_pattern(dsp,
+        this->local_dofs_per_process,
+        this->comm,
+        this->locally_relevant_dofs);
+      this->sp.copy_from(dsp);
+
+      for (unsigned int g1 = 0; g1 < n_groups; g1++)
+        for (unsigned int g2 = 0; g2 < n_groups; g2++)
+        {
+          this->matrix_blocks[g1][g2] = new PETScWrappers::MPI::SparseMatrix;
+          this->matrix_blocks[g1][g2]->reinit(this->locally_owned_dofs,
+            this->locally_owned_dofs,
+            this->sp, this->comm);
+        }
+      assemble_full_matrices(materials);
+    }
+    else
+      AssertRelease(false, "Invalid matrixfree_type: " + this->matrixfree_type);
+  }
+
+/**
+ *
+ */
+template <int dim, int n_fe_degree>
+  void FisionDelayedMatrix<dim, n_fe_degree>::assemble_full_matrices (
+    const Materials &materials)
+  {
+    double val;
+    double coeffs_matrix;
+    unsigned int mat;
+    std::vector<types::global_dof_index> local_dof_indices(
+      dof_handler.get_fe().dofs_per_cell);
+    QGauss<dim> quadrature_formula(n_fe_degree + 1);
+
+    FEValues<dim> fe_values(dof_handler.get_fe(), quadrature_formula,
+      update_values | update_quadrature_points | update_JxW_values);
+
+    const unsigned int dofs_per_cell = dof_handler.get_fe().dofs_per_cell;
+    const unsigned int n_q_points = quadrature_formula.size();
+
+    FullMatrix<double> cell_val(dofs_per_cell, dofs_per_cell);
+    FullMatrix<double> cell_M(dofs_per_cell, dofs_per_cell);
+
+    typename DoFHandler<dim>::active_cell_iterator cell =
+                                                          dof_handler.begin_active(),
+        endc = dof_handler.end();
+    for (; cell != endc; ++cell)
+      if (cell->is_locally_owned())
+      {
+        fe_values.reinit(cell);
+        mat = materials.get_material_id<dim>(cell);
+
+        cell_val = 0;
+        cell->get_dof_indices(local_dof_indices);
+        for (unsigned int i = 0; i < dofs_per_cell; ++i)
+          for (unsigned int j = 0; j < dofs_per_cell; ++j)
+            for (unsigned int q_p = 0; q_p < n_q_points; ++q_p)
+            {
+              val = fe_values.shape_value(i, q_p)
+                    * fe_values.shape_value(j, q_p)
+                    * fe_values.JxW(q_p);
+
+              cell_val(i, j) += val;
+            }
+
+        for (unsigned int gi = 0; gi < materials.get_n_groups(); ++gi)
+          for (unsigned int gj = 0; gj < materials.get_n_groups(); ++gj)
+          {
+            // Get the material coefficients:
+        	coeffs_matrix= materials.get_prompt_spectra(
+        	  							mat, gi) * materials.get_nu_sigma_f(gj, mat)
+        	  							* (1.0 - materials.get_delayed_fraction_sum(mat));
+            cell_M.equ(coeffs_matrix, cell_val);
+            constraints.distribute_local_to_global(cell_M, local_dof_indices,
+              *(this->matrix_blocks[gi][gj]));
+          }
+      }
+
+    for (unsigned int gi = 0; gi < materials.get_n_groups(); ++gi)
+      for (unsigned int gj = 0; gj < materials.get_n_groups(); ++gj)
+        this->matrix_blocks[gi][gj]->compress(VectorOperation::add);
+  }
+
+/**
+ *
+ */
+template <int dim, int n_fe_degree>
+  std::size_t FisionDelayedMatrix<dim, n_fe_degree>::memory_consumption () const
+  {
+    std::size_t memory = 0;
+
+    if (this->matrixfree_type == non_diagonal
+        or this->matrixfree_type == full_matrixfree)
+      memory = matfree_data.memory_consumption();
+    else
+    {
+      memory += this->sp.memory_consumption();
+      for (unsigned int i = 0; i < this->n_blocks; ++i)
+        for (unsigned int j = 0; j < this->n_blocks; ++j)
+          memory += this->matrix_blocks[i][j]->memory_consumption();
+    }
+
+    return memory;
+  }
+
+/**
+ *
+ */
+template <int dim, int n_fe_degree>
+  void FisionDelayedMatrix<dim, n_fe_degree>::clear ()
+  {
+
+    matfree_data.clear();
+    coeffs.clear();
+
+    this->FisionMatrixBase<dim, n_fe_degree>::clear();
+
+    return;
+  }
+
+//-------------------------------------------------------------------------------------------//
 //  ------------------- GammaMatrix    ------------------
 //-------------------------------------------------------------------------------------------//
 /**
@@ -2367,6 +2573,215 @@ template <int dim, int n_fe_degree>
     return;
   }
 
+
+//-------------------------------------------------------------------------------------------//
+//  ------------------- SpectraBetaFission    ------------------
+//-------------------------------------------------------------------------------------------//
+/**
+ * @brief Constructor of FissionMatrix. Just copy references to DoFHandler and AffineConstraints.
+ */
+template <int dim, int n_fe_degree>
+SpectraBetaFission<dim, n_fe_degree>::SpectraBetaFission (const MPI_Comm &comm,
+    const DoFHandler<dim> &dof_handler,
+    const AffineConstraints<double> &constraints) :
+      FisionMatrixBase<dim, n_fe_degree>(comm, dof_handler, constraints),
+      dof_handler(dof_handler),
+      constraints(constraints)
+  {
+	type_precursor=0;
+  }
+/**
+ *
+ */
+template <int dim, int n_fe_degree>
+  void SpectraBetaFission<dim, n_fe_degree>::reinit (const Materials &materials,
+    const MatrixFreeType &_matrixfree_type, const unsigned int _type_precursor,
+    bool listen_to_material_id)
+  {
+	type_precursor=_type_precursor;
+    const unsigned int n_groups = materials.get_n_groups();
+    this->n_blocks = n_groups;
+    this->matrixfree_type = _matrixfree_type;
+    this->n_dofs_block = dof_handler.n_dofs();
+
+    if (this->matrixfree_type == non_diagonal
+        or this->matrixfree_type == full_matrixfree)
+    {
+      const unsigned int n_mats = materials.get_n_mats();
+      this->mass_mf_blocks.resize(this->n_blocks,
+        std::vector<MassOperator<dim, n_fe_degree, double>*>(
+          this->n_blocks));
+      coeffs.resize(n_groups, std::vector<Vector<double> >(n_groups));
+      // Fill coeffs
+      for (unsigned int from_g = 0; from_g < n_groups; from_g++)
+        for (unsigned int to_g = 0; to_g < n_groups; to_g++)
+        {
+          coeffs[to_g][from_g].reinit(n_mats);
+          for (unsigned int mat = 0; mat < n_mats; mat++)
+          {
+		  coeffs[to_g][from_g][mat] = materials.get_delayed_spectra (
+		      mat, type_precursor, to_g)
+		      * materials.get_delayed_fraction (mat, type_precursor)
+		      * materials.get_nu_sigma_f(from_g, mat);
+          }
+        }
+
+      //  --------- Matrix-Free Blocks  ---------
+      //  Initialize Matrix free data
+      typename dealii::MatrixFree<dim, double>::AdditionalData additional_data;
+      additional_data.tasks_parallel_scheme =
+          dealii::MatrixFree<dim, double>::AdditionalData::none;
+      additional_data.mapping_update_flags = (update_values
+                                              | update_JxW_values);
+      matfree_data.reinit(dof_handler, constraints,
+        QGauss<1>(n_fe_degree + 1), additional_data);
+
+      for (unsigned int gi = 0; gi < n_groups; gi++)
+        for (unsigned int gj = 0; gj < n_groups; gj++)
+        {
+          this->mass_mf_blocks[gi][gj] = new MassOperator<dim,
+              n_fe_degree, double>(matfree_data);
+          this->mass_mf_blocks[gi][gj]->reinit(constraints,
+            materials.get_materials_vector(), coeffs[gi][gj],
+            listen_to_material_id);
+        }
+    }
+    else if (this->matrixfree_type == full_allocated)
+    {
+      // Resize matrix_blocks
+      this->matrix_blocks.resize(n_groups,
+        std::vector<PETScWrappers::MPI::SparseMatrix*>(n_groups));
+
+      DoFTools::extract_locally_relevant_dofs(dof_handler,
+        this->locally_relevant_dofs);
+      this->locally_owned_dofs = dof_handler.locally_owned_dofs();
+      DynamicSparsityPattern dsp(this->locally_relevant_dofs);
+
+      DoFTools::make_sparsity_pattern(dof_handler, dsp, constraints, true);
+      this->local_dofs_per_process =
+                                     dof_handler.n_locally_owned_dofs_per_processor();
+
+      SparsityTools::distribute_sparsity_pattern(dsp,
+        this->local_dofs_per_process, this->comm,
+        this->locally_relevant_dofs);
+      this->sp.copy_from(dsp);
+
+      for (unsigned int g1 = 0; g1 < n_groups; g1++)
+        for (unsigned int g2 = 0; g2 < n_groups; g2++)
+        {
+          this->matrix_blocks[g1][g2] =
+                                        new PETScWrappers::MPI::SparseMatrix;
+          this->matrix_blocks[g1][g2]->reinit(this->locally_owned_dofs,
+            this->locally_owned_dofs, this->sp, this->comm);
+        }
+      assemble_full_matrices(materials);
+    }
+    else
+      AssertRelease(false,
+        "Invalid matrixfree_type: " + this->matrixfree_type);
+  }
+
+/**
+ *
+ */
+template <int dim, int n_fe_degree>
+  void SpectraBetaFission<dim, n_fe_degree>::assemble_full_matrices (
+    const Materials &materials)
+  {
+    double val;
+    double xsec_value;
+    unsigned int mat;
+    std::vector<types::global_dof_index> local_dof_indices(
+      dof_handler.get_fe().dofs_per_cell);
+    QGauss<dim> quadrature_formula(n_fe_degree + 1);
+
+    FEValues<dim> fe_values(dof_handler.get_fe(), quadrature_formula,
+      update_values | update_quadrature_points | update_JxW_values);
+
+    const unsigned int dofs_per_cell = dof_handler.get_fe().dofs_per_cell;
+    const unsigned int n_q_points = quadrature_formula.size();
+
+    FullMatrix<double> cell_val(dofs_per_cell, dofs_per_cell);
+    FullMatrix<double> cell_M(dofs_per_cell, dofs_per_cell);
+
+    typename DoFHandler<dim>::active_cell_iterator cell =
+                                                          dof_handler.begin_active(),
+        endc = dof_handler.end();
+    for (; cell != endc; ++cell)
+      if (cell->is_locally_owned())
+      {
+        fe_values.reinit(cell);
+        mat = materials.get_material_id<dim>(cell);
+
+        cell_val = 0;
+        cell->get_dof_indices(local_dof_indices);
+        for (unsigned int i = 0; i < dofs_per_cell; ++i)
+          for (unsigned int j = 0; j < dofs_per_cell; ++j)
+            for (unsigned int q_p = 0; q_p < n_q_points; ++q_p)
+            {
+              val = fe_values.shape_value(i, q_p)
+                    * fe_values.shape_value(j, q_p)
+                    * fe_values.JxW(q_p);
+
+              cell_val(i, j) += val;
+            }
+
+        for (unsigned int gi = 0; gi < materials.get_n_groups(); ++gi)
+          for (unsigned int gj = 0; gj < materials.get_n_groups(); ++gj)
+          {
+            // Get the material coefficients:
+              xsec_value = materials.get_delayed_spectra (
+		      mat, type_precursor, gi)
+		      * materials.get_delayed_fraction (mat, type_precursor)
+		      * materials.get_nu_sigma_f(gj, mat);
+            cell_M.equ(xsec_value, cell_val);
+            constraints.distribute_local_to_global(cell_M,
+              local_dof_indices, *(this->matrix_blocks[gi][gj]));
+          }
+      }
+
+    for (unsigned int gi = 0; gi < materials.get_n_groups(); ++gi)
+      for (unsigned int gj = 0; gj < materials.get_n_groups(); ++gj)
+        this->matrix_blocks[gi][gj]->compress(VectorOperation::add);
+  }
+
+/**
+ *
+ */
+template <int dim, int n_fe_degree>
+  void SpectraBetaFission<dim, n_fe_degree>::clear ()
+  {
+
+    matfree_data.clear();
+    coeffs.clear();
+
+    this->FisionMatrixBase<dim, n_fe_degree>::clear();
+
+    return;
+  }
+
+/**
+ *
+ */
+template <int dim, int n_fe_degree>
+  std::size_t SpectraBetaFission<dim, n_fe_degree>::memory_consumption () const
+  {
+    std::size_t memory = 0;
+
+    if (this->matrixfree_type == non_diagonal
+        or this->matrixfree_type == full_matrixfree)
+      memory = matfree_data.memory_consumption();
+    else
+    {
+      memory += this->sp.memory_consumption();
+      for (unsigned int i = 0; i < this->n_blocks; ++i)
+        for (unsigned int j = 0; j < this->n_blocks; ++j)
+          memory += this->matrix_blocks[i][j]->memory_consumption();
+    }
+
+    return memory;
+  }
+
 // ----------- Explicit Instantations ----------- //
 
 template class TransportMatrix<1, 1> ;
@@ -2441,6 +2856,24 @@ template class FisionMatrix<3, 3> ;
 template class FisionMatrix<3, 4> ;
 template class FisionMatrix<3, 5> ;
 
+template class FisionDelayedMatrix<1, 1> ;
+template class FisionDelayedMatrix<1, 2> ;
+template class FisionDelayedMatrix<1, 3> ;
+template class FisionDelayedMatrix<1, 4> ;
+template class FisionDelayedMatrix<1, 5> ;
+
+template class FisionDelayedMatrix<2, 1> ;
+template class FisionDelayedMatrix<2, 2> ;
+template class FisionDelayedMatrix<2, 3> ;
+template class FisionDelayedMatrix<2, 4> ;
+template class FisionDelayedMatrix<2, 5> ;
+
+template class FisionDelayedMatrix<3, 1> ;
+template class FisionDelayedMatrix<3, 2> ;
+template class FisionDelayedMatrix<3, 3> ;
+template class FisionDelayedMatrix<3, 4> ;
+template class FisionDelayedMatrix<3, 5> ;
+
 template class GammaMatrix<1, 1> ;
 template class GammaMatrix<1, 2> ;
 template class GammaMatrix<1, 3> ;
@@ -2494,3 +2927,21 @@ template class VelocityMatrix<3, 2> ;
 template class VelocityMatrix<3, 3> ;
 template class VelocityMatrix<3, 4> ;
 template class VelocityMatrix<3, 5> ;
+
+template class SpectraBetaFission<1, 1> ;
+template class SpectraBetaFission<1, 2> ;
+template class SpectraBetaFission<1, 3> ;
+template class SpectraBetaFission<1, 4> ;
+template class SpectraBetaFission<1, 5> ;
+
+template class SpectraBetaFission<2, 1> ;
+template class SpectraBetaFission<2, 2> ;
+template class SpectraBetaFission<2, 3> ;
+template class SpectraBetaFission<2, 4> ;
+template class SpectraBetaFission<2, 5> ;
+
+template class SpectraBetaFission<3, 1> ;
+template class SpectraBetaFission<3, 2> ;
+template class SpectraBetaFission<3, 3> ;
+template class SpectraBetaFission<3, 4> ;
+template class SpectraBetaFission<3, 5> ;
