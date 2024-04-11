@@ -77,5 +77,10 @@ void test_round ();
  */
 void run_tests_utils ();
 
+/**
+ * @brief run_test_static_rom
+ */
+void run_test_static_rom (const std::string &input_file, unsigned int n_tests);
+
 #endif
 

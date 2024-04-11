@@ -78,7 +78,8 @@ template <int dim, int n_fe_degree>
 	ROMKinetics (ParameterHandler &prm,
       StaticDiffusion<dim, n_fe_degree> &static_problem,
       const bool verbose,
-      const bool silent);
+      const bool silent,
+      const bool run=true);
 
     void run ();
 

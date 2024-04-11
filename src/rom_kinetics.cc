@@ -84,7 +84,8 @@ template <int dim, int n_fe_degree>
     ParameterHandler &prm,
     StaticDiffusion<dim, n_fe_degree> &static_problem,
     const bool verbose,
-    const bool silent) :
+    const bool silent,
+    const bool run) :
       comm(MPI_COMM_WORLD),
       n_mpi_processes(
         Utilities::MPI::n_mpi_processes(comm)),
@@ -169,13 +170,8 @@ template <int dim, int n_fe_degree>
 
     get_snapshots(static_problem);
 
-    dim_rom=snapshots.size(); //TODO
-
     get_parameters_from_command_line();
 
-    snap_basis.resize(dim_rom);
-    for (unsigned int dr=0; dr<dim_rom; dr++)
-    snap_basis[dr].reinit(local_dofs_vector, comm);
 
     if (prec_flag == false)
     {
@@ -191,6 +187,7 @@ template <int dim, int n_fe_degree>
     verbose_cout << "Initialize the perturbation class" << std::endl;
     perturbation.init_transient();
 
+    if (run)
     this->run();
   }
 
@@ -286,7 +283,7 @@ template<int dim, int n_fe_degree>
     double step_bar = (perturbation.bars_top_pos - bars_bottom_pos)
 	/ (n_snap - 1);
 
-    unsigned int bar_material = perturbation.bar_materials[bar_bank];
+    unsigned int bar_material = perturbation.bar_materials[bar_bank-1];
 
     for (unsigned int ns = 0; ns < n_snap; ns++)
       {
@@ -300,7 +297,7 @@ template<int dim, int n_fe_degree>
 	    if (perturbation.bars_position[plant_pos] == bar_bank){
 
 	      perturbation.move_bar_volume_homogenized (plant_pos, bar_pos_z,
-							bar_material, bar_bank);
+							bar_material, bar_bank-1);
 	    }
 
 	  }
@@ -413,6 +410,11 @@ template <int dim, int n_fe_degree>
   void ROMKinetics<dim, n_fe_degree>::compute_pod_basis ()
   {
 
+	dim_rom=snapshots.size(); //TODO
+
+	snap_basis.resize(dim_rom);
+	for (unsigned int dr=0; dr<dim_rom; dr++)
+	snap_basis[dr].reinit(local_dofs_vector, comm);
 
 	// Create the matrix with the snapshot to apply the SVD
 	Mat Mat_snap;
@@ -449,7 +451,7 @@ template <int dim, int n_fe_degree>
 	for (i_sv=0; i_sv<static_cast<int>(dim_rom); i_sv++){
 	SVDGetSingularTriplet(svd,i_sv,&(singular_values[i_sv]),u,NULL);
 	copy_to_BlockVector(snap_basis[i_sv], u);
-   	std::cout<<"Singular value "<<i_sv<<": "<<singular_values[i_sv]<<std::endl;
+   	cout<<"Singular value "<<i_sv<<": "<<singular_values[i_sv]<<std::endl;
 	}
 
 	MatDestroy(&Mat_snap);
@@ -461,7 +463,7 @@ template <int dim, int n_fe_degree>
 
 
 /*
- * @brief Assemble Time System
+ * @brief compute_pod_basis This function must be work for SLEPc 3.21.0
  */
 //template <int dim, int n_fe_degree>
 //  void ROMKinetics<dim, n_fe_degree>::compute_pod_basis ()
@@ -493,6 +495,8 @@ template <int dim, int n_fe_degree>
 ////	BVSVDAndRank(Snap_basis,n_sinvalues,n_snap,1E-09,BV_SVD_METHOD_QR,&A,&sigma,&rank);
 //
 //  }
+
+
 /*
  * @brief Assemble Time System
  */
@@ -555,120 +559,6 @@ template <int dim, int n_fe_degree>
 
 
 
-/*
- * @brief Compute the RHS called E
- */
-/*template <int dim, int n_fe_degree>
-  void ROMKinetics<dim, n_fe_degree>::compute_RHS ()
-  {
-    double exp_factor;
-
-    // E =R*phi_old
-    Rfree.vmult(E, phi);
-    Rfree.clear();
-    E *= 1 / delta_t[step];
-
-    if (time_scheme == "implicit-exponential")
-    {
-      // Precursors term
-      std::vector<PETScWrappers::MPI::BlockVector> XCk(n_prec);
-      for (unsigned int np = 0; np < n_prec; np++)
-      {
-        XCk[np].reinit(local_dofs_vector, comm);
-
-        for (unsigned int ng = 0; ng < n_groups; ng++)
-          XCk[np].block(ng).equ(materials.get_delayed_spectra(0, np, ng),
-            PCk[np]);
-      }
-
-      for (unsigned int p = 0; p < n_prec; ++p)
-      {
-        exp_factor = materials.get_delayed_decay_constant(0, p)
-                     * exp(
-                       -materials.get_delayed_decay_constant(0, p)
-                       * delta_t[step]);
-        E.add(exp_factor, XCk[p]);
-      }
-    }
-    else if (time_scheme == "semi-implicit-exponential"
-             or time_scheme == "semi-implicit-euler")
-    {
-
-      PETScWrappers::MPI::BlockVector XCp;
-      XCp.reinit(local_dofs_vector, comm);
-
-      // Obtain Ck
-      if (time_scheme == "semi-implicit-exponential")
-        for (unsigned int p = 0; p < n_prec; p++)
-          KSPSolve(kspP, PCk[p], Ck[p]);
-
-      // Precursors term
-      for (unsigned int p = 0; p < n_prec; ++p)
-      {
-        XCp *= 0.0;
-        for (unsigned int g = 0; g < n_groups; ++g)
-        {
-          X[p][g]->vmult_add(XCp.block(g), Ck[p]);
-        }
-        E.add(1.0, XCp);
-      }
-
-//		E.print(std::cout);
-
-    }
-    else
-    {
-      AssertRelease(false, "Time scheme not available");
-    }
-
-    if (print_rhs)
-    {
-
-      std::string print_time_matrices_matlab;
-      get_string_from_options("-print_time_matrices_matlab",
-        print_time_matrices_matlab);
-
-      if (!print_time_matrices_matlab.empty())
-      {
-
-        std::string name_file;
-        name_file.append(print_time_matrices_matlab.begin(),
-          print_time_matrices_matlab.end() - 2);
-        name_file.append("_s" + std::to_string(step) + "_e.m");
-        out_matlab.open(name_file.c_str(), std::ios::out);
-
-        print_block_vector_in_matlab(E, name_file, out_matlab, 12);
-
-        out_matlab.close();
-      }
-
-      std::string print_time_matrices_python;
-      get_string_from_options("-print_time_matrices_python",
-        print_time_matrices_python);
-
-      if (!print_time_matrices_python.empty())
-      {
-
-        for (unsigned int g1 = 0; g1 < n_groups; g1++)
-        {
-          std::string name = "E" + std::to_string(g1);
-          print_vector_in_python(E.block(g1), name, out_matlab, 12);
-        }
-
-        out_matlab << "E=[];" << std::endl;
-        out_matlab << "E=np.array(E);" << std::endl;
-        for (unsigned int g1 = 0; g1 < n_groups; g1++)
-          out_matlab << "E=np.append(E,E" + std::to_string(g1) + ");";
-
-        for (unsigned int g1 = 0; g1 < n_groups; g1++)
-          out_matlab << "del E" + std::to_string(g1) + ";";
-
-        out_matlab.close();
-      }
-    }
-
-  }
-*/
 
 template <int dim, int n_fe_degree>
   void ROMKinetics<dim, n_fe_degree>::solve_system_petsc ()
@@ -781,149 +671,6 @@ template <int dim, int n_fe_degree>
 
   }
 
-
-///*
-// * @brief solve_LHS
-// */
-//template <int dim, int n_fe_degree>
-//  void ROMKinetics<dim, n_fe_degree>::solve_LHS ()
-//  {
-//
-//    PETScWrappers::MPI::Vector phivec(comm, n_groups * n_dofs,
-//      n_groups * locally_owned_dofs.n_elements());
-//    PETScWrappers::MPI::Vector Evec(comm, n_groups * n_dofs,
-//      n_groups * locally_owned_dofs.n_elements());
-//
-//    if (type_perturbation != "Step_Change_Material" or step < 2 or reinit_step< 2)
-//    {
-//
-//
-//      // Setup the solver
-//      KSPCreate(comm, &ksp);
-//      KSPGetPC(ksp, &pc);
-//      KSPSetTolerances(ksp, tol_ksp, tol_ksp, PETSC_DEFAULT, 3000);
-//      KSPSetType(ksp, KSPGMRES);
-//      PCSetType(pc, PCSHELL);
-//      PCShellSetApply(pc, apply_preconditioner<dim, n_fe_degree>);
-//      PCShellSetContext(pc, this);
-//      KSPSetNormType(ksp, KSP_NORM_UNPRECONDITIONED);
-//      KSPSetInitialGuessNonzero(ksp, PETSC_TRUE);
-//      KSPSetFromOptions(ksp);
-//
-//      KSPSetOperators(ksp, shell_T, shell_T);
-//      KSPSetUp(ksp);
-//    }
-//
-//    copy_to_Vec(Evec, E);
-//    copy_to_Vec(phivec, phi);
-//
-//    KSPSolve(ksp, Evec, phivec);
-//    copy_to_BlockVector(phi, phivec);
-//
-//    old_its = its;
-//    its = 0;
-//    KSPGetIterationNumber(ksp, &its);
-//    solver_its.push_back(its);
-//    cpu_time.push_back(timer.cpu_time());
-//    totalits += its;
-//
-//    if (step % out_interval == 0)
-//      cout << "   its: " << its << std::endl;
-//
-//    solve_precursors();
-//
-//    phivec.clear();
-//    Evec.clear();
-//
-//    if (type_perturbation != "Step_Change_Material" or step < 1 or reinit_step< 1)
-//    {
-//      Tfree.clear();
-//      MatDestroy(&shell_T);
-//      KSPDestroy(&ksp);
-//    }
-//
-//  }
-
-/*
- * @brief solve_LHS
- */
-template <int dim, int n_fe_degree>
-  void ROMKinetics<dim, n_fe_degree>::solve_precursors ()
-  {
-
-//    double expFactor, ak;
-//    PETScWrappers::MPI::Vector Mxphi(locally_owned_dofs, comm);
-//
-//    if (time_scheme == "implicit-exponential"
-//        or time_scheme == "semi-implicit-exponential")
-//    {
-//      // Computation of XC_k
-//      for (unsigned int k = 0; k < n_prec; ++k)
-//      {
-//        Mxphi = 0.0;
-//        for (unsigned int ng = 0; ng < n_groups; ++ng)
-//          BMfree.vmult_add(ng, k, Mxphi, phi.block(ng));
-//
-//        // In Ck_update it is accumulated the produced precursors
-//        expFactor = exp(
-//          -materials.get_delayed_decay_constant(0, k)
-//          * delta_t[step]);
-//        ak = 1.0 / materials.get_delayed_decay_constant(0, k)
-//             * (1 - expFactor);
-//        //Computes Ck = expFactor *  Ck[k] + ak* Mxphi;
-//        PCk[k].sadd(expFactor, ak, Mxphi);
-//
-//      }
-//
-//      Mxphi.clear();
-//
-//    }
-//    else if (time_scheme == "semi-implicit-euler")
-//    {
-//
-//      for (unsigned int p = 0; p < n_prec; p++)
-//      {
-//        PCk[p] *= 0.0;
-//        P.vmult(PCk[p], Ck[p]);
-//        PCk[p] /= delta_t[step];
-//      }
-//
-//      PETScWrappers::MPI::Vector Mxphi(locally_owned_dofs, comm);
-//
-//      // Computation of XC_k
-//      for (unsigned int np = 0; np < n_prec; ++np)
-//      {
-//        Mxphi *= 0.0;
-//
-//        for (unsigned int ng = 0; ng < n_groups; ++ng)
-//          BMfree.vmult_add(ng, np, Mxphi, phi.block(ng));
-//
-//        PCk[np].add(1.0, Mxphi);
-//
-//        KSPSolve(kspLP[np], PCk[np], Ck[np]);
-//
-//      }
-//
-//      Mxphi.clear();
-//
-//      if (type_perturbation != "Step_Change_Material" or step < 1 or reinit_step< 1)
-//      {
-//        for (unsigned int np = 0; np < n_prec; np++)
-//        {
-//          KSPDestroy(&kspLP[np]);
-//          LP[np]->clear();
-//        }
-//      }
-//
-//    }
-//    else
-//    {
-//      AssertRelease(false, "Invalid type of time scheme.");
-//    }
-//
-//    BMfree.clear();
-
-  }
 
 /*
  * @brief FormFunction definition for Petsc Solver
@@ -1398,10 +1145,6 @@ template <int dim, int n_fe_degree>
                          << timer.cpu_time() << " s." << std::endl;
     compute_pod_basis();
 
-//    verbose_cout << std::fixed
-//                     << "   Assemble matrices...                CPU Time = "
-//                     << timer.cpu_time() << " s." << std::endl;
-//    assemble_matrices();
 
     verbose_cout << std::fixed
                  << "   Init time computation...                CPU Time = "

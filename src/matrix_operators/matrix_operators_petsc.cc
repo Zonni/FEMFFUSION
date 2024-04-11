@@ -1787,21 +1787,23 @@ template <int dim, int n_fe_degree>
       const unsigned int n_mats = materials.get_n_mats();
       this->mass_mf_blocks.resize(this->n_blocks,
         std::vector<MassOperator<dim, n_fe_degree, double>*>(this->n_blocks));
-      coeffs.resize(n_groups,
-        std::vector<Vector<double> >(n_groups));
+      coeffs.resize(n_groups);
+
+
       // Fill coeffs
-      for (unsigned int from_g = 0; from_g < n_groups; from_g++)
-        for (unsigned int to_g = 0; to_g < n_groups; to_g++)
+      for (unsigned int to_g = 0; to_g < n_groups; to_g++){
+	  coeffs[to_g].resize(n_groups);
+        for (unsigned int from_g = 0; from_g < n_groups; from_g++)
         {
           coeffs[to_g][from_g].reinit(n_mats);
           for (unsigned int mat = 0; mat < n_mats; mat++)
           {
-					coeffs[to_g][from_g][mat] = materials.get_prompt_spectra(
+		coeffs[to_g][from_g][mat] = materials.get_prompt_spectra(
 							mat, to_g) * materials.get_nu_sigma_f(from_g, mat)
 							* (1.0 - materials.get_delayed_fraction_sum(mat));
           }
         }
-
+      }
       //  --------- Matrix-Free Blocks  ---------
       //  Initialize Matrix free data
       typename dealii::MatrixFree<dim, double>::AdditionalData additional_data;
