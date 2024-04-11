@@ -205,19 +205,27 @@ template <int dim, int n_fe_degree>
     this->mass_mf_blocks.resize(this->n_blocks,
       std::vector<MassOperator<dim, n_fe_degree, double>*>(this->n_blocks));
     this->poison_mf_blocks.resize(this->n_blocks);
-    coeffs.resize(n_groups,
-      std::vector<Vector<double> >(n_groups,
-        Vector<double>(n_mats)));
+
+
+    coeffs.resize(n_groups);
     //
-    for (unsigned int from_g = 0; from_g < n_groups; from_g++)
-      for (unsigned int to_g = 0; to_g < n_groups; to_g++)
+
+    for (unsigned int to_g = 0; to_g < n_groups; to_g++)
       {
-        if (to_g != from_g)
-          for (unsigned int mat = 0; mat < n_mats; mat++)
-          {
-            coeffs[to_g][from_g][mat] = -materials.get_sigma_s(from_g, to_g, mat);
-          }
+	coeffs[to_g].resize (n_groups);
+	for (unsigned int from_g = 0; from_g < n_groups; from_g++)
+	  {
+	    coeffs[to_g][from_g].reinit (n_mats);
+	    if (to_g != from_g)
+	      for (unsigned int mat = 0; mat < n_mats; mat++)
+		{
+		  coeffs[to_g][from_g][mat] = -materials.get_sigma_s (from_g,
+								      to_g,
+								      mat);
+		}
+	  }
       }
+
 
     coeffs_grad.resize(n_groups);
     coeffs_val.resize(n_groups);

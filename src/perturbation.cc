@@ -472,7 +472,7 @@ template <int dim>
           }
 
           // The bar occupy all the cell
-          else if (bar_pos - minp < 1e-8 && maxp - bars_top_pos < 1e-8)
+          else if (bar_pos - minp < 1e-14 && maxp - bars_top_pos < 1e-14)
           //          else if (bar_pos - minp < 1e-8 )
           {
 //            if (maxp - bars_top_pos>1e-8) {

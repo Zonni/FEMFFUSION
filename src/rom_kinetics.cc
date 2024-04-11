@@ -162,17 +162,14 @@ template <int dim, int n_fe_degree>
     phi = static_problem.phi[0];
     phi_critic = static_problem.phi[0];
 
-    // Initialize snapshots
-    snapshots.resize(static_problem.phi.size());
-    for (unsigned int eig=0; eig<static_problem.phi.size(); eig++){
-    snapshots[eig].reinit(local_dofs_vector, comm);
-    static_problem.phi[eig].compress(VectorOperation::insert);
-    snapshots[eig]=static_problem.phi[eig];
-    }
 
+    // Reinit ROM data
+    type_snapshots=' '; // modes or dyn_pos
+    n_snap=2;
 
+    get_snapshots(static_problem);
 
-    dim_rom=static_problem.phi.size(); //TODO
+    dim_rom=snapshots.size(); //TODO
 
     get_parameters_from_command_line();
 
@@ -185,7 +182,6 @@ template <int dim, int n_fe_degree>
       n_prec = 0;
       materials.remove_precursors();
     }
-
 
     // Initialization
     delta_t.reserve(t_end / init_delta_t);
@@ -209,8 +205,11 @@ template <int dim, int n_fe_degree>
   void ROMKinetics<dim, n_fe_degree>::init_time_computation ()
   {
 
+    verbose_cout << "Assemble XBF..." << std::endl;
+    for (unsigned int p=0; p<n_prec; p++)
+    XBF[p].reinit(materials, full_matrixfree,p, listen_to_material_id);
 
-	VecCreateSeq(PETSC_COMM_SELF, (n_prec + 1) * dim_rom, &coeffs_n);
+    VecCreateSeq(PETSC_COMM_SELF, (n_prec + 1) * dim_rom, &coeffs_n);
     PetscScalar *N;
     VecGetArray(coeffs_n, &N);
 
@@ -242,9 +241,81 @@ template <int dim, int n_fe_degree>
 
     VecRestoreArray(coeffs_n, &N);
 
+    for (unsigned int k = 0; k < n_prec; k++)
+      XBF[k].clear();
+
 
   }
 
+
+/**
+ *
+ *
+ *
+ */
+template<int dim, int n_fe_degree>
+  void
+  ROMKinetics<dim, n_fe_degree>::get_snapshots (
+      StaticDiffusion<dim, n_fe_degree> &static_problem)
+  {
+
+
+    // Initialize snapshots
+    get_uint_from_options("-n_snap", n_snap);
+
+    if (type_snapshots == "modes")
+      n_snap = static_problem.n_eigenvalues;
+
+    snapshots.resize (n_snap);
+    for (unsigned int ns = 0; ns < n_snap; ns++)
+      snapshots[ns].reinit (local_dofs_vector, comm);
+
+    if (type_snapshots == "modes")
+      {
+	for (unsigned int ns = 0; ns < n_snap; ns++)
+	  {
+	    static_problem.phi[ns].compress (VectorOperation::insert);
+	    snapshots[ns] = static_problem.phi[ns];
+	  }
+	return;
+      }
+
+    unsigned int bar_bank = 1;
+    double bars_bottom_pos = 0.0;
+    AssertRelease(n_snap>1,"The number of snapshots must be greater than 1");
+    double step_bar = (perturbation.bars_top_pos - bars_bottom_pos)
+	/ (n_snap - 1);
+
+    unsigned int bar_material = perturbation.bar_materials[bar_bank];
+
+    for (unsigned int ns = 0; ns < n_snap; ns++)
+      {
+
+	unsigned int bar_pos_z = ns * step_bar + bars_bottom_pos;
+
+	for (unsigned int plant_pos = 0;
+	    plant_pos < perturbation.bars_position.size (); ++plant_pos)
+	  {
+
+	    if (perturbation.bars_position[plant_pos] == bar_bank){
+
+	      perturbation.move_bar_volume_homogenized (plant_pos, bar_pos_z,
+							bar_material, bar_bank);
+	    }
+
+	  }
+
+	static_problem.cout.set_condition (false);
+	static_problem.show_eps_convergence = false;
+	static_problem.assemble_system_lambda ();
+	static_problem.solve_eps ();
+	static_problem.phi[0].compress (VectorOperation::insert);
+	snapshots[ns] = static_problem.phi[0];
+	cout << "Step " << ns << ", Bar Position: " << bar_pos_z
+	    << ", Eigenvalue: " << static_problem.eigenvalues[0] << std::endl;
+      }
+
+  }
 
 /**
  * @brief It uses PETSc interface to get parameters from the command line options.
@@ -378,7 +449,7 @@ template <int dim, int n_fe_degree>
 	for (i_sv=0; i_sv<static_cast<int>(dim_rom); i_sv++){
 	SVDGetSingularTriplet(svd,i_sv,&(singular_values[i_sv]),u,NULL);
 	copy_to_BlockVector(snap_basis[i_sv], u);
-    std::cout<<"Singular value "<<i_sv<<": "<<singular_values[i_sv]<<std::endl;
+   	std::cout<<"Singular value "<<i_sv<<": "<<singular_values[i_sv]<<std::endl;
 	}
 
 	MatDestroy(&Mat_snap);
@@ -432,7 +503,7 @@ template <int dim, int n_fe_degree>
     // Assemble the mass matrix
     // It is necessary to assemble all matrices even if the operators
     // do not change because the number of material (in rods) can be changed
-	verbose_cout << "Assemble V..." << std::endl;
+//	verbose_cout << "Assemble V..." << std::endl;
 	V.reinit(materials, full_matrixfree, listen_to_material_id);
 	verbose_cout << "Assemble L..." << std::endl;
 	L.reinit(materials, boundary_conditions, albedo_factors, full_matrixfree,
@@ -474,7 +545,11 @@ template <int dim, int n_fe_degree>
 
 	rominvV.invert(romV);
 
-
+	V.clear();
+	L.clear();
+	F.clear();
+	for(unsigned int p=0; p<n_prec; p++)
+		XBF[p].clear();
 
   }
 
@@ -1323,18 +1398,19 @@ template <int dim, int n_fe_degree>
                          << timer.cpu_time() << " s." << std::endl;
     compute_pod_basis();
 
-    verbose_cout << std::fixed
-                     << "   Assemble matrices...                CPU Time = "
-                     << timer.cpu_time() << " s." << std::endl;
-    assemble_matrices();
+//    verbose_cout << std::fixed
+//                     << "   Assemble matrices...                CPU Time = "
+//                     << timer.cpu_time() << " s." << std::endl;
+//    assemble_matrices();
 
     verbose_cout << std::fixed
                  << "   Init time computation...                CPU Time = "
                  << timer.cpu_time() << " s." << std::endl;
     init_time_computation();
 
-
+    verbose_cout << "   Post-processing time_step...   " << std::flush;
     postprocess_time_step();
+
 
         cout <<" ---> Power:  "
              << power_total << std::endl;
@@ -1343,8 +1419,6 @@ template <int dim, int n_fe_degree>
                          << timer.cpu_time()
                          << " s." << std::endl;
     solve_system_petsc();
-
-
 
 
 //      if (type_perturbation == "Mechanical_Vibration")
@@ -1437,7 +1511,7 @@ template <int dim, int n_fe_degree>
     void *ctx)
   {
 
-std::cout<<"time: "<<time<<std::endl;
+
 
     TSGetApplicationContext(ts, &ctx);
     PetscScalar *ndot;
@@ -1454,9 +1528,12 @@ std::cout<<"time: "<<time<<std::endl;
     unsigned int dim_rom = TSobject->dim_rom;
     double transf_time = time ; //0.0 is the initial time
 
+    if (std::abs(TSobject->sim_time-time)>1e-6){
+    std::cout<<"time: "<<time<<std::endl;
     TSobject->sim_time=transf_time;
     TSobject->update_xsec();
     TSobject->assemble_ROM_matrices();
+    }
 
     for (unsigned int i = 0; i < (n_prec + 1) * dim_rom; i++)
       ndot[i] = 0.0;

@@ -84,6 +84,7 @@ template <int dim, int n_fe_degree>
 
     // Build problem
     void init_time_computation ();
+    void get_snapshots(StaticDiffusion<dim,n_fe_degree> &static_problem);
     void get_parameters_from_command_line ();
 
     void update_xsec ();
@@ -203,10 +204,13 @@ template <int dim, int n_fe_degree>
     std::vector<double> delayed_fraction_sum;
 
     // ROM data
+    std::string type_snapshots;
+    unsigned int n_snap;
     unsigned int dim_rom;
     std::vector<PETScWrappers::MPI::BlockVector> snapshots;
     std::vector<PETScWrappers::MPI::BlockVector> snap_basis;
     Vec coeffs_n;
+
 
      // ROM Matrices
     FullMatrix<double> rominvV, romL, romF;
