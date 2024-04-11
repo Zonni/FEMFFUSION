@@ -185,6 +185,7 @@ template <int dim, int n_fe_degree>
     std::vector<double> cpu_time;
     double t_end;
     double power_total;
+    double aux_power;
     double norm0;
 
 

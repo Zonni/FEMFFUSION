@@ -155,6 +155,7 @@ template <int dim, int n_fe_degree>
     delta_t.push_back(init_delta_t);
     sim_time = 0.0;
     power_total = 0.0;
+    aux_power = 1.0;
 
 
     // Initialize phi //TODO remove
@@ -251,68 +252,68 @@ template <int dim, int n_fe_degree>
  *
  */
 template<int dim, int n_fe_degree>
-  void
-  ROMKinetics<dim, n_fe_degree>::get_snapshots (
-      StaticDiffusion<dim, n_fe_degree> &static_problem)
-  {
+void ROMKinetics<dim, n_fe_degree>::get_snapshots(
+		StaticDiffusion<dim, n_fe_degree> &static_problem)
+{
 
+	// Initialize snapshots
+	get_uint_from_options("-n_snap", n_snap);
 
-    // Initialize snapshots
-    get_uint_from_options("-n_snap", n_snap);
+	if (type_snapshots == "modes")
+		n_snap = static_problem.n_eigenvalues;
 
-    if (type_snapshots == "modes")
-      n_snap = static_problem.n_eigenvalues;
-
-    snapshots.resize (n_snap);
-    for (unsigned int ns = 0; ns < n_snap; ns++)
-      snapshots[ns].reinit (local_dofs_vector, comm);
-
-    if (type_snapshots == "modes")
-      {
+	snapshots.resize(n_snap);
 	for (unsigned int ns = 0; ns < n_snap; ns++)
-	  {
-	    static_problem.phi[ns].compress (VectorOperation::insert);
-	    snapshots[ns] = static_problem.phi[ns];
-	  }
-	return;
-      }
+		snapshots[ns].reinit(local_dofs_vector, comm);
 
-    unsigned int bar_bank = 1;
-    double bars_bottom_pos = 0.0;
-    AssertRelease(n_snap>1,"The number of snapshots must be greater than 1");
-    double step_bar = (perturbation.bars_top_pos - bars_bottom_pos)
-	/ (n_snap - 1);
+	if (type_snapshots == "modes")
+	{
+		for (unsigned int ns = 0; ns < n_snap; ns++)
+		{
+			static_problem.phi[ns].compress(VectorOperation::insert);
+			snapshots[ns] = static_problem.phi[ns];
+		}
+		return;
+	}
 
-    unsigned int bar_material = perturbation.bar_materials[bar_bank-1];
+	unsigned int bar_bank = 1;
+	double bars_bottom_pos = 0.0;
+	AssertRelease(n_snap > 1, "The number of snapshots must be greater than 1");
+	double step_bar = (perturbation.bars_top_pos - bars_bottom_pos)
+			/ (n_snap - 1);
 
-    for (unsigned int ns = 0; ns < n_snap; ns++)
-      {
+	unsigned int bar_material = perturbation.bar_materials[bar_bank - 1];
 
-	unsigned int bar_pos_z = ns * step_bar + bars_bottom_pos;
+	for (unsigned int ns = 0; ns < n_snap; ns++)
+	{
 
-	for (unsigned int plant_pos = 0;
-	    plant_pos < perturbation.bars_position.size (); ++plant_pos)
-	  {
+		unsigned int bar_pos_z = ns * step_bar + bars_bottom_pos;
 
-	    if (perturbation.bars_position[plant_pos] == bar_bank){
+		for (unsigned int plant_pos = 0;
+				plant_pos < perturbation.bars_position.size(); ++plant_pos)
+		{
 
-	      perturbation.move_bar_volume_homogenized (plant_pos, bar_pos_z,
-							bar_material, bar_bank-1);
-	    }
+			if (perturbation.bars_position[plant_pos] == bar_bank)
+			{
 
-	  }
+				perturbation.move_bar_volume_homogenized(plant_pos, bar_pos_z,
+						bar_material, bar_bank - 1);
+			}
 
-	static_problem.cout.set_condition (false);
-	static_problem.show_eps_convergence = false;
-	static_problem.assemble_system_lambda ();
-	static_problem.solve_eps ();
-	static_problem.phi[0].compress (VectorOperation::insert);
-	snapshots[ns] = static_problem.phi[0];
-	cout << "Step " << ns << ", Bar Position: " << bar_pos_z
-	    << ", Eigenvalue: " << static_problem.eigenvalues[0] << std::endl;
-      }
+		}
 
-  }
+		static_problem.cout.set_condition(false);
+		static_problem.show_eps_convergence = false;
+		static_problem.assemble_system_lambda();
+		static_problem.solve_eps();
+		static_problem.phi[0].compress(VectorOperation::insert);
+		snapshots[ns] = static_problem.phi[0];
+		cout << "Step " << ns << ", Bar Position: " << bar_pos_z
+				<< ", Eigenvalue: " << static_problem.eigenvalues[0]
+				<< std::endl;
+	}
+
+}
 
 /**
  * @brief It uses PETSc interface to get parameters from the command line options.
@@ -564,15 +565,11 @@ template <int dim, int n_fe_degree>
   void ROMKinetics<dim, n_fe_degree>::solve_system_petsc ()
   {
 
-    double init_time_step_sundials = 1e-2;
+    double init_time_step = 1e-2;
     unsigned int max_steps = 1e+2;
-//    unsigned int maxl;
 
-
-// SOLVER PETSC implemented for a linear system
+    // SOLVER PETSC implemented for a linear system
     TS ts;
-
-//    vecn.resize(n_eigenvalues);
 
     if (step == 0 and print_timefile)
     {
@@ -586,20 +583,18 @@ template <int dim, int n_fe_degree>
     TSSetProblemType(ts, TS_LINEAR);
     TSSetApplicationContext(ts, this);
 
-
     //   Tell the timestepper context where to compute solutions
     TSSetSolution(ts, coeffs_n);
 
-//       Provide the call-back for the nonlinear function we are
-//       evaluating. Thus whenever the timestepping routines need the
-//       function they will call this routine. Note the final argument
-//       is the application context used by the call-back functions.
-
+	//       Provide the call-back for the nonlinear function we are
+	//       evaluating. Thus whenever the timestepping routines need the
+	//       function they will call this routine. Note the final argument
+	//       is the application context used by the call-back functions
     TSSetRHSFunction(ts, NULL, FormFunctionROM_system<dim, n_fe_degree>,
         this);
 
 
-    		//   Form the initial guess for the problem
+    //   Form the initial guess for the problem
     //   (this can be done from a function FormInitialGuess)
 
     //   This indicates that we are using pseudo timestepping to
@@ -608,30 +603,19 @@ template <int dim, int n_fe_degree>
 
     //   Set the initial time to start at (this is arbitrary for
     //   steady state problems); and the initial timestep given above
-//    TSSetTimeStep(ts, 1e-5);
-    TSSetTimeStep(ts, init_time_step_sundials);
+    //    TSSetTimeStep(ts, 1e-5);
+    TSSetTimeStep(ts, init_time_step);
 
     //   Set a large number of timesteps and final duration time
     //   to insure convergence to steady state.
-    //   TSSetMaxSteps(ts, max_steps);
-//    if (update_modes == true)
+    TSSetMaxSteps(ts, max_steps);
+    //    if (update_modes == true)
     TSSetMaxTime(ts, t_end);
-//    else
-//      TSSetMaxTime(ts, delta_t_petsc);
+    //    else
+    //      TSSetMaxTime(ts, delta_t_petsc);
     TSSetExactFinalTime(ts, TS_EXACTFINALTIME_INTERPOLATE);
-//    TSSetPostStep(ts, PostStep<dim, n_fe_degree>);
-//    TSSetApplicationContext(ts, this);
-//    TSSundialsMonitorInternalSteps(ts, PETSC_TRUE);
-//    TSSundialsSetType(ts, SUNDIALS_BDF);
-//    //TSSundialsSetMaxl(ts, 50);
-//    //TSSundialsSetLinearTolerance(ts,1.0);
-//    TSSundialsSetMinTimeStep(ts, 1e-12);
-//    TSSundialsSetMaxTimeStep(ts, 1e-1);
-//    TSSundialsSetTolerance(ts, tol_sundials_rel, tol_sundials_abs);
+    TSSetPostStep(ts, PostStep<dim, n_fe_degree>);
 
-    //   Set any additional options from the options database. This
-    //   includes all options for the nonlinear and linear solvers used
-    //   internally the timestepping routines.
     TSSetFromOptions(ts);
     TSSetUp(ts);
 
@@ -652,8 +636,6 @@ template <int dim, int n_fe_degree>
          << " ---> Power:  "
          << power_total << std::endl;
 
-//    for (unsigned int eig = 0; eig < n_eigenvalues; ++eig)
-//      vecn[eig].push_back(narray[eig]);
 
     //   Get the number of steps
     PetscInt its;
@@ -664,8 +646,6 @@ template <int dim, int n_fe_degree>
     << std::endl;
 
 //    total_ts_its += its;
-
-
 
     TSDestroy(&ts);
 
@@ -679,53 +659,49 @@ template <int dim, int n_fe_degree>
   PetscErrorCode PostStep (TS ts)
   {
 
-	/*
+
     void *ctx;
     TSGetApplicationContext(ts, &ctx);
 
     ROMKinetics<dim, n_fe_degree>* TSobject =
                                                 (ROMKinetics<dim, n_fe_degree>*) ctx;
-    PetscReal deltatime;
+    PetscReal ts_time;
     const PetscScalar *n;
     Vec N;
 
-    TSGetTime(ts, &deltatime);
+    TSGetTime(ts, &ts_time);
     TSGetSolution(ts, &N);
     VecGetArrayRead(N, &n);
 
-    double transf_time = deltatime + TSobject->t_init_upd;
+    // for updating
+    double real_time = ts_time + 0.0;
+//    double real_time = ts_time + TSobject->t_init_upd;
 
-    TSobject->step++;
-
-    for (unsigned int eig = 0; eig < TSobject->n_eigenvalues; ++eig)
-    {
-//         power_total+=n[eig]*TSobject->power_modes[eig];
-      TSobject->vecn[eig].push_back(n[eig]);
-    }
 
     TSobject->phi = 0.0;
 
-    for (unsigned int eig = 0; eig < TSobject->n_eigenvalues; ++eig)
+    for (unsigned int dr = 0; dr < TSobject->dim_rom; ++dr)
     {
-      TSobject->phi.add(n[eig], TSobject->phi_modes[eig]);
+      TSobject->phi.add(n[dr], TSobject->snap_basis[dr]);
     }
 
-    TSobject->postprocess_time_step(transf_time);
+    TSobject->postprocess_time_step();
 
-    if (transf_time < TSobject->t_end_upd)
+//    if (real_time < TSobject->t_end_upd)
+    if (real_time < TSobject->t_end)
     {
-      if (std::abs((TSobject->old_power - TSobject->power_total) / TSobject->old_power) < 2.0)
+      // Save data only if the change in the power is larger than 0.1%
+      if (std::abs((TSobject->aux_power - TSobject->power_total) / TSobject->aux_power) > 1e-3)
       {
-
-        TSobject->step_time_out.push_back(TSobject->step);
+    	TSobject->step++;
         TSobject->power_vector.push_back(TSobject->power_total);
-        TSobject->time_vect.push_back(transf_time);
-
-        TSobject->old_power = TSobject->power_total;
+        TSobject->time_vect.push_back(ts_time);
+        TSobject->aux_power = TSobject->power_total;
+        TSobject->output_results();
       }
 
       TSobject->cout << std::setprecision(4) << std::fixed << "Time:   "
-      << transf_time
+      << ts_time
       << " ---> Power:  " << TSobject->power_total
       << std::endl;
     }
@@ -735,7 +711,7 @@ template <int dim, int n_fe_degree>
 //    TSobject->tseg = transf_time;
 //    VecCopy(N, TSobject->nseg);
 
-//    VecDestroy(&N);
+//   VecDestroy(&N);
 
 //    It does not work
 //    Vec error_vec;
@@ -751,7 +727,7 @@ template <int dim, int n_fe_degree>
 //    PetscPrintf(PETSC_COMM_WORLD,"Estimated Error = %E.\n",err_norm);
 
     return 0;
-    */
+
   }
 
 
@@ -1130,15 +1106,12 @@ template <int dim, int n_fe_degree>
 template <int dim, int n_fe_degree>
   void ROMKinetics<dim, n_fe_degree>::run ()
   {
+
     cout << "------------ START OF THE ROM TIME LOOP ------------------"
          << std::endl;
 
     cout << "Type of perturbation: " << type_perturbation << std::endl
              << std::endl;
-
-
-    cout << "IT IS ASSUMED THAT LAMBDA (DELAYED DECAY CONSTANT) ARE CONSTANT!!"<< std::endl
-                 << std::endl;
 
     verbose_cout << std::fixed
                          << "   Compute POD basis...                CPU Time = "
@@ -1155,12 +1128,16 @@ template <int dim, int n_fe_degree>
     postprocess_time_step();
 
 
-        cout <<" ---> Power:  "
-             << power_total << std::endl;
+    power_vector.push_back(power_total);
+    time_vect.push_back(0.0);
+    output_results();
 
-    verbose_cout << "   Solve the ROM system...                 CPU Time = "
-                         << timer.cpu_time()
-                         << " s." << std::endl;
+
+	cout << std::setprecision(4) << std::fixed << "Time:   " << 0.0000
+			<< " ---> Power:  " << power_total << std::endl;
+
+	verbose_cout << "   Solve the ROM system...                 CPU Time = "
+			<< timer.cpu_time() << " s." << std::endl;
     solve_system_petsc();
 
 
@@ -1176,67 +1153,14 @@ template <int dim, int n_fe_degree>
       verbose_cout << "      postprocess_noise..." << std::flush;
       postprocess_noise();
 
-      // ------------------------------------------------------------------------
-      //if (step % out_interval == 0)
-      //{
-//      cout << " Step " << step << " at t=" << sim_time << std::endl;
-//      cout << "                         Total Power " << power_total
-//           << "   Time = "
-//           << timer.cpu_time() << std::endl;
-//
-//      verbose_cout << "   Step Done." << " Time = " << timer.cpu_time()
-//                   << " s."
-//                   << std::endl;
-      //}
 
-      // ------------------------------------------------------------------------
+    if (this_mpi_process == 0)
+    {
+      // Print Total power evolution in time
+      print_vector_in_file(time_vect, out_file, "Time vector\n", true, 10);
+      print_vector_in_file(power_vector, out_file, "Total Power vector\n", true, 10);
 
-//      if (out_flag and step % out_interval == 0)
-//      {
-//        MPI_Barrier(comm);
-//        verbose_cout << " Done!" << std::endl;
-//        output_results();
-//        MPI_Barrier(comm);
-//      }
-//
-//      PetscMemorySetGetMaximumUsage();
-//      PetscLogDouble memory;
-//      PetscMemoryGetMaximumUsage(&memory);
-//      cout << "   Max Memory " << memory * 1e-6 << " MB" << std::endl;
-
-//      verbose_cout << "---------------------------------------------------"
-//                   << std::endl;
-
-      // Out things in the future will be a function
-//      time_vect.push_back(sim_time);
-//      power_vector.push_back(power_total);
-//      delta_t.push_back(init_delta_t);
-
-//      step++;
-
-
-//      MPI_Barrier(comm);
-
-
-//    if (this_mpi_process == 0)
-//    {
-//      // Print Total power evolution in time
-//      print_vector_in_file(time_vect, out_file, "Time vector\n", true, 10);
-//      print_vector_in_file(power_vector, out_file, "Total Power vector\n", true, 10);
-//      print_vector_in_file(delta_t, out_file, "Delta t\n", true, 10);
-//      print_vector_in_file(cpu_time, out_file, "CPU Time\n", true, 10);
-//      print_vector_in_file(solver_its, out_file, "Solver Its\n", true, 10);
-//
-//      if (print_timefile)
-//        print_vector_in_file(print_time_vect, filename_time, "Time\n", true, 10);
-//    }
-//
-//    if (out_matlab.is_open())
-//      out_matlab.close();
-
-//    cout << "Total its: " << totalits << ", mean by it:"
-//         << double(totalits) / step
-//         << std::endl;
+    }
 
 
     cout << "            Finished in " << timer.cpu_time() << " s." << std::endl;
@@ -1271,12 +1195,12 @@ template <int dim, int n_fe_degree>
     unsigned int dim_rom = TSobject->dim_rom;
     double transf_time = time ; //0.0 is the initial time
 
-    if (std::abs(TSobject->sim_time-time)>1e-6){
-    std::cout<<"time: "<<time<<std::endl;
-    TSobject->sim_time=transf_time;
-    TSobject->update_xsec();
-    TSobject->assemble_ROM_matrices();
-    }
+	if (std::abs(TSobject->sim_time - time) > 1e-6)
+	{
+		TSobject->sim_time = transf_time;
+		TSobject->update_xsec();
+		TSobject->assemble_ROM_matrices();
+	}
 
     for (unsigned int i = 0; i < (n_prec + 1) * dim_rom; i++)
       ndot[i] = 0.0;
