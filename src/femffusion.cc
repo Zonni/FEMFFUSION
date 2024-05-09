@@ -276,6 +276,13 @@ void prm_declare_entries (ParameterHandler &prm)
   // ROM variables
   prm.declare_entry("ROM_Transient", "false", Patterns::Bool(),
       "# True/false - Activate ROM Calculation");
+  prm.declare_entry("ROM_Type_Snapshots", "", Patterns::Anything(),
+    "Type of Snapshots used in ROM calculation");
+  prm.declare_entry("ROM_Time_Break_Snapshots", "", Patterns::Anything(),
+    "Time Break of Snapshots used in ROM calculation");
+  prm.declare_entry("N_Snapshots", "2", Patterns::Integer(),
+    "Number of snapshots for the ROM method");
+
 }
 
 /**

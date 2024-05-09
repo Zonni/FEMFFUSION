@@ -1972,6 +1972,35 @@ void parse_vector (std::string input,
   return;
 }
 
+/**
+ * Same as before but for double vector. There is not default values in this case.
+ * It exist an special character in order to repeat number:
+ * 4* 10.0 = 10.0 10.0 10.0 10.0
+ * 2.0 2*1.0 2.0 = 2.0 1.0 1.0 2.0
+ */
+void parse_vector (std::string input,
+  std::vector<std::string> &out,
+  unsigned int length)
+{
+  Assert(out.size()==0, ExcMessage("Vector not empty"));
+  trim(input);
+  std::istringstream iss(input);
+
+  std::string string;
+  std::string str;
+  out.reserve(length);
+  while (iss.good())
+  {
+    iss >> str;
+    out.push_back(str);
+  }
+
+  AssertRelease(out[0]!="",
+      "The number of arguments should be greater than 1");
+
+  return;
+}
+
 template <int dim>
   void extrude_triangulation (const Triangulation<2, 2>&,
     const unsigned int,

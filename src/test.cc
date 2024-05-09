@@ -1720,7 +1720,8 @@ void run_test_static_rom(const std::string &input_file, unsigned int n_tests)
 
 	const double time_step = rom_prob.t_end / n_tests;
 
-	rom_prob.snapshots.resize(n_tests);
+	rom_prob.snapshots.resize(1);
+	rom_prob.snapshots[0].resize(n_tests);
 	for (unsigned int nt = 0; nt < n_tests; nt++)
 	{
 
@@ -1731,7 +1732,7 @@ void run_test_static_rom(const std::string &input_file, unsigned int n_tests)
 		static_prob.solve_eps();
 		static_eig[nt] = static_prob.eigenvalues[0];
 		static_prob.phi[0].compress(VectorOperation::insert);
-		rom_prob.snapshots[nt] = static_prob.phi[0];
+		rom_prob.snapshots[0][nt] = static_prob.phi[0];
 	}
 
 	for (unsigned int nt = 0; nt < n_tests; nt++)
@@ -1744,7 +1745,7 @@ void run_test_static_rom(const std::string &input_file, unsigned int n_tests)
 		static_prob.perturbation.move_bars(nt * time_step);
 
 		// Compute eigenvalues with ROM method
-		rom_prob.compute_pod_basis();
+		rom_prob.compute_pod_basis(rom_prob.snapshots[0]);
 
 		// We use the matrices of the static problem because F in ROM is multiplied by (1-beta)
 		static_prob.assemble_system_lambda();

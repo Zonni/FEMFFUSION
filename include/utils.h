@@ -689,6 +689,14 @@ void parse_vector (std::string input,
 /**
  *
  */
+
+void parse_vector (std::string input,
+  std::vector<std::string> &out,
+  unsigned int length=0);
+
+/**
+ *
+ */
 void parse_materials (std::string XECSFile,
   std::vector<unsigned int> &n_cells_per_dim,
   unsigned int n_assemblies,

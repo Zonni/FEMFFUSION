@@ -84,15 +84,33 @@ template <int dim, int n_fe_degree>
     void run ();
 
     // Build problem
-    void init_time_computation ();
-    void get_snapshots(StaticDiffusion<dim,n_fe_degree> &static_problem);
-    void get_parameters_from_command_line ();
+	void init_time_computation();
+	void get_snapshots(StaticDiffusion<dim, n_fe_degree> &static_problem,
+			std::vector<PETScWrappers::MPI::BlockVector> &_snapshots,
+			std::string t_snap);
+	void get_snapshots_modes(StaticDiffusion<dim, n_fe_degree> &static_problem,
+			std::vector<PETScWrappers::MPI::BlockVector> &_snapshots);
+	void get_snapshots_bar(StaticDiffusion<dim, n_fe_degree> &static_problem,
+			std::vector<PETScWrappers::MPI::BlockVector> &_snapshots,
+			unsigned int bar_bank);
+	void get_snapshots_bar_ihs(
+			StaticDiffusion<dim, n_fe_degree> &static_problem,
+			std::vector<PETScWrappers::MPI::BlockVector> &_snapshots);
 
-    void update_xsec ();
+	void get_snapshots_bar_time_variation(
+			StaticDiffusion<dim, n_fe_degree> &static_problem,
+			std::vector<PETScWrappers::MPI::BlockVector> &_snapshots);
 
-    void compute_pod_basis();
-    void assemble_matrices ();
-    void assemble_ROM_matrices();
+
+
+	void get_parameters_from_command_line();
+
+	void update_xsec();
+
+	void compute_pod_basis(
+			std::vector<PETScWrappers::MPI::BlockVector> &_snapshots);
+	void assemble_matrices();
+	void assemble_ROM_matrices();
 
     void print_matrices ();
 
@@ -154,6 +172,7 @@ template <int dim, int n_fe_degree>
     std::vector<double> power_axial;
     std::vector<double> volume_per_plane;
 
+
     Timer timer;
 
     KSP ksp;
@@ -180,7 +199,7 @@ template <int dim, int n_fe_degree>
     double sim_time;
     double init_delta_t;
     double tol_time_ksp;
-    std::vector<double> delta_t;
+    double delta_t;
     std::vector<double> solver_its;
     std::vector<double> cpu_time;
     double t_end;
@@ -206,17 +225,26 @@ template <int dim, int n_fe_degree>
     std::vector<double> delayed_fraction_sum;
 
     // ROM data
-    std::string type_snapshots;
+    std::vector<std::string> type_snapshots;
     unsigned int n_snap;
+    unsigned int init_n_snap;
     unsigned int dim_rom;
-    std::vector<PETScWrappers::MPI::BlockVector> snapshots;
+    std::vector<std::vector<PETScWrappers::MPI::BlockVector>> snapshots;
     std::vector<PETScWrappers::MPI::BlockVector> snap_basis;
+    std::vector<PETScWrappers::MPI::BlockVector> snap_basis_old;
     Vec coeffs_n;
 
 
      // ROM Matrices
     FullMatrix<double> rominvV, romL, romF;
     std::vector<FullMatrix<double>> romXBF;
+
+    // Updating POD
+    unsigned n_sets_snap;
+    std::vector<double> time_intervals_snapshots;
+    double time_init_upd;
+    unsigned int step_rom;
+    std::vector<std::vector<double>> cjk_old;
 
     private:
   };
