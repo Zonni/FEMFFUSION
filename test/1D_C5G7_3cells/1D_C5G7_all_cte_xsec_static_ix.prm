@@ -85,7 +85,7 @@ set Material_Changing = 2
 
 # Type of instability Constant | Ramp
 set Perturbation_Function   = Ramp
-set Slope_Up =0.00
+set Slope_Up = 0.00
 
 
 

@@ -42,12 +42,12 @@ template <int dim>
     frequency = prm.get_double("Frequency");
     xs_amplitude = prm.get_double("Amplitude");
     out_phase = prm.get_double("Out_Phase");
-    slope = prm.get_double("Slope");
-    slope_up = prm.get_double("Slope_Up");
-    slope_down = prm.get_double("Slope_Down");
-    cut_time = prm.get_double("Cut_Time");
-    mat_changing = prm.get_integer("Material_Changing") - 1;
-    mat_changing_1 = prm.get_integer("Material_Changing_1") - 1;
+
+//    mat_changing = prm.get_integer("Material_Changing") - 1;
+    parse_vector(prm.get("Material_Changing"), mat_changing);
+    for (unsigned int i=0; i<mat_changing.size(); i++)
+    mat_changing[i]=mat_changing[i]-1;
+//    mat_changing_1 = prm.get_integer("Material_Changing_1") - 1;
     group_changing = prm.get_integer("Group_Changing") - 1;
     xs_pert_name = prm.get("XS_Name");
     lower_case(xs_pert_name);
@@ -67,6 +67,13 @@ template <int dim>
 
     if (type_perturbation == "Out_Of_Phase")
       perturbation_function = "Sinus";
+
+    // if ramp perturbation
+    if (perturbation_function == "Ramp"){
+    parse_vector(prm.get("Slope_Up"), slope_up);
+    parse_vector(prm.get("Slope_Down"), slope_down);
+    parse_vector(prm.get("Cut_Time"), cut_time);
+    }
 
     // vibration parameters
     direction = prm.get_integer("Direction");
@@ -154,8 +161,6 @@ template <int dim>
     get_double_from_options("-frequency", frequency);
     get_double_from_options("-xs_amplitude", xs_amplitude);
     get_double_from_options("-out_phase", out_phase);
-    get_double_from_options("-slope_up", slope_up);
-
     get_string_from_options("-rod_cusping_treat", rod_cusping_treat);
 
   }
@@ -517,7 +522,7 @@ template <int dim>
 //	AssertRelease(false,
 //			"We must obtain the vectors volume_per_plane and power_axial");
 
-    std::cout << "move_bar_flux_weighting" << std::endl;
+    //std::cout << "move_bar_flux_weighting" << std::endl;
 
     const unsigned int move_dim = dim - 1;
     unsigned int n_assemblies_per_plane = materials.n_assemblies
@@ -735,164 +740,194 @@ template <int dim>
   {
 
     if (sim_time > 0.0)
-      materials.change_mat_value(mat_changing, mat_changing_1);
+      materials.change_mat_value(mat_changing);
 
   }
 
 /**
  * @brief Perturbate a xsec with a function
  */
-template <int dim>
-  void Perturbation<dim>::apply_function_to_perturb (double sim_time)
-  {
+template<int dim>
+void Perturbation<dim>::apply_function_to_perturb(double sim_time)
+{
 
-    if (type_perturbation == "Flux_Distributed")
-    {
-      for (int nmat = 0; nmat < static_cast<int>(materials.get_n_mats());
-          nmat++)
-        modify_xsec(sim_time, nmat);
-    }
-    else if (type_perturbation == "Single_Material")
-    {
-      modify_xsec(sim_time, mat_changing);
-    }
-    else if (type_perturbation == "Out_Of_Phase")
-    {
-      modify_xsec(sim_time, mat_changing, mat_changing_1);
-    }
-  }
+	if (type_perturbation == "Flux_Distributed")
+	{
+		mat_changing.resize(materials.get_n_mats());
+		for (int nmat = 0; nmat < static_cast<int>(materials.get_n_mats());
+				nmat++)
+			mat_changing[nmat] = nmat;
+
+		modify_xsec(sim_time, mat_changing);
+	}
+	else if (type_perturbation == "Single_Material"
+			or type_perturbation == "Out_Of_Phase"
+			or type_perturbation == "Ramp_Two_Mats")
+	{
+		modify_xsec(sim_time, mat_changing);
+	}
+
+}
 
 /**
  * @brief Perturbate a xsec with a function
  */
-template <int dim>
-  void Perturbation<dim>::modify_xsec (double sim_time,
-    unsigned int nmat,
-    unsigned int nmat2)
-  {
+template<int dim>
+void Perturbation<dim>::modify_xsec(double sim_time, std::vector<int> mat_chan)
+{
 
-    std::vector<double> new_xsec(n_groups);
-    std::vector<std::vector<double>> new_xsec_all(4,
-      std::vector<double>(n_groups));
+	std::vector<double> new_xsec(n_groups);
+	std::vector<std::vector<double>> new_xsec_all(4,
+			std::vector<double>(n_groups));
 
-    // The xs_amplitudes in the previous inputs (12/2020) are in %
-    if (perturbation_function == "Sinus")
-    {
+	unsigned int nmat;
 
-      if (group_changing > -1)
-      {
-        AssertRelease(xs_pert_name != "all",
-          "This perturbation is only valid for sigmaf or sigmaa");
-        for (unsigned int ng = 0; ng < n_groups; ng++)
-          new_xsec[ng] = xsec_init[ng][nmat];
+	for (unsigned int nm=0; nm<mat_chan.size(); nm++){
 
-        new_xsec[group_changing] += xs_amplitude
-                                    * sin(2 * M_PI * frequency * sim_time);
+	nmat =mat_chan[nm];
 
-      }
-      else
-      {
-        unsigned int xsec_am = 0;
-        for (unsigned int ng = 0; ng < n_groups; ng++)
-        {
-          if (xs_pert_name == "sigma_f" or xs_pert_name == "sigma_a")
-            new_xsec[ng] = xsec_init[ng][nmat]
-                           + xs_amplitude
-                             * sin(2 * M_PI * frequency * sim_time);
-          else if (xs_pert_name == "all")
-            for (unsigned xsec = 0; xsec < 4; xsec++)
-            {
-              new_xsec_all[xsec][ng] = xsec_init_all[xsec][ng][nmat]
-                                       + amplitudes[xsec_am]
-                                         * sin(2 * M_PI * frequency * sim_time);
-              xsec_am++;
-            }
-        }
-      }
+	// The xs_amplitudes in the previous inputs (12/2020) are in %
+	if (perturbation_function == "Sinus")
+	{
 
-    }
-    else if (perturbation_function == "Constant")
-    {
-      for (unsigned int ng = 0; ng < n_groups; ng++)
-      {
-        if (sim_time > 0.0)
-          new_xsec[ng] = xsec_init[ng][nmat] + 1e-4;
-        else
-          new_xsec[ng] = xsec_init[ng][nmat];
-      }
-    }
-    else if (perturbation_function == "Ramp")
-    {
-      if (group_changing > -1)
-      {
-        for (unsigned int ng = 0; ng < n_groups; ng++)
-          new_xsec[ng] = xsec_init[ng][nmat];
+		if (group_changing > -1)
+		{
+			AssertRelease(xs_pert_name != "all",
+					"This perturbation is only valid for sigmaf or sigmaa");
+			for (unsigned int ng = 0; ng < n_groups; ng++)
+				new_xsec[ng] = xsec_init[ng][nmat];
 
-        if (sim_time < cut_time)
-          new_xsec[group_changing] += xsec_init[group_changing][nmat]
-                                      * (slope_up * sim_time);
-        else
-          new_xsec[group_changing] += xsec_init[group_changing][nmat]
-                                      * (slope_up * cut_time)
-                                      - (xsec_init[group_changing][nmat]
-                                         + xsec_init[group_changing][nmat]
-                                           * (slope_down * cut_time))
-                                        * (slope_down * (sim_time - cut_time));
-      }
-      else
-      {
-        for (unsigned int ng = 0; ng < n_groups; ng++)
-          if (sim_time < cut_time)
-            new_xsec[ng] = xsec_init[ng][nmat]
-                           * (1 + (slope_up * sim_time));
-          else
-            new_xsec[ng] = xsec_init[ng][nmat]
-                           + xsec_init[ng][nmat] * (slope_up * cut_time)
-                           - (xsec_init[ng][nmat]
-                              + xsec_init[ng][nmat]
-                                * (slope_down * cut_time))
-                             * (slope_down * (sim_time - cut_time));
-      }
-    }
-    else if (perturbation_function == "Ramp_hex")
-    {
-      new_xsec[0] = xsec_init[0][nmat];
-      if (sim_time <= 1.0)
-      {
-        new_xsec[1] = 0.118870 * (1 - sim_time) + 0.016917 * sim_time;
-      }
-      else if ((sim_time > 1.0) and sim_time < 2.0)
-      {
-        new_xsec[1] = 0.118870 * (sim_time - 1) + 0.016917 * (2 - sim_time);
-      }
-      else
-      {
-        new_xsec[1] = 0.118870;
-      }
-    }
-    else if (perturbation_function == "Noise_7g")
-    {
-      materials.modify_xsec_7g(xs_pert_name, sim_time, amplitudes, nmat);
-    }
+			new_xsec[group_changing] += xs_amplitude
+					* sin(2 * M_PI * frequency * sim_time + M_PI*nm);
 
-    if (xs_pert_name == "sigma_f" or xs_pert_name == "sigma_a")
-      materials.modify_xsec(xs_pert_name, nmat, new_xsec);
-    else if (xs_pert_name == "all")
-      materials.modify_xsec_all(xs_pert_name, nmat, new_xsec_all);
+		}
+		else
+		{
+			unsigned int xsec_am = 0;
+			for (unsigned int ng = 0; ng < n_groups; ng++)
+			{
+				if (xs_pert_name == "sigma_f" or xs_pert_name == "sigma_a")
+					new_xsec[ng] = xsec_init[ng][nmat]
+							+ xs_amplitude
+									* sin(2 * M_PI * frequency * sim_time + M_PI*nm);
+				else if (xs_pert_name == "all")
+					for (unsigned xsec = 0; xsec < 4; xsec++)
+					{
+						new_xsec_all[xsec][ng] = xsec_init_all[xsec][ng][nmat]
+								+ amplitudes[xsec_am]
+										* sin(2 * M_PI * frequency * sim_time + M_PI*nm);
+						xsec_am++;
+					}
+			}
+		}
 
-    if (nmat2 > 0
-        and (xs_pert_name == "sigma_f" or xs_pert_name == "sigma_a"))
-    {
-      AssertRelease(perturbation_function == "Sinus",
-        "This perturbation is only permited for the sinus instability");
-      for (unsigned int ng = 0; ng < n_groups; ng++)
-        new_xsec[ng] = xsec_init[ng][nmat2]
-                       + xs_amplitude
-                         * sin(2 * M_PI * frequency * sim_time + M_PI);
-      materials.modify_xsec(xs_pert_name, nmat2, new_xsec);
-    }
+	}
+	else if (perturbation_function == "Constant")
+	{
+		for (unsigned int ng = 0; ng < n_groups; ng++)
+		{
+			if (sim_time > 0.0)
+				new_xsec[ng] = xsec_init[ng][nmat] + 1e-4;
+			else
+				new_xsec[ng] = xsec_init[ng][nmat];
+		}
+	}
+	else if (perturbation_function == "Ramp")
+	{
 
-  }
+		if (group_changing > -1)
+		{
+			for (unsigned int ng = 0; ng < n_groups; ng++)
+				new_xsec[ng] = xsec_init[ng][nmat];
+
+			if (sim_time < cut_time[nm])
+				new_xsec[group_changing] += xsec_init[group_changing][nmat]
+						* (slope_up[nm] * sim_time);
+			else
+				new_xsec[group_changing] += xsec_init[group_changing][nmat]
+						* (slope_up[nm] * cut_time[nm])
+						- (xsec_init[group_changing][nmat]
+								+ xsec_init[group_changing][nmat]
+										* (slope_down[nm] * cut_time[nm]))
+								* (slope_down[nm] * (sim_time - cut_time[nm]));
+		}
+		else
+		{
+			for (unsigned int ng = 0; ng < n_groups; ng++)
+				if (sim_time < cut_time[nm])
+					new_xsec[ng] = xsec_init[ng][nmat]
+							* (1 + (slope_up[nm] * sim_time));
+				else
+					new_xsec[ng] = xsec_init[ng][nmat]
+							+ xsec_init[ng][nmat] * (slope_up[nm] * cut_time[nm])
+							- (xsec_init[ng][nmat]
+									+ xsec_init[ng][nmat]
+											* (slope_down[nm] * cut_time[nm]))
+									* (slope_down[nm] * (sim_time - cut_time[nm]));
+		}
+	}
+	else if (perturbation_function == "Ramp_hex")
+	{
+		new_xsec[0] = xsec_init[0][nmat];
+		if (sim_time <= 1.0)
+		{
+			new_xsec[1] = 0.118870 * (1 - sim_time) + 0.016917 * sim_time;
+		}
+		else if ((sim_time > 1.0) and sim_time < 2.0)
+		{
+			new_xsec[1] = 0.118870 * (sim_time - 1) + 0.016917 * (2 - sim_time);
+		}
+		else
+		{
+			new_xsec[1] = 0.118870;
+		}
+	}
+	else if (perturbation_function == "Noise_7g")
+	{
+		materials.modify_xsec_7g(xs_pert_name, sim_time, amplitudes, nmat);
+	}
+
+	if (xs_pert_name == "sigma_f" or xs_pert_name == "sigma_a")
+		materials.modify_xsec(xs_pert_name, nmat, new_xsec);
+	else if (xs_pert_name == "all")
+		materials.modify_xsec_all(xs_pert_name, nmat, new_xsec_all);
+
+
+	}
+
+//	if (nmat2 > 0 and (xs_pert_name == "sigma_f" or xs_pert_name == "sigma_a"))
+//	{
+//		if (perturbation_function == "Sinus" )
+//		{
+//			AssertRelease(perturbation_function == "Sinus",
+//					"This perturbation is only permited for the sinus instability");
+//			for (unsigned int ng = 0; ng < n_groups; ng++)
+//				new_xsec[ng] = xsec_init[ng][nmat2]
+//						+ xs_amplitude
+//								* sin(2 * M_PI * frequency * sim_time + M_PI);
+//
+//		}
+//		else if (perturbation_function == "Ramp")
+//		{
+//			for (unsigned int ng = 0; ng < n_groups; ng++)
+//			{
+//				if (sim_time < cut_time[1])
+//					new_xsec[ng] = xsec_init[ng][nmat2]
+//							* (1 + (slope_up[1] * sim_time));
+//				else
+//					new_xsec[ng] = xsec_init[ng][nmat2]
+//							+ xsec_init[ng][nmat2] * (slope_up[1] * cut_time[1])
+//							- (xsec_init[ng][nmat2]
+//									+ xsec_init[ng][nmat2]
+//											* (slope_down[1] * cut_time[1]))
+//									* (slope_down[1] * (sim_time - cut_time[1]));
+//			}
+//		}
+//
+//		materials.modify_xsec(xs_pert_name, nmat2, new_xsec);
+//	}
+
+}
 
 /*
  * @brief Move Vibrating

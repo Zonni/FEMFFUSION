@@ -41,11 +41,9 @@ rcParams.update(params)
 #     ]
 
 labels = ['FOM','POD-5','RPOD-5']
-out_files =['3D_Langenbuch_ds_bars_fe3.out',
-        '3D_Langenbuch_rom5_bars_fe3.out',
-        '3D_Langenbuch_rrom5_bars_fe3.out'
+out_files =[
+    '3D_VVER440_FE2_ds.out','3D_VVER440_rom_FE2.out'
     ]
-
 
 
 

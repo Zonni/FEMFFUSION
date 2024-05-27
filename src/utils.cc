@@ -1879,6 +1879,53 @@ void parse_vector (std::string input,
 }
 
 /**
+ * @brief Parse a vector from an string. Check at the end if the given vector have
+ * the expected length. If the string is empty return the default input.
+ */
+void parse_vector (std::string input,
+  std::vector<int> &out,
+  unsigned int length,
+  std::vector<int> def)
+{
+  Assert(out.size()==0, ExcMessage("Vector not empty"));
+  trim(input);
+  std::istringstream iss(input);
+  int number;
+  std::string str;
+  out.reserve(length);
+
+// if input is empty return default parameter
+  if (input.empty())
+  {
+    out = def;
+    return;
+  }
+
+  while (iss.good())
+  {
+    iss >> str;
+
+    // Allow "4* 10" notation for repetitions
+    if (*str.rbegin() == '*')
+    {
+      str = str.substr(0, str.size() - 1);
+      iss >> number;
+      int len = Utilities::string_to_int(str);
+      for (unsigned int j = 0; j < len; j++)
+        out.push_back(number);
+    }
+    else
+      out.push_back(Utilities::string_to_int(str));
+  }
+
+  if (length != 0)
+    AssertRelease(out.size() == length,
+      "There aren't the number of arguments it should be \n");
+
+  return;
+}
+
+/**
  * Same as before but for double vector. There is not default values in this case.
  * It exist an special character in order to repeat number:
  * 4* 10.0 = 10.0 10.0 10.0 10.0

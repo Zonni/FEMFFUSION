@@ -757,13 +757,14 @@ void Materials::set_sigma_t (
   sigma_t[group][mat] = sigma_t_coeff;
 }
 
-void Materials::change_mat_value (unsigned int old_material,
-  unsigned int new_material)
+void Materials::change_mat_value (std::vector<int> material_changing)
 {
 
+	AssertRelease(material_changing.size() == 2,
+			"To apply the step perturbation Material_Changing must have 2 elements");
   for (unsigned int c = 0; c < materials_vector.size(); c++)
-    if (materials_vector[c] == old_material)
-      materials_vector[c] = new_material;
+    if (materials_vector[c] == material_changing[0])
+      materials_vector[c] = material_changing[1];
 }
 
 /**

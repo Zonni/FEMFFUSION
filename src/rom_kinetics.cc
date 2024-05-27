@@ -157,6 +157,9 @@ template <int dim, int n_fe_degree>
     aux_power = 1.0;
     step_rom=0;
 
+    verbose_cout << "Initialize the perturbation class" << std::endl;
+    perturbation.init_transient();
+
 
     // Initialize phi //TODO remove
     phi.reinit(local_dofs_vector, comm);
@@ -167,6 +170,8 @@ template <int dim, int n_fe_degree>
 
     // Reinit ROM data
     init_n_snap=prm.get_integer("N_Snapshots");
+	// Initialize snapshots
+	get_uint_from_options("-n_snap", init_n_snap);
     n_snap=init_n_snap;
     n_sets_snap=1;
 
@@ -200,8 +205,7 @@ template <int dim, int n_fe_degree>
     time_vect.reserve(t_end / init_delta_t);
     power_vector.reserve(t_end / init_delta_t);
 
-    verbose_cout << "Initialize the perturbation class" << std::endl;
-    perturbation.init_transient();
+
 
     if (run)
     this->run();
@@ -260,6 +264,8 @@ template <int dim, int n_fe_degree>
 		for (unsigned int j= 0; j < dim_rom; j++){
 			for (unsigned int m= 0; m < snap_basis_old.size(); m++){
 			ajm[j][m]=(snap_basis_old[m]* snap_basis[j])/(snap_basis_old[m]*snap_basis_old[m]);
+
+			std::cout<<"ajm: "<<ajm[j][m]<<std::endl;
 			}
 
 		}
@@ -280,8 +286,6 @@ template <int dim, int n_fe_degree>
 			}
 		}
 	}
-
-
 
 
       for (unsigned int k = 0; k < n_prec; k++)
@@ -313,8 +317,7 @@ void ROMKinetics<dim, n_fe_degree>::get_snapshots(
 		std::string t_snap)
 {
 
-	// Initialize snapshots
-	get_uint_from_options("-n_snap", n_snap);
+
 
 	if (t_snap == "modes")
 		get_snapshots_modes(static_problem, _snapshots);
@@ -331,6 +334,38 @@ void ROMKinetics<dim, n_fe_degree>::get_snapshots(
 		get_snapshots_bar(static_problem, _snapshots, 1);
 		get_snapshots_bar(static_problem, _snapshots, 2);
 	}
+	else if (t_snap == "bank6")
+	{
+		get_snapshots_bar(static_problem, _snapshots, 6);
+	}
+	else if (t_snap == "bank135")
+	{
+		get_snapshots_bar(static_problem, _snapshots, 1);
+		get_snapshots_bar(static_problem, _snapshots, 3);
+		get_snapshots_bar(static_problem, _snapshots, 5);
+	}
+	else if (t_snap == "bank123")
+	{
+		get_snapshots_bar(static_problem, _snapshots, 1);
+		get_snapshots_bar(static_problem, _snapshots, 2);
+		get_snapshots_bar(static_problem, _snapshots, 3);
+	}
+	else if (t_snap == "bank1356")
+	{
+		get_snapshots_bar(static_problem, _snapshots, 1);
+		get_snapshots_bar(static_problem, _snapshots, 3);
+		get_snapshots_bar(static_problem, _snapshots, 5);
+		get_snapshots_bar(static_problem, _snapshots, 6);
+	}
+	else if (t_snap == "bank123456")
+	{
+		get_snapshots_bar(static_problem, _snapshots, 1);
+		get_snapshots_bar(static_problem, _snapshots, 2);
+		get_snapshots_bar(static_problem, _snapshots, 3);
+		get_snapshots_bar(static_problem, _snapshots, 4);
+		get_snapshots_bar(static_problem, _snapshots, 5);
+		get_snapshots_bar(static_problem, _snapshots, 6);
+	}
 	else if (t_snap == "bank12_ihs")
 	{
 		get_snapshots_bar_ihs(static_problem, _snapshots);
@@ -338,6 +373,15 @@ void ROMKinetics<dim, n_fe_degree>::get_snapshots(
 	else if (t_snap == "bank12_time")
 	{
 		get_snapshots_bar_time_variation(static_problem, _snapshots);
+	}
+	else if (t_snap == "ramp_time")
+	{
+		get_snapshots_ramp_time(static_problem, _snapshots);
+	}
+	else if (t_snap == "ramp_time_mat")
+	{
+//		get_snapshots_ramp(static_problem, _snapshots, perturbation.mat_changing,0);
+//		get_snapshots_ramp(static_problem, _snapshots, perturbation.mat_changing_1,1);
 	}
 
 }
@@ -381,16 +425,15 @@ void ROMKinetics<dim, n_fe_degree>::get_snapshots_bar(
 	unsigned int min_s_snap= _snapshots.size();
 	unsigned int max_s_snap= _snapshots.size()+ init_n_snap;
 
-	std::cout<<"min: "<<min_s_snap<<"max: "<<max_s_snap<<std::endl;
 
 	_snapshots.resize(max_s_snap);
 	for (unsigned int ns = min_s_snap; ns < max_s_snap; ns++)
 		_snapshots[ns].reinit(local_dofs_vector, comm);
 
 	double bars_bottom_pos = 0.0;
-	AssertRelease(n_snap > 1, "The number of snapshots must be greater than 1");
+	AssertRelease(init_n_snap > 1, "The number of snapshots must be greater than 1");
 	double step_bar = (perturbation.bars_top_pos - bars_bottom_pos)
-			/ (n_snap - 1);
+			/ (init_n_snap - 1);
 
 	unsigned int bar_material = perturbation.bar_materials[bar_bank - 1];
 
@@ -419,7 +462,7 @@ void ROMKinetics<dim, n_fe_degree>::get_snapshots_bar(
 				<< std::endl;
 	}
 
-	// TODO only for two banks
+
 	n_snap=max_s_snap;
 
 
@@ -442,22 +485,22 @@ void ROMKinetics<dim, n_fe_degree>::get_snapshots_bar_ihs(
 	int seed = 17;
 	int *x;
 	std::vector<std::vector<double>> sample_pos(n_bars,
-			std::vector<double>(n_snap));
+			std::vector<double>(init_n_snap));
 
 	//
 	//  Get the points.
 	//
-	x = ihs(n_bars, n_snap, duplication, seed);
+	x = ihs(n_bars, init_n_snap, duplication, seed);
 	for (int d = 0; d < n_bars; d++)
-		for (int i = 0; i < n_snap; i++){
-			sample_pos[d][i] = static_cast<double>(x[n_bars * i + d]) / n_snap;
+		for (unsigned int i = 0; i < init_n_snap; i++){
+			sample_pos[d][i] = static_cast<double>(x[n_bars * i + d]) / init_n_snap;
 		}
 
 	delete[] x;
 
 	// Compute Snapshots
 	unsigned int min_s_snap = _snapshots.size();
-	unsigned int max_s_snap = _snapshots.size() + n_snap;
+	unsigned int max_s_snap = _snapshots.size() + init_n_snap;
 
 	_snapshots.resize(max_s_snap);
 	for (unsigned int ns = min_s_snap; ns < max_s_snap; ns++)
@@ -514,12 +557,12 @@ void ROMKinetics<dim, n_fe_degree>::get_snapshots_bar_time_variation(
 		StaticDiffusion<dim, n_fe_degree> &static_problem,
 		std::vector<PETScWrappers::MPI::BlockVector> &_snapshots){
 
-	AssertRelease(n_snap > 1, "The number of snapshots must be greater than 1");
+	AssertRelease(init_n_snap > 1, "The number of snapshots must be greater than 1");
 	double sample_time;
 
 	// Compute Snapshots
 	unsigned int min_s_snap = _snapshots.size();
-	unsigned int max_s_snap = _snapshots.size() + n_snap;
+	unsigned int max_s_snap = _snapshots.size() + init_n_snap;
 
 	_snapshots.resize(max_s_snap);
 	for (unsigned int ns = min_s_snap; ns < max_s_snap; ns++)
@@ -529,9 +572,115 @@ void ROMKinetics<dim, n_fe_degree>::get_snapshots_bar_time_variation(
 	for (unsigned int ns = min_s_snap; ns < max_s_snap; ns++)
 	{
 		//for each bar bank
-		sample_time=(t_end-0.0)/(n_snap-1)*ns;
+		sample_time=(t_end-0.0)/(init_n_snap-1)*ns;
 		perturbation.move_bars(sample_time);
 
+		static_problem.cout.set_condition(false);
+		static_problem.show_eps_convergence = false;
+		static_problem.assemble_system_lambda();
+		static_problem.solve_eps();
+		static_problem.phi[0].compress(VectorOperation::insert);
+		_snapshots[ns] = static_problem.phi[0];
+		cout << "Step " << ns
+				<< ", Eigenvalue: " << static_problem.eigenvalues[0]
+				<< std::endl;
+	}
+	n_snap = max_s_snap;
+
+
+}
+
+/**
+ *
+ *
+ *
+ */
+template<int dim, int n_fe_degree>
+void ROMKinetics<dim, n_fe_degree>::get_snapshots_ramp(
+		StaticDiffusion<dim, n_fe_degree> &static_problem,
+		std::vector<PETScWrappers::MPI::BlockVector> &_snapshots,
+		unsigned int mat_chan, double num_mat)
+{
+
+	double sample_time, sample_time_2;
+
+	unsigned int min_s_snap = _snapshots.size();
+	unsigned int max_s_snap = _snapshots.size() + init_n_snap;
+
+	_snapshots.resize(max_s_snap);
+	for (unsigned int ns = min_s_snap; ns < max_s_snap; ns++)
+		_snapshots[ns].reinit(local_dofs_vector, comm);
+
+	// for each snapshot
+	for (unsigned int ns = min_s_snap; ns < max_s_snap; ns++)
+	{
+		//for each bar bank
+		sample_time = (t_end - 0.0) / (init_n_snap - 1) * ns;
+
+
+
+		if (sample_time < perturbation.cut_time[num_mat]
+													and std::abs(perturbation.slope_up[num_mat]) > 0 )
+		{
+			sample_time_2 = (perturbation.cut_time[num_mat] - 0.0) / (init_n_snap - 1) * ns;
+//			perturbation.modify_xsec(sample_time_2, mat_chan);
+
+		}
+		else if ((sample_time > perturbation.cut_time[num_mat]
+														and std::abs(perturbation.slope_down[num_mat])))
+		{
+			sample_time_2 = (t_end-perturbation.cut_time[num_mat]) / (init_n_snap - 1) * ns+perturbation.cut_time[num_mat];
+//						perturbation.modify_xsec(sample_time_2, mat_chan);
+
+						// Aqui tengo que cambiar modify_xsec para que la rampa cambie el slope_up con [0] y [1]
+		}
+		else{
+			return;
+		}
+
+		static_problem.cout.set_condition(false);
+		static_problem.show_eps_convergence = false;
+		static_problem.assemble_system_lambda();
+		static_problem.solve_eps();
+		static_problem.phi[0].compress(VectorOperation::insert);
+		_snapshots[ns] = static_problem.phi[0];
+		cout << "Step " << ns << ", Eigenvalue: "
+				<< static_problem.eigenvalues[0] << std::endl;
+	}
+
+
+	n_snap = max_s_snap;
+
+}
+/**
+ *
+ *
+ *
+ */
+template<int dim, int n_fe_degree>
+void ROMKinetics<dim, n_fe_degree>::get_snapshots_ramp_time(
+		StaticDiffusion<dim, n_fe_degree> &static_problem,
+		std::vector<PETScWrappers::MPI::BlockVector> &_snapshots){
+
+	AssertRelease(init_n_snap > 1, "The number of snapshots must be greater than 1");
+	double sample_time;
+
+	// Compute Snapshots
+	unsigned int min_s_snap = _snapshots.size();
+	unsigned int max_s_snap = _snapshots.size() + init_n_snap;
+
+	_snapshots.resize(max_s_snap);
+	for (unsigned int ns = min_s_snap; ns < max_s_snap; ns++)
+		_snapshots[ns].reinit(local_dofs_vector, comm);
+
+	// for each snapshot
+	for (unsigned int ns = min_s_snap; ns < max_s_snap; ns++)
+	{
+		//for each bar bank
+		sample_time=(t_end-0.0)/(init_n_snap-1)*ns;
+		std::cout<<"sample time: "<<sample_time<<std::endl;
+		perturbation.apply_function_to_perturb(sample_time);
+		std::cout<<"done!"<<std::endl;
 		static_problem.cout.set_condition(false);
 		static_problem.show_eps_convergence = false;
 		static_problem.assemble_system_lambda();
@@ -587,7 +736,8 @@ template <int dim, int n_fe_degree>
 
     if (type_perturbation == "Flux_Distributed"
         or type_perturbation == "Single_Material"
-        or type_perturbation == "Out_Of_Phase")
+        or type_perturbation == "Out_Of_Phase"
+        or type_perturbation == "Ramp_Two_Mats")
     {
       verbose_cout << "Apply function to perturbed " << std::endl;
       perturbation.apply_function_to_perturb(sim_time);
@@ -814,7 +964,7 @@ template <int dim, int n_fe_degree>
   {
 
     double init_time_step = 1e-2;
-    unsigned int max_steps = 1e+3;
+    unsigned int max_steps = 1e+5;
 
     // SOLVER PETSC implemented for a linear system
     TS ts;
@@ -892,6 +1042,12 @@ template <int dim, int n_fe_degree>
     cout << std::setprecision(4) << "Time:   " << time_init_upd + delta_t
          << " ---> Power:  "
          << power_total << std::endl;
+
+    power_vector.push_back(power_total);
+    time_vect.push_back(delta_t);
+    aux_power = power_total;
+    if (out_flag)
+    output_results();
 
 
     //   Get the number of steps
@@ -1481,7 +1637,7 @@ template <int dim, int n_fe_degree>
     double real_time = TSobject->time_init_upd + time ; //0.0 is the initial time
 //    std::cout<<"real time:"<<real_time<<std::endl;
 
-	if (std::abs(TSobject->sim_time - real_time) > 1e-5)
+	if (std::abs(TSobject->sim_time - real_time) > 1e-4)
 	{
 		TSobject->sim_time = real_time;
 		TSobject->update_xsec();

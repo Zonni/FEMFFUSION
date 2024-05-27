@@ -101,6 +101,14 @@ template <int dim, int n_fe_degree>
 			StaticDiffusion<dim, n_fe_degree> &static_problem,
 			std::vector<PETScWrappers::MPI::BlockVector> &_snapshots);
 
+	void get_snapshots_ramp_time(
+			StaticDiffusion<dim, n_fe_degree> &static_problem,
+			std::vector<PETScWrappers::MPI::BlockVector> &_snapshots);
+
+	void get_snapshots_ramp(
+			StaticDiffusion<dim, n_fe_degree> &static_problem,
+			std::vector<PETScWrappers::MPI::BlockVector> &_snapshots,
+			unsigned int mat_chan, double num_mat);
 
 
 	void get_parameters_from_command_line();

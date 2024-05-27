@@ -1,0 +1,84 @@
+# Reactor VVER 440 3D Hexagonal
+# ---------------------------------------------------------------------------
+
+#  Dimensions of the problem (1, 2 or 3)
+set Dimension           = 3
+
+# Number of eigenvalues
+set N_Eigenvalues       = 1
+
+# Finite element Degree
+set FE_Degree           = 1
+
+# Where it is stored the material coefficients
+set N_Refinements       = 0
+
+set Energy_Groups =2
+
+#
+# GEOMETRY
+# Grid Type (Rectangular | Hexagonal | Unstructured)
+set Geometry_Type       = Hexagonal
+
+# Boundary Conditions (0 ZeroFlux) (1 Symmetry) (2 Vaccum)
+set Boundary_Conditions = 3 3 3 3 3 3
+
+set Albedo_Factors= 0.4695 0.4695
+
+# Number of cells per dimension
+set Mesh_Size           = 22 25 12 
+
+# Set the first and last existing cell every row in the reactor plant for output results
+set Geometry_Points     =  1 5 1 10 1 13 1 14 1 17 1 18 1 19 1 20 1 21 1 20 1 21 1 22 1 21 1 22 1 21 1 20 1 21 1 20 1 19 1 18 1 17 1 14 1 13 1 10 1 5 
+
+# Pitch of the cells in x dimension
+set Cell_Pitch_x        = 22* 14.7
+# Pitch of the cells in y dimension
+set Cell_Pitch_y        = 25* 14.7
+# Pitch of the cells in z dimension
+set Cell_Pitch_z        = 12* 25.0
+
+# ".msh File where is the mesh
+set Mesh_Filename       = 3D_VVER440/VVER440.msh
+
+# Filename where it is stored the material cross section
+set XSECS_Filename      = 3D_VVER440/3D_VVER440.xsec
+
+#
+# OUTPUT
+# True/false - Print the grid 
+set Print_Grid_Flag     = false
+
+# True/false - Make a .vtk file with the output 
+set Output_Flag         = false
+
+# Number of Refinements per cell in the .vtk output
+set Out_Refinements     = 2
+
+# Filename where will be written the output
+set Output_Filename     = 3D_VVER440/3D_VVER440_rom_FE1.out
+
+# Filename where it is defined the movement of the banks
+set Bar_Filename     = 3D_VVER440/3D_VVER440.bar
+
+#
+# TIME PARAMETERS
+# Delta time of the iteration
+set Time_Delta          = 0.01
+
+# Final time of the computation
+set Time_End            = 4.0
+
+# INSTABILITY
+# Time Scheme used to solve the time equation Distributed or Modal_Kinetics
+set ROM_Transient       = true
+set ROM_Type_Snapshots  = bank123456
+# set ROM_Time_Break_Snapshots  = 1.0
+# Number of snapshots for the ROM method
+set N_Snapshots         = 5
+
+# Distribution of the instability: Flux_Distributed or Single_Material or Rods
+set Type_Perturbation   = Rods
+# set Rod_Cusping_Method  = fluxwei
+
+

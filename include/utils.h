@@ -657,6 +657,11 @@ void parse_vector (std::string input,
   unsigned int length = 0,
   std::vector<unsigned int> def = std::vector<unsigned int>());
 
+void parse_vector (std::string input,
+  std::vector<int> &out,
+  unsigned int length = 0,
+  std::vector<int> def = std::vector<int>());
+
 /**
  * @brief Same as before but for double vector. There is not default values in this case.
  * It exist an special character in order to repeat number:

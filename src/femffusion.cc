@@ -209,18 +209,16 @@ void prm_declare_entries (ParameterHandler &prm)
     "Amplitude instabilities in %");
   prm.declare_entry("Out_Phase", "3.141592653589793", Patterns::Double(),
     "Phase for the out of phase");
-  prm.declare_entry("Slope", "0.01525", Patterns::Double(),
+  prm.declare_entry("Slope_Up", "0.0", Patterns::Anything(),
     "Slope for the ramp perturbation");
-  prm.declare_entry("Slope_Up", "0.01525", Patterns::Double(),
+  prm.declare_entry("Slope_Down", "0.0", Patterns::Anything(),
     "Slope for the ramp perturbation");
-  prm.declare_entry("Slope_Down", "0.01525", Patterns::Double(),
-    "Slope for the ramp perturbation");
-  prm.declare_entry("Cut_Time", "2.0", Patterns::Double(),
-    "Slope for the ramp perturbation");
-  prm.declare_entry("Material_Changing", "0", Patterns::Integer(),
+  prm.declare_entry("Cut_Time", "100.0", Patterns::Anything(),
+    "Cut Time for the ramp perturbation");
+  prm.declare_entry("Material_Changing", "", Patterns::Anything(),
     "Material where the instability is inserted");
-  prm.declare_entry("Material_Changing_1", "0", Patterns::Integer(),
-    "Second Material where the instability is inserted");
+//  prm.declare_entry("Material_Changing_1", "0", Patterns::Integer(),
+//    "Second Material where the instability is inserted");
   prm.declare_entry("Group_Changing", "0", Patterns::Integer(),
     "Second Material where the instability is inserted");
   prm.declare_entry("XS_Name", "Sigma_f", Patterns::Anything(),
@@ -232,7 +230,7 @@ void prm_declare_entries (ParameterHandler &prm)
     "Time Scheme used to solve the distributed time equation");
   prm.declare_entry("Type_Perturbation", "None",
     Patterns::Selection(
-      "Flux_Distributed | Single_Material | Out_Of_Phase | Step_Change_Material "
+      "Flux_Distributed | Single_Material | Out_Of_Phase | Ramp_Two_Mats | Step_Change_Material "
       "| Rods | AECL | Mechanical_Vibration | Read_XS_File | Read_XML_File | C5G7-TD1.1 | None"),
     "Distribution of the instability: Flux_Distributed or Single_Material");
   prm.declare_entry("Perturbation_Function", "Constant",

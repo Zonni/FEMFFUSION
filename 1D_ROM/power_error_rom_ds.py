@@ -33,17 +33,9 @@ params = {'backend': 'pdf',
 
 rcParams.update(params)
 
-# labels = ['FOM','POD-3','POD-5','POD-10']
-# out_files =['3D_Langenbuch_ds_bars_fe3.out',
-#     '3D_Langenbuch_rom3_bars_fe3.out',
-#         '3D_Langenbuch_rom5_bars_fe3.out',
-#         '3D_Langenbuch_rom10_bars_fe3.out'
-#     ]
 
 labels = ['FOM','POD-5','RPOD-5']
-out_files =['3D_Langenbuch_ds_bars_fe3.out',
-        '3D_Langenbuch_rom5_bars_fe3.out',
-        '3D_Langenbuch_rrom5_bars_fe3.out'
+out_files =['1D_ROM_ds.out','1D_ROM_pod.out',
     ]
 
 
