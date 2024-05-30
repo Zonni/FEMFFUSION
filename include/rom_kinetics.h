@@ -85,7 +85,7 @@ template <int dim, int n_fe_degree>
 
     // Build problem
 	void init_time_computation();
-	void get_snapshots(StaticDiffusion<dim, n_fe_degree> &static_problem,
+	void get_snapshots(ParameterHandler &prm,StaticDiffusion<dim, n_fe_degree> &static_problem,
 			std::vector<PETScWrappers::MPI::BlockVector> &_snapshots,
 			std::string t_snap);
 	void get_snapshots_modes(StaticDiffusion<dim, n_fe_degree> &static_problem,
@@ -102,6 +102,11 @@ template <int dim, int n_fe_degree>
 			std::vector<PETScWrappers::MPI::BlockVector> &_snapshots);
 
 	void get_snapshots_ramp_time(
+			StaticDiffusion<dim, n_fe_degree> &static_problem,
+			std::vector<PETScWrappers::MPI::BlockVector> &_snapshots);
+
+	void get_snapshots_ramp_time_dyn(
+			ParameterHandler &prm,
 			StaticDiffusion<dim, n_fe_degree> &static_problem,
 			std::vector<PETScWrappers::MPI::BlockVector> &_snapshots);
 

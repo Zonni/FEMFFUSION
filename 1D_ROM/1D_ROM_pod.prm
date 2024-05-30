@@ -58,8 +58,7 @@ set XS_Name             = Sigma_a
 
 # Distribution of the instability: Flux_Distributed or Single_Material
 set Type_Perturbation   = Ramp_Two_Mats
-set Material_Changing = 2
-set Material_Changing_1 = 3
+set Material_Changing = 2 3
 
 
 # Type of instability Constant | Ramp
@@ -69,8 +68,8 @@ set Slope_Down              = 0.0 -0.001
 set Cut_Time                = 0.1  1.0
 
 # ROM Parameters
-set ROM_Type_Snapshots  = ramp_time_mat 
-# set ROM_Time_Break_Snapshots  = 
+set ROM_Type_Snapshots  = ramp_time_mat1 ramp_time_mat12 ramp_time_mat2
+set ROM_Time_Break_Snapshots  = 0.1 1.0
 # Number of snapshots for the ROM method
 set N_Snapshots         = 10
 

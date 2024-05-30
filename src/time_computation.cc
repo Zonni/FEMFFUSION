@@ -78,7 +78,8 @@ template <int dim, int n_fe_degree>
     ParameterHandler &prm,
     StaticDiffusion<dim, n_fe_degree> &static_problem,
     const bool verbose,
-    const bool silent) :
+    const bool silent,
+	const bool to_run) :
       comm(MPI_COMM_WORLD),
       n_mpi_processes(Utilities::MPI::n_mpi_processes(comm)),
       this_mpi_process(Utilities::MPI::this_mpi_process(comm)),
@@ -184,6 +185,7 @@ template <int dim, int n_fe_degree>
     verbose_cout << "Initialize the perturbation class" << std::endl;
     perturbation.init_transient();
 
+    if (to_run)
     this->run();
   }
 
@@ -1429,6 +1431,15 @@ template <int dim, int n_fe_degree>
       }
 
       power_total = norm / volume;
+
+      norm /= volume;
+
+	  // Normalize the values of the power and fluxes per cell
+	  normalize_vector(power_per_assembly[0], norm);
+
+//
+//      for (unsigned int i=0; i<power_per_assembly[0].size(); i++)
+//      power_per_assembly[0][i]/=volume;
 
       if (print_timefile and (step % print_step == 0))
       {
