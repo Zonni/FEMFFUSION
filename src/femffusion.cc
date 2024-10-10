@@ -280,6 +280,12 @@ void prm_declare_entries (ParameterHandler &prm)
     "Time Break of Snapshots used in ROM calculation");
   prm.declare_entry("N_Snapshots", "2", Patterns::Integer(),
     "Number of snapshots for the ROM method");
+  prm.declare_entry("ROM_Slope_Up", "0.0", Patterns::Anything(),
+    "Slope for the ramp perturbation");
+  prm.declare_entry("ROM_Slope_Down", "0.0", Patterns::Anything(),
+    "Slope for the ramp perturbation");
+  prm.declare_entry("ROM_Cut_Time", "100.0", Patterns::Anything(),
+    "Cut Time for the ramp perturbation");
 
 }
 

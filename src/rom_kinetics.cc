@@ -183,6 +183,8 @@ template <int dim, int n_fe_degree>
     for (unsigned int ns=0; ns<n_sets_snap; ns++)
     	std::cout<<"type: "<<ns<<": "<<type_snapshots[ns]<<std::endl;
 
+
+
     // Get snapshots
     snapshots.resize(n_sets_snap);
     for (unsigned int ns=0; ns<type_snapshots.size(); ns++){
@@ -413,6 +415,19 @@ void ROMKinetics<dim, n_fe_degree>::get_snapshots(
 	{
 		get_snapshots_ramp(static_problem, _snapshots, perturbation.mat_changing[0],0);
 		get_snapshots_ramp(static_problem, _snapshots, perturbation.mat_changing[1],1);
+	}
+	else if (t_snap == "ramp_time_change_mat1")
+	{
+		get_snapshots_ramp_change(prm,static_problem, _snapshots, perturbation.mat_changing[0],0);
+	}
+	else if (t_snap == "ramp_time_change_mat2")
+	{
+		get_snapshots_ramp_change(prm,static_problem, _snapshots, perturbation.mat_changing[1],1);
+	}
+	else if (t_snap == "ramp_time_change_mat12")
+	{
+		get_snapshots_ramp_change(prm,static_problem, _snapshots, perturbation.mat_changing[0],0);
+		get_snapshots_ramp_change(prm,static_problem, _snapshots, perturbation.mat_changing[1],1);
 	}
 	else
 	{
@@ -752,6 +767,89 @@ void ROMKinetics<dim, n_fe_degree>::get_snapshots_ramp(
 			mat_chan_vector.push_back(1);
 			mat_chan_vector.push_back(-1);
 			perturbation.modify_xsec(perturbation.cut_time[0], mat_chan_vector);
+
+		}
+		else{
+			continue;
+		}
+
+		static_problem.cout.set_condition(false);
+		static_problem.show_eps_convergence = false;
+		static_problem.assemble_system_lambda();
+		static_problem.solve_eps();
+		static_problem.phi[0].compress(VectorOperation::insert);
+		_snapshots[ns] = static_problem.phi[0];
+		cout << "Step " << ns << ", Eigenvalue: "
+				<< static_problem.eigenvalues[0] << std::endl;
+	}
+
+
+	n_snap = max_s_snap;
+
+}
+
+/**
+ *
+ *
+ *
+ */
+template<int dim, int n_fe_degree>
+void ROMKinetics<dim, n_fe_degree>::get_snapshots_ramp_change(ParameterHandler &prm,
+		StaticDiffusion<dim, n_fe_degree> &static_problem,
+		std::vector<PETScWrappers::MPI::BlockVector> &_snapshots,
+		unsigned int mat_chan, double num_mat)
+{
+
+	double sample_time, sample_time_2;
+
+	unsigned int min_s_snap = _snapshots.size();
+	unsigned int max_s_snap = _snapshots.size() + init_n_snap;
+
+	_snapshots.resize(max_s_snap);
+	for (unsigned int ns = min_s_snap; ns < max_s_snap; ns++)
+		_snapshots[ns].reinit(local_dofs_vector, comm);
+
+	std::vector<int> mat_chan_vector;
+
+	std::vector<double> ROM_Slope_Up;
+	std::vector<double> ROM_Slope_Down;
+	std::vector<double> ROM_Cut_Time;
+
+	parse_vector(prm.get("ROM_Slope_Up"), ROM_Slope_Up);
+	parse_vector(prm.get("ROM_Slope_Down"), ROM_Slope_Down);
+	parse_vector(prm.get("ROM_Cut_Time"), ROM_Cut_Time);
+
+
+
+	std::cout<<"-------------MAT CHAN"<<mat_chan<<std::endl;
+
+	// for each snapshot
+	for (unsigned int ns = min_s_snap; ns < max_s_snap; ns++)
+	{
+
+
+		if (std::abs(ROM_Slope_Up[num_mat]) > 0 )
+		{
+			std::cout<<"slope_up"<<std::endl;
+			mat_chan_vector.clear();
+			mat_chan_vector.push_back(mat_chan);
+			sample_time_2 = (ROM_Cut_Time[num_mat] - 0.0) / (init_n_snap - 1) * (ns-min_s_snap);
+			perturbation.modify_xsec(sample_time_2, mat_chan_vector);
+
+		}
+		else if (std::abs(ROM_Slope_Down[num_mat])>0)
+		{
+			std::cout<<"--slope_down"<<std::endl;
+			mat_chan_vector.clear();
+			mat_chan_vector.push_back(-1);
+			mat_chan_vector.push_back(mat_chan);
+			sample_time_2 = (t_end-ROM_Cut_Time[num_mat]) / (init_n_snap - 1) * (ns-min_s_snap) + ROM_Cut_Time[num_mat];
+			perturbation.modify_xsec(sample_time_2, mat_chan_vector);
+			//TODO
+			mat_chan_vector.clear();
+			mat_chan_vector.push_back(1);
+			mat_chan_vector.push_back(-1);
+			perturbation.modify_xsec(ROM_Cut_Time[0], mat_chan_vector);
 
 		}
 		else{
@@ -1173,8 +1271,8 @@ template <int dim, int n_fe_degree>
 
     //   This indicates that we are using pseudo timestepping to
     //   find a steady state solution to the nonlinear problem.
-    //TSSetType(ts, TSBDF);//
-    TSSetType(ts, TSBEULER);
+    TSSetType(ts, TSBDF);//
+    //TSSetType(ts, TSBEULER);
 
     //   Set the initial time to start at (this is arbitrary for
     //   steady state problems); and the initial timestep given above

@@ -36,11 +36,16 @@ rcParams.update(params)
 
 
 labels = ['FOM','POD-5','RPOD-5']
-out_files =['1D_ROM_ds.out','1D_ROM_pod.out', 
+out_files =['1D_ROM_ds.out','1D_ROM_pod_mats.out', 
     ]
-out_time_files =['1D_ROM_ds_time.out','1D_ROM_pod_time.out',
+out_time_files =['1D_ROM_ds_time.out','1D_ROM_pod_mats_time.out',
     ]
 
+#labels = ['FOM','POD-5','RPOD-5']
+#out_files =['1D_ROM_ds.out'
+#   ]
+#out_time_files =['1D_ROM_ds_time.out'
+#    ]
 
 
 powers = []

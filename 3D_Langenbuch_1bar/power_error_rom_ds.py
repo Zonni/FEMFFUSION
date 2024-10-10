@@ -40,8 +40,11 @@ rcParams.update(params)
 #         '3D_Langenbuch_rom10_bars_fe3.out'
 #     ]
 
-labels = ['FOM']
-out_files =['3D_Langenbuch_ds_bars_fe3.out']
+labels = ['FOM','POD-5','RPOD-5']
+out_files =['3D_Langenbuch_ds_bars_fe3.out',
+        '3D_Langenbuch_rom5_bars_fe3.out',
+        '3D_Langenbuch_rrom5_bars_fe3.out'
+    ]
 
 
 
@@ -81,7 +84,7 @@ ax.grid(True)
 ax.legend()
 ax.set_xlabel('t (s)')
 ax.set_ylabel('Relative Power')
-fig.savefig('langenbuch_fom.pdf', format='pdf')
+fig.savefig('langenbuch_rrom.pdf', format='pdf')
 
 
 
