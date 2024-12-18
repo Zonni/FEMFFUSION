@@ -253,6 +253,7 @@ template <int dim, int n_fe_degree>
     Vec coeffs_n;
 
 
+
      // ROM Matrices
     FullMatrix<double> rominvV, romL, romF;
     std::vector<FullMatrix<double>> romXBF;
@@ -263,6 +264,10 @@ template <int dim, int n_fe_degree>
     double time_init_upd;
     unsigned int step_rom;
     std::vector<std::vector<double>> cjk_old;
+
+    unsigned int n_matsvecs;
+
+    bool update;
 
     private:
   };

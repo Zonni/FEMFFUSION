@@ -208,6 +208,9 @@ template <int dim, int n_fe_degree>
     time_vect.reserve(t_end / init_delta_t);
     power_vector.reserve(t_end / init_delta_t);
 
+    n_matsvecs=0;
+
+    update=true;
 
 
     if (run)
@@ -352,8 +355,11 @@ void ROMKinetics<dim, n_fe_degree>::get_snapshots(
 	}
 	else if (t_snap == "bank12")
 	{
+		Timer _time_bank12;
+		_time_bank12.start();
 		get_snapshots_bar(static_problem, _snapshots, 1);
 		get_snapshots_bar(static_problem, _snapshots, 2);
+		std::cout<<"Time bank 12: "<<_time_bank12.cpu_time()<<std::endl;
 	}
 	else if (t_snap == "bank6")
 	{
@@ -393,14 +399,17 @@ void ROMKinetics<dim, n_fe_degree>::get_snapshots(
 	}
 	else if (t_snap == "bank12_time")
 	{
+		// Solve static problems each time step
 		get_snapshots_bar_time_variation(static_problem, _snapshots);
 	}
 	else if (t_snap == "ramp_time")
 	{
+		// Solve static problems with large time-steps for ramps
 		get_snapshots_ramp_time(static_problem, _snapshots);
 	}
-	else if (t_snap == "ramp_time_dyn")
+	else if (t_snap == "time_dyn")
 	{
+		// Solve the time dependent problem with large time-steps
 		get_snapshots_ramp_time_dyn(prm,static_problem, _snapshots);
 	}
 	else if (t_snap == "ramp_time_mat1")
@@ -1200,14 +1209,38 @@ template <int dim, int n_fe_degree>
 	for (unsigned int p=0; p<n_prec; p++)
 		romXBF[p] = FullMatrix<double>(dim_rom);
 
-	for (unsigned int b1 = 0; b1 < dim_rom; b1++)
-	      for (unsigned int b2 = 0; b2 < dim_rom; b2++){
-	    	  romV(b1, b2) = V.vmult_dot(snap_basis[b1], snap_basis[b2]);
-	    	  romL(b1, b2) = L.vmult_dot(snap_basis[b1], snap_basis[b2]);
-	    	  romF(b1, b2) = F.vmult_dot(snap_basis[b1], snap_basis[b2]);
-	    	  for(unsigned int p=0; p<n_prec; p++)
-	    		 romXBF[p](b1,b2)=XBF[p].vmult_dot(snap_basis[b1], snap_basis[b2]);
-	      }
+	PETScWrappers::MPI::BlockVector auxv(snap_basis[0]);
+	PETScWrappers::MPI::BlockVector auxl(snap_basis[0]);
+	PETScWrappers::MPI::BlockVector auxf(snap_basis[0]);
+	std::vector<PETScWrappers::MPI::BlockVector> auxxbf(n_prec);
+
+	for (unsigned int b2 = 0; b2 < dim_rom; b2++)
+	{
+		V.vmult(auxv, snap_basis[b2]);
+		n_matsvecs++;
+		L.vmult(auxl, snap_basis[b2]);
+		n_matsvecs++;
+		F.vmult(auxf, snap_basis[b2]);
+		n_matsvecs++;
+
+		for (unsigned int p = 0; p < n_prec; p++)
+		{
+			auxxbf[p].reinit(snap_basis[0]);
+			XBF[p].vmult(auxxbf[p], snap_basis[b2]);
+			n_matsvecs++;
+		}
+
+		for (unsigned int b1 = 0; b1 < dim_rom; b1++)
+		{
+			romV(b1, b2) = auxv * snap_basis[b1];
+			romL(b1, b2) = auxl * snap_basis[b1];
+			romF(b1, b2) = auxf * snap_basis[b1];
+			for (unsigned int p = 0; p < n_prec; p++)
+			{
+				romXBF[p](b1, b2) = auxxbf[p] * snap_basis[b1];
+			}
+		}
+	}
 
 //	std::cout<<"romV:"<<std::endl;
 //	romV.print(std::cout,10);
@@ -1237,7 +1270,7 @@ template <int dim, int n_fe_degree>
   void ROMKinetics<dim, n_fe_degree>::solve_system_petsc ()
   {
 
-    double init_time_step = 1e-2;
+    double init_time_step = 1e-3;
     unsigned int max_steps = 1e+5;
 
     // SOLVER PETSC implemented for a linear system
@@ -1272,7 +1305,7 @@ template <int dim, int n_fe_degree>
     //   This indicates that we are using pseudo timestepping to
     //   find a steady state solution to the nonlinear problem.
     TSSetType(ts, TSBDF);//
-    //TSSetType(ts, TSBEULER);
+//    TSSetType(ts, TSBEULER);
 
     //   Set the initial time to start at (this is arbitrary for
     //   steady state problems); and the initial timestep given above
@@ -1887,10 +1920,13 @@ void ROMKinetics<dim, n_fe_degree>::run()
 
 	}
 
-	cout << "            Finished in " << timer.cpu_time() << " s."			<< std::endl;
 
-	cout << "            time_get_snap " << time_get_snap << " s."			<< std::endl;
+
+	cout << "            time_get_snap: " << time_get_snap << " s."			<< std::endl;
 	cout << "            time_ROM: " <<  timer.cpu_time() -time_get_snap  << " s."			<< std::endl;
+	cout << "            Number of mat-vec product " << n_matsvecs 		<<"\n"<< std::endl;
+
+	cout << "            Finished in " << timer.cpu_time() << " s."			<< std::endl;
 
 
 }
@@ -1929,6 +1965,7 @@ template <int dim, int n_fe_degree>
 		TSobject->sim_time = real_time;
 		TSobject->update_xsec();
 		TSobject->assemble_ROM_matrices();
+
 	}
 
     for (unsigned int i = 0; i < (n_prec + 1) * dim_rom; i++)

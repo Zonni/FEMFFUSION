@@ -1,0 +1,72 @@
+# TEST 1D Noise -- 2 Groups
+# ---------------------------------------------------------------------------
+#
+
+# Dimension of the problem (1, 2 or 3)
+set Dimension            = 1
+
+# Number of eigenvalues required
+set N_Eigenvalues        = 1
+
+# Energy groups
+set Energy_Groups        = 2
+
+
+#
+# REACTOR and MESH DEFINITION
+# Finite element degree
+set FE_Degree            = 3
+ 
+# Number of global refinements
+set N_Refinements        = 0
+
+# Number of cells per dimension
+set Mesh_Size            = 60
+set Cell_Pitch_x         = 60* 5.00
+
+# Boundary Conditopns (LEFT RIGHT DOWN UP)   (0 ZeroFlux) (1 ZeroCurrent) (2 Vaccum) (3 Albedo)
+set Boundary_Conditions  = 2 2
+ 
+# 
+# OUT OPTIONS
+# Filename where will be written the output.
+set Output_Filename      = 1D_ROM/1D_ROM_pod_dyn_step.out
+
+# True/false - Make a .vtk file with the output
+set Output_Flag          = false
+
+# True/false - Print the grid in .eps
+set Print_Grid_Flag      = false
+
+# TIME OPTIONS
+set ROM_Transient            = true
+
+# Delta time of the iteration
+set Time_Delta          = 0.01
+
+# Final time of the computation
+set Time_End            = 0.05
+ 
+# Input types
+set XSECS_Filename       = 1D_ROM/1D_ROM.xsec
+
+
+
+# Cross Section where the Sigma_f/Sigma_a
+set XS_Name             = Sigma_a
+
+
+# Distribution of the instability: Flux_Distributed or Single_Material
+set Type_Perturbation   = Single_Material
+set Material_Changing = 2
+
+
+# Type of instability Constant | Ramp
+set Perturbation_Function   = Constant
+
+# ROM Parameters
+set ROM_Type_Snapshots  = ramp_time
+# Number of snapshots for the ROM method
+set N_Snapshots         = 10
+
+

@@ -250,6 +250,9 @@ template <int dim, int n_fe_degree>
     bool adaptive_timestep;
     bool vver_reactor;
     PETScWrappers::MPI::BlockVector u0, u1, u2;
+
+    unsigned int n_matsvecs;
+
   };
 
 #endif /* TIME_COMPUTATION_H_ */

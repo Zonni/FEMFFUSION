@@ -185,6 +185,8 @@ template <int dim, int n_fe_degree>
     verbose_cout << "Initialize the perturbation class" << std::endl;
     perturbation.init_transient();
 
+    n_matsvecs=0;
+
     if (to_run)
     this->run();
   }
@@ -2046,6 +2048,8 @@ template <int dim, int n_fe_degree>
          / preconditioner.n_applications_coarse
       << std::endl;
 
+    cout << "            Number of mat-vec products: " << n_matsvecs << " s." << std::endl;
+
     cout << "            Finished in " << timer.cpu_time() << " s." << std::endl;
   }
 
@@ -2091,6 +2095,7 @@ template <int dim, int n_fe_degree>
     // Multiplication
     copy_to_BlockVector(src_block, src_);
     TSobject->Tfree.vmult(dst_block, src_block);
+    TSobject->n_matsvecs++;
     copy_to_Vec(dst_, dst_block);
 
     for (unsigned int ng = 0; ng < TSobject->n_groups; ng++)

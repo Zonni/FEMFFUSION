@@ -40,8 +40,10 @@ rcParams.update(params)
 #         '3D_Langenbuch_rom10_bars_fe3.out'
 #     ]
 
-labels = ['FOM']
-out_files =['3D_Langenbuch_ds_bars_fe3.out']
+labels = ['FOM','ROM-10-Static','ROM-10-Dyn']
+out_files =['3D_Langenbuch_ds_bars_fe2.out','3D_Langenbuch_rom5_bars_fe2.out','3D_Langenbuch_rom10_dyn_fe2.out'
+    ]
+
 
 
 
