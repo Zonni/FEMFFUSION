@@ -133,6 +133,7 @@ template <int dim, int n_fe_degree>
 //	rod_cusping = prm.get("Rod_Cusping_Method");
     time_scheme = prm.get("Distributed_Time_Scheme");
     lower_case(time_scheme);
+    print_timefile = prm.get_bool("Print_Time_Dependent_Data");
 
     // Solver parameters
     init_delta_t = prm.get_double("Time_Delta");
@@ -1138,9 +1139,9 @@ template <int dim, int n_fe_degree>
     {
 
       // Setup the preconditioner
-      cout << "   setup_preconditioner... " << std::flush;
+      verbose_cout << "   setup_preconditioner... " << std::flush;
       setup_preconditioner();
-      cout << "   Done!!: " << std::endl;
+      verbose_cout << "   Done!!: " << std::endl;
 
       // Setup the solver
       KSPCreate(comm, &ksp);
@@ -1172,7 +1173,7 @@ template <int dim, int n_fe_degree>
     totalits += its;
 
     if (step % out_interval == 0)
-      cout << "   its: " << its << std::endl;
+      verbose_cout << "   its: " << its << std::endl;
 
     solve_precursors();
 
@@ -1907,9 +1908,7 @@ template <int dim, int n_fe_degree>
 
     if (print_timefile and this_mpi_process == 0)
     {
-      filename_time = out_file;
-      filename_time.erase(filename_time.end() - 4, filename_time.end());
-      filename_time = filename_time + "_time.out";
+      filename_time = out_file + ".time";
       std::ofstream out(filename_time.c_str(), std::ios::out);
     }
 
@@ -1966,17 +1965,22 @@ template <int dim, int n_fe_degree>
       postprocess_noise();
 
       // ------------------------------------------------------------------------
-      //if (step % out_interval == 0)
-      //{
-      cout << " Step " << step << " at t=" << sim_time << std::endl;
-      cout << "                         Total Power " << power_total
-           << "   Time = "
-           << timer.cpu_time() << std::endl;
+      if (step % out_interval == 0)
+      {
+      cout << std::defaultfloat << std::setfill(' ');
+      cout << " Step "<< std::setw(5) << step;
+      cout << std::fixed << std::setprecision(4) << std::setfill('0');
+      cout << " at t=" <<  std::setw(5)<< sim_time << std::flush;
+      cout << std::fixed << std::setprecision(4) << std::setfill('0');
+      cout << "   Total Power " <<  std::setw(6) << power_total;
+      cout << std::fixed << std::setprecision(3) << std::setfill('0');
+      cout   << "   CPU Time = "<<  std::setw(5);
+      cout    << timer.cpu_time() << std::endl;
 
       verbose_cout << "   Step Done." << " Time = " << timer.cpu_time()
                    << " s."
                    << std::endl;
-      //}
+      }
 
       // ------------------------------------------------------------------------
 
@@ -1991,7 +1995,7 @@ template <int dim, int n_fe_degree>
       PetscMemorySetGetMaximumUsage();
       PetscLogDouble memory;
       PetscMemoryGetMaximumUsage(&memory);
-      cout << "   Max Memory " << memory * 1e-6 << " MB" << std::endl;
+      verbose_cout << "   Max Memory " << memory * 1e-6 << " MB" << std::endl;
 
       verbose_cout << "---------------------------------------------------"
                    << std::endl;
@@ -2005,7 +2009,7 @@ template <int dim, int n_fe_degree>
       step++;
 
       if (step % out_interval == 0)
-        cout << "   Update the time step...    " << delta_t[step] << std::endl;
+        verbose_cout << "   Update the time step...    " << delta_t[step] << std::endl;
 
       sim_time += delta_t[step];
 
@@ -2037,7 +2041,7 @@ template <int dim, int n_fe_degree>
     if (out_matlab.is_open())
       out_matlab.close();
 
-    cout << "Total its: " << totalits << ", mean by it:"
+    verbose_cout << "Total its: " << totalits << ", mean by it:"
          << double(totalits) / step
          << std::endl;
 
@@ -2048,7 +2052,7 @@ template <int dim, int n_fe_degree>
          / preconditioner.n_applications_coarse
       << std::endl;
 
-    cout << "            Number of mat-vec products: " << n_matsvecs << " s." << std::endl;
+    verbose_cout << "            Number of mat-vec products: " << n_matsvecs << std::endl;
 
     cout << "            Finished in " << timer.cpu_time() << " s." << std::endl;
   }

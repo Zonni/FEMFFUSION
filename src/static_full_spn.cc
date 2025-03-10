@@ -20,6 +20,8 @@
 #include "../include/matrix_operators/matrix_operators_petsc.h"
 #include "../include/printing.h"
 
+#include <filesystem>
+
 using namespace dealii;
 
 /**
@@ -1185,9 +1187,13 @@ template <int dim, int n_fe_degree>
     // Make reactor critical
     materials.make_critical(eigenvalues[0]);
 
+    // Create Folder if Does not exist
+	std::size_t pos = out_file.find_last_of('/');
+	std::string folderPath = (pos != std::string::npos) ? out_file.substr(0, pos) : "";
+	if (!std::filesystem::exists(folderPath))
+		std::filesystem::create_directory(folderPath);
     // Erase the content of output file
-    std::ofstream
-    out(out_file.c_str(), std::ios::out);
+    std::ofstream  out(out_file.c_str(), std::ios::out);
 
     // Print the eigenvalues in the outFile
     print_logo(out);

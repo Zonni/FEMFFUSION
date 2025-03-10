@@ -5,7 +5,7 @@ Editor de Spyder
 Este es un archivo temporal.
 """
 import sys
-#sys.path.append('../postprocess')
+sys.path.append('../postprocess')
 from utils import get_td_power, get_td_time
 import numpy as np
 import matplotlib.pyplot as plt
@@ -34,12 +34,17 @@ params = {'backend': 'pdf',
 
 rcParams.update(params)
 
-
-labels = ['FOM','POD-5','RPOD-5']
-out_files =['1D_ROM_ds.out','1D_ROM_pod_mats.out', 
-    ]
-out_time_files =['1D_ROM_ds_time.out','1D_ROM_pod_mats_time.out',
-    ]
+markers = ['-', 'o', '*', '^', 'v',  'X', '+', "d", 'x']
+labels = ['FOM','POD-STA-10','POD-STA-20', 'POD-MATS-10', 'LUPOD-MATS-10', 'LUPOD-MATS-60']
+out_files =['1D_ROM_td.out', 
+            '1D_ROM_pod_sta10.out', 
+            '1D_ROM_pod_sta20.out',
+            '1D_ROM_rampmat12_10.out',
+            '1D_ROM_rampmat12_LUPOD10.out',
+            '1D_ROM_reinit_10.out'
+            ]
+# out_time_files =['1D_ROM_ds_time.out','1D_ROM_pod_mats_time.out'
+#                  ]
 
 #labels = ['FOM','POD-5','RPOD-5']
 #out_files =['1D_ROM_ds.out'
@@ -50,7 +55,7 @@ out_time_files =['1D_ROM_ds_time.out','1D_ROM_pod_mats_time.out',
 
 powers = []
 time = []
-local_pows = []
+# local_pows = []
 
 for i in range(len(out_files)):
     print(i)
@@ -60,8 +65,8 @@ for i in range(len(out_files)):
     
 
 
-    _, _, local_pow = parse_time_file(out_time_files[i])
-    local_pows.append(local_pow)
+    # _, _, local_pow = parse_time_file(out_time_files[i])
+    # local_pows.append(local_pow)
 
 
 #%% ===========================================================================
@@ -73,32 +78,14 @@ ax = fig.add_subplot(1, 1, 1)
 error_power=[];
 # ax.plot(time, power, label='Δt = 0.1 s')
 for i in range(len(out_files)):
-    ax.plot(time[i], powers[i],  label=labels[i])
-
-    x = time[i]
-    y = powers[i]
-    spl = CubicSpline(x, y)
-    ynew=spl(time[0])
-
-    error_power = np.mean(abs(powers[0]-ynew)/powers[0]) *100
-    err_local = []
-    max_errs = []
-    for t in range(len(local_pows[0])):
-        mean_err, maxs, _, _ = compare_distributions(local_pows[i][t], local_pows[0][t] )
-        err_local.append(mean_err)
-        max_errs.append(maxs)
-    mean_local_err = np.mean(err_local)
-    
-    
-    data = [labels[i], error_power, mean_local_err, max(max_errs)]
-    print(latex_row(data))
+    ax.plot(time[i], powers[i], markers[i],  label=labels[i], )
     
 
 ax.grid(True)
 ax.legend()
 ax.set_xlabel('t (s)')
 ax.set_ylabel('Relative Power')
-fig.savefig('langenbuch_rrom.pdf', format='pdf')
+fig.savefig('1D_ROM.pdf', format='pdf')
 
 
 

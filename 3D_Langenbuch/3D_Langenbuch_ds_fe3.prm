@@ -61,7 +61,7 @@ set Bar_Filename     = 3D_Langenbuch/3D_Langenbuch.bar
 #
 # TIME PARAMETERS
 # Delta time of the iteration
-set Time_Delta          = 0.1
+set Time_Delta          = 0.01
 
 # Final time of the computation
 set Time_End            = 60.0

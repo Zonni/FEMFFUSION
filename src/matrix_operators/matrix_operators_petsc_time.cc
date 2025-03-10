@@ -554,17 +554,17 @@ template <int dim, int n_fe_degree>
                             * materials.get_nu_sigma_f(gi, mat);
 
           if (this->type_scheme == "implicit-exponential")
-          for (unsigned int np = 0; np < materials.get_n_precursors();
-              np++)
-          {
-            // TODO check to change get_prompt_spectra by get_delayed_spectra
-            //					coeff_cell_val += -exp_value[np]
-            //							* materials.get_prompt_spectra(mat,  gi)
-            //							* materials.get_nu_sigma_f(gi, mat);
-            coeff_cell_val += -exp_value[np]
-                              * materials.get_delayed_spectra(mat, np, gi)
-                              * materials.get_nu_sigma_f(gi, mat);
-          }
+            for (unsigned int np = 0; np < materials.get_n_precursors();
+                np++)
+            {
+              // TODO check to change get_prompt_spectra by get_delayed_spectra
+              //					coeff_cell_val += -exp_value[np]
+              //							* materials.get_prompt_spectra(mat,  gi)
+              //							* materials.get_nu_sigma_f(gi, mat);
+              coeff_cell_val += -exp_value[np]
+                                * materials.get_delayed_spectra(mat, np, gi)
+                                * materials.get_nu_sigma_f(gi, mat);
+            }
 
           cell_L.equ(D, cell_grad, coeff_cell_val, cell_val, 1.0,
             bound[gi]);
@@ -1105,8 +1105,7 @@ template <int dim, int n_fe_degree>
       DynamicSparsityPattern dsp(this->locally_relevant_dofs);
 
       DoFTools::make_sparsity_pattern(dof_handler, dsp, constraints, true);
-      this->local_dofs_per_process =
-                                     dof_handler.n_locally_owned_dofs_per_processor();
+      this->local_dofs_per_process = dof_handler.n_locally_owned_dofs_per_processor();
 
       SparsityTools::distribute_sparsity_pattern(dsp,
         this->local_dofs_per_process, this->comm,
@@ -1219,11 +1218,6 @@ template <int dim, int n_fe_degree>
     return memory;
   }
 
-
-
-
-
-
 // ----------- Explicit Instantations ----------- //
 
 template class SystemMatrixTime<1, 1> ;
@@ -1279,5 +1273,4 @@ template class MassMatrixTime<3, 2> ;
 template class MassMatrixTime<3, 3> ;
 template class MassMatrixTime<3, 4> ;
 template class MassMatrixTime<3, 5> ;
-
 

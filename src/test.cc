@@ -1,6 +1,6 @@
 /**
  * @file   test.cc
- * @brief  Implementation of class tests.
+ * @brief  Implementation some tests. Execute them with ./femffusion -t
  */
 #include <deal.II/base/parameter_handler.h>
 #include <math.h>
@@ -26,9 +26,22 @@ int run_tests ()
 {
   std::string input_file, out_file;
 
+  // FIXME
+  //
+  // -------------------- TEST STATIC ROM -------------------- //
+  //
+  //
+  //input_file = "test/3D_Langenbuch/3D_Langenbuch_rom_rods.prm";
+  //run_test_static_rom(input_file, 10);
+
+  // input_file = "test/1D_hom_5cells_mov_prec/1D_5cells_f1_rom.prm";
+  run_test_rom_LUPOD_1();
+  // input_file = "test/1D_hom_5cells_mov_prec/1D_5cells_f1_rom.prm";
+  run_test_rom_LUPOD_2();
+
 #ifdef DEBUG
   std::cout<<" Compiled in DEBUG mode! "<<std::endl;
-  std::cout<<" Tests not working in this mode. "<<std::endl;
+  std::cout<<" Tests does not work in this mode. "<<std::endl;
   exit(0);
 #endif
 
@@ -622,12 +635,7 @@ int run_tests ()
 
   // ---------------------------------------------------------------------//
 
-  //
-  // -------------------- TEST STATIC ROM -------------------- //
-  //
-  //
-  input_file = "test/3D_Langenbuch/3D_Langenbuch_rom_rods.prm";
-  run_test_static_rom(input_file,10);
+// TODO
 
   std::cout << std::endl;
   std::cout << "  ALL TEST PASSED!" << std::endl;
@@ -1681,101 +1689,287 @@ void run_tests_utils ()
 /**
  * @brief run_test_static_rom
  */
-void run_test_static_rom(const std::string &input_file, unsigned int n_tests)
+void run_test_static_rom (
+  const std::string &input_file,
+  unsigned int n_tests)
 {
-	std::cout << "StaROM... " << input_file << " " << std::flush;
+  std::cout << "Testing ROM Static.. " << input_file << " " << std::flush;
 
-	ParameterHandler prm;
-	prm_declare_entries(prm);
-	AssertRelease(fexists(input_file),
-			"ERROR!: Input File .prm Does NOT exist\n Use -f input_file.rm  option");
-	prm.parse_input(input_file);
+  ParameterHandler prm;
+  prm_declare_entries(prm);
+  AssertRelease(fexists(input_file),
+    "ERROR!: Input File .prm Does NOT exist\n Use -f input_file.rm  option");
+  prm.parse_input(input_file);
 
-	int dim = prm.get_integer("Dimension");
-	AssertRelease(dim == 3,
-			"This test is only implemented for problems of dimension 3.");
+  int dim = prm.get_integer("Dimension");
+  AssertRelease(dim == 3,
+    "This test is only implemented for problems of dimension 3.");
 
-	int fe_degree = prm.get_integer("FE_Degree");
-	AssertRelease(fe_degree == 1,
-			"This test is only implemented for problems of FE Degree 1.");
+  int fe_degree = prm.get_integer("FE_Degree");
+  AssertRelease(fe_degree == 1,
+    "This test is only implemented for problems of FE Degree 1.");
 
-	std::string transport = prm.get("Transport_Appr");
-	lower_case(transport);
-	AssertRelease(transport == "diffusion",
-			"This test is only implemented for diffusion.");
+  std::string transport = prm.get("Transport_Appr");
+  lower_case(transport);
+  AssertRelease(transport == "diffusion",
+    "This test is only implemented for diffusion.");
 
-	std::string type_per = prm.get("Type_Perturbation");
-	AssertRelease(type_per == "Rods",
-			"This test is implemented for Bars Transient");
+  std::string type_per = prm.get("Type_Perturbation");
+  AssertRelease(type_per == "Rods",
+    "This test is implemented for Bars Transient");
 
-	bool rom = prm.get_bool("ROM_Transient");
-	AssertRelease(rom, "This test is implemented for ROM Computation");
+  bool rom = prm.get_bool("ROM_Transient");
+  AssertRelease(rom, "This test is implemented for ROM Computation");
 
-	std::vector<double> static_eig(n_tests);
-	double rom_eig;
-	std::vector<double> rom_eigs(n_tests);
+  double rom_eig;
+  std::vector<double> static_eig(n_tests);
+  std::vector<double> rom_eigs(n_tests);
 
-	StaticDiffusion<3, 1> static_prob(prm, input_file, false, true);
-	ROMKinetics<3, 1> rom_prob(prm, static_prob, false, true, false);
+  StaticDiffusion<3, 1> static_prob(prm, input_file, false, true);
+  ROMKinetics<3, 1> rom_prob(prm, static_prob, false, true, false);
 
-	const double time_step = rom_prob.t_end / n_tests;
+  const double time_step = rom_prob.t_end / n_tests;
 
-	rom_prob.snapshots.resize(1);
-	rom_prob.snapshots[0].resize(n_tests);
-	for (unsigned int nt = 0; nt < n_tests; nt++)
-	{
+  rom_prob.snapshots.resize(1);
+  rom_prob.snapshots[0].resize(n_tests);
+  for (unsigned int nt = 0; nt < n_tests; nt++)
+  {
+    static_prob.perturbation.move_bars(nt * time_step);
 
-		static_prob.perturbation.move_bars(nt * time_step);
+    // Compute eigenvalues with static_problem
+    static_prob.assemble_system_lambda();
+    static_prob.solve_eps();
+    static_eig[nt] = static_prob.eigenvalues[0];
+    static_prob.phi[0].compress(VectorOperation::insert);
+    rom_prob.snapshots[0][nt] = static_prob.phi[0];
+  }
 
-		// Compute eigenvalues with static_problem
-		static_prob.assemble_system_lambda();
-		static_prob.solve_eps();
-		static_eig[nt] = static_prob.eigenvalues[0];
-		static_prob.phi[0].compress(VectorOperation::insert);
-		rom_prob.snapshots[0][nt] = static_prob.phi[0];
-	}
+  for (unsigned int nt = 0; nt < n_tests; nt++)
+  {
+    LAPACKFullMatrix<double> romT(n_tests);
+    LAPACKFullMatrix<double> romTM(n_tests);
+    LAPACKFullMatrix<double> romM(n_tests);
 
-	for (unsigned int nt = 0; nt < n_tests; nt++)
-	{
+    static_prob.perturbation.move_bars(nt * time_step);
 
-		LAPACKFullMatrix<double> romT(n_tests);
-		LAPACKFullMatrix<double> romTM(n_tests);
-		LAPACKFullMatrix<double> romM(n_tests);
+    // Compute eigenvalues with ROM method
+    rom_prob.compute_pod_basis(rom_prob.snapshots[0]);
 
-		static_prob.perturbation.move_bars(nt * time_step);
+    // We use the matrices of the static problem because F in ROM is multiplied by (1-beta)
+    static_prob.assemble_system_lambda();
 
-		// Compute eigenvalues with ROM method
-		rom_prob.compute_pod_basis(rom_prob.snapshots[0]);
+    for (unsigned int b1 = 0; b1 < n_tests; b1++)
+      for (unsigned int b2 = 0; b2 < n_tests; b2++)
+      {
+        romT(b1, b2) = static_prob.T.vmult_dot(rom_prob.snap_basis[b1],
+          rom_prob.snap_basis[b2]);
+        romM(b1, b2) = static_prob.F.vmult_dot(rom_prob.snap_basis[b1],
+          rom_prob.snap_basis[b2]);
+      }
 
-		// We use the matrices of the static problem because F in ROM is multiplied by (1-beta)
-		static_prob.assemble_system_lambda();
+    static_prob.T.clear();
+    static_prob.F.clear();
 
-		for (unsigned int b1 = 0; b1 < n_tests; b1++)
-			for (unsigned int b2 = 0; b2 < n_tests; b2++)
-			{
-				romT(b1, b2) = static_prob.T.vmult_dot(rom_prob.snap_basis[b1],
-						rom_prob.snap_basis[b2]);
-				romM(b1, b2) = static_prob.F.vmult_dot(rom_prob.snap_basis[b1],
-						rom_prob.snap_basis[b2]);
-			}
+    romT.invert();
+    romT.mmult(romTM, romM);
+    romTM.compute_eigenvalues(true);
+    for (unsigned int e = 0; e < n_tests; e++)
+      rom_eigs[e] = romTM.eigenvalue(e).real();
+    rom_eig = *std::max_element(rom_eigs.begin(), rom_eigs.end());
 
-		static_prob.T.clear();
-		static_prob.F.clear();
+    AssertRelease(std::abs(rom_eig - static_eig[nt]) < 1e-5,
+      "  Error solving test " + input_file + '\n'
+      + "  Calculated ROM "
+      + num_to_str(rom_eig)
+      + " and calculated Static "
+      + num_to_str(static_eig[nt])
+      + '.');
 
-		romT.invert();
-		romT.mmult(romTM, romM);
-		romTM.compute_eigenvalues(true);
-		for (unsigned int e = 0; e < n_tests; e++)
-			rom_eigs[e] = romTM.eigenvalue(e).real();
-		rom_eig = *std::max_element(rom_eigs.begin(), rom_eigs.end());
+  }
 
-		AssertRelease(std::abs(rom_eig - static_eig[nt]) < 1e-5,
-				"  Error solving test " + input_file + '\n'
-						+ "  Calculated ROM " + num_to_str(rom_eig)
-						+ " and calculated Static " + num_to_str(static_eig[nt])
-						+ '.');
-
-	}
-
-	std::cout << " Passed!" << std::endl;
+  std::cout << " Passed!" << std::endl;
 }
+
+/**
+ * @brief run_test_rom_LUPOD
+ * Test LUPOD Technique
+ */
+void run_test_rom_LUPOD_1 ()
+{
+  std::string input_file = "test/1D_hom_5cells_mov_prec/1D_5cells_f1_rom_LUPOD.prm";
+  std::cout << "Testing ROM LUPOD 1... " << input_file << " " << std::flush;
+
+  ParameterHandler prm;
+  prm_declare_entries(prm);
+  AssertRelease(fexists(input_file),
+    "ERROR!: Input File .prm Does NOT exist\n Use -f input_file.rm  option");
+  prm.parse_input(input_file);
+
+  std::string transport = prm.get("Transport_Appr");
+  lower_case(transport);
+  AssertRelease(transport == "diffusion",
+    "This test is only implemented for diffusion.");
+
+  int fe_degree = prm.get_integer("FE_Degree");
+  AssertRelease(fe_degree == 1, "This test is implemented for FE_Degree==1");
+
+  bool rom = prm.get_bool("ROM_Transient");
+  AssertRelease(rom, "This test is implemented for ROM Computation");
+
+  StaticDiffusion<1, 1> static_prob(prm, input_file, false, true);
+  ROMKinetics<1, 1> rom_prob(prm, static_prob, false, true, true);
+  const double tol = 1e-5;
+  std::vector<unsigned int> points_reference =
+                                                 { 3, 1, 4 };
+  std::vector<unsigned int> snaps_reference =
+                                                { 3, 1, 4 };
+  std::cout << "rom_prob.snaps" << std::endl;
+  print_vector(rom_prob.snaps);
+  std::cout << " rom_prob.points" << std::endl;
+  print_vector(rom_prob.points);
+  std::cout << " rom_prob.epsilon_M "<< rom_prob.epsilon_M << std::endl;
+  std::cout << " rom_prob.epsilon_N "<< rom_prob.epsilon_N  << std::endl;
+
+  assert_vectors_similar(rom_prob.snaps, snaps_reference, tol);
+  assert_vectors_similar(rom_prob.points, points_reference, tol);
+
+  PETScWrappers::MPI::Vector dst0;
+  std::vector<std::vector<double> >
+  U_red_ref_std =
+                    {
+                        { -7.554602e-01, +4.166607e-01, -5.056419e-01 },
+                        { -4.931731e-01, -8.696971e-01, +2.018046e-02 },
+                        { -4.313468e-01, +2.646145e-01, +8.625074e-01 }
+                    };
+
+  LAPACKFullMatrix<double> U_red_ref(rom_prob.U_reduced.m(), rom_prob.U_reduced.n());
+  // Copy elements
+  for (unsigned int i = 0; i < rom_prob.U_reduced.m(); ++i)
+    for (unsigned int j = 0; j < rom_prob.U_reduced.n(); ++j)
+      U_red_ref(i, j) = U_red_ref_std[i][j];
+
+  U_red_ref.add(-1.0, rom_prob.U_reduced);
+
+  AssertRelease(U_red_ref.linfty_norm() < tol,
+    "  Error in U_full, error: " + num_to_str(U_red_ref.linfty_norm()));
+  // singular_values = { 1.52834, 0.587737, 0.0365, 3.23611e-16}
+
+  // Test U_full
+  std::vector<std::vector<double> >
+  U_full_ref_std =
+                     {
+                         { +1.775534e-17, -9.415731e-17, -2.753979e-15 },
+                         { -4.931731e-01, -8.696971e-01, +2.018046e-02 },
+                         { -7.366730e-01, -3.752936e-01, +8.965586e-01 },
+                         { -7.554602e-01, +4.166607e-01, -5.056419e-01 },
+                         { -4.313468e-01, +2.646145e-01, +8.625074e-01 },
+                         { +5.697307e-17, -1.716882e-16, -1.704035e-15 },
+                     };
+
+  FullMatrix<double> U_full_ref(rom_prob.U_full.m(), rom_prob.U_full.n());
+  // Copy elements
+  for (unsigned int i = 0; i < rom_prob.U_full.m(); ++i)
+    for (unsigned int j = 0; j < rom_prob.U_full.n(); ++j)
+      U_full_ref(i, j) = U_full_ref_std[i][j];
+
+  U_full_ref.add(rom_prob.U_full, -1.0);
+  std::cout << " 3" << std::endl;
+  AssertRelease(U_full_ref.linfty_norm() < tol,
+    "  Error in U_full, error: " + num_to_str(U_full_ref.linfty_norm()));
+
+  std::cout << " Passed!" << std::endl;
+}
+
+/**
+ * @brief run_test_rom_LUPOD
+ * Test LUPOD technique
+ */
+void run_test_rom_LUPOD_2 ()
+{
+  std::string input_file = "test/1D_hom_5cells_mov_prec/1D_5cells_f1_rom_LUPOD2.prm";
+  std::cout << "Testing ROM LUPOD 2... " << input_file << " " << std::flush;
+
+  ParameterHandler prm;
+  prm_declare_entries(prm);
+  AssertRelease(fexists(input_file),
+    "ERROR!: Input File .prm Does NOT exist\n Use -f input_file.rm  option");
+  prm.parse_input(input_file);
+
+  std::string transport = prm.get("Transport_Appr");
+  lower_case(transport);
+  AssertRelease(transport == "diffusion",
+    "This test is only implemented for diffusion.");
+
+  int fe_degree = prm.get_integer("FE_Degree");
+  AssertRelease(fe_degree == 2, "This test is implemented for FE_Degree==1");
+
+  bool rom = prm.get_bool("ROM_Transient");
+  AssertRelease(rom, "This test is implemented for ROM Computation");
+
+  StaticDiffusion<1, 2> static_prob(prm, input_file, false, true);
+  ROMKinetics<1, 2> rom_prob(prm, static_prob, false, true, true);
+  const double tol = 1e-6;
+  std::vector<unsigned int> snaps_reference =
+                                                { 1, 2 };
+  std::vector<unsigned int> points_reference =
+                                                 { 4, 5 };
+
+  assert_vectors_similar(rom_prob.snaps, snaps_reference, tol);
+  assert_vectors_similar(rom_prob.points, points_reference, tol);
+  std::vector<std::vector<double>>
+  u_red_ref =
+                {
+                    { -0.729106, -0.684401 },
+                    { -0.684401, +0.729106 }
+                };
+
+  AssertRelease(is_similar(rom_prob.U_reduced(0, 0), u_red_ref[0][0], tol),
+    "  Error in U_reduced(0, 0) ");
+  AssertRelease(is_similar(rom_prob.U_reduced(0, 1), u_red_ref[0][1], tol),
+    "  Error in U_reduced(0, 1) ");
+  AssertRelease(is_similar(rom_prob.U_reduced(1, 0), u_red_ref[1][0], tol),
+    "  Error in U_reduced(1, 0) ");
+  AssertRelease(is_similar(rom_prob.U_reduced(1, 1), u_red_ref[1][1], tol),
+    "  Error in U_reduced(1, 1) ");
+
+  // Test U_full
+  std::vector<std::vector<double> >
+  U_full_ref_std =
+                     {
+                         { -0.000000001266899, +0.000000001404289 },
+                         { -0.588889993842957, -0.762939586299597 },
+                         { -0.330700849029543, -0.481982160696203 },
+                         { -0.758143532925241, -0.159583583017522 },
+                         { -0.729105631228219, -0.684401182429795 },
+                         { -0.684401182429795, +0.729105631228219 },
+                         { -0.741655760998246, +0.443931888864489 },
+                         { -0.375852267581478, +0.439099210411635 },
+                         { -0.561536596313876, +0.710273354101464 },
+                         { -0.000000002552288, +0.000000002829072 },
+                         { -0.180285863103333, +0.163023661494686 },
+                     };
+
+  FullMatrix<double> U_full_ref(rom_prob.U_full.m(), rom_prob.U_full.n());
+  // Copy elements
+  for (unsigned int i = 0; i < rom_prob.U_full.m(); ++i)
+    for (unsigned int j = 0; j < rom_prob.U_full.n(); ++j)
+      U_full_ref(i, j) = U_full_ref_std[i][j];
+
+  U_full_ref.add(rom_prob.U_full, -1.0);
+  AssertRelease(U_full_ref.linfty_norm() < tol, "  Error in U_full_ref ");
+
+  // singular_values = { 0.740887,: 0.337672}
+
+  // Test vmult_row
+  rom_prob.assemble_matrices();
+  PETScWrappers::MPI::BlockVector src(rom_prob.n_groups, rom_prob.comm, rom_prob.n_dofs,
+    rom_prob.n_dofs);
+  double dst = 0.0;
+  src = 1.0; // Set all vector entries to ones
+  rom_prob.F.vmult_row(dst, src, 3);
+
+  AssertRelease(is_similar(dst, 0.178074, tol), "  Error in vmult_row ");
+
+  std::cout << " Passed!" << std::endl;
+}
+

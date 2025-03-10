@@ -30,7 +30,7 @@ template <int dim>
     std::vector<std::vector<std::vector<double>>> xsec_init_all;
 
     // Instability Function
-    std::vector<int> mat_changing;
+    std::vector<unsigned int> mat_changing;
 //	int mat_changing_1;
     double frequency;
     double xs_amplitude;
@@ -38,7 +38,7 @@ template <int dim>
     double out_phase;
     std::vector<double> slope_up, slope_down, cut_time;
     std::string type_perturbation, tmodes, perturbation_function;
-    int group_changing;
+    unsigned int group_changing;
 
     // Data
     unsigned int n_groups;
@@ -110,7 +110,7 @@ template <int dim>
     void step_change_material (double sim_time);
 
     void modify_xsec (double sim_time,
-    		std::vector<int> mat_chan);
+    		std::vector<unsigned int> mat_chan);
 
     void apply_function_to_perturb (double sim_time);
 

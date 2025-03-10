@@ -940,8 +940,8 @@ template <int dim>
               {
                 coeff = coeff.substr(0, coeff.size() - 1);
                 myfile >> coeff2;
-                unsigned int len = Utilities::string_to_int(coeff);
 
+                unsigned int len = Utilities::string_to_int(coeff);
                 for (unsigned int j = 0; j < len; j++)
                   out.push_back(getRefPair<dim>(coeff2));
 
@@ -1910,7 +1910,7 @@ void parse_vector (std::string input,
     {
       str = str.substr(0, str.size() - 1);
       iss >> number;
-      int len = Utilities::string_to_int(str);
+      unsigned int len = Utilities::string_to_int(str);
       for (unsigned int j = 0; j < len; j++)
         out.push_back(number);
     }

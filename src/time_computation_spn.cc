@@ -139,7 +139,7 @@ template <int dim, int n_fe_degree>
 
     if (prec_flag == false)
     {
-//      n_prec = 0;
+    //n_prec = 0;
 //      beta = 0.0;
       materials.remove_precursors();
 
@@ -167,6 +167,9 @@ template <int dim, int n_fe_degree>
     }
     u = static_problem.u[0];
     phi_critic = static_problem.phi[0][0];
+
+    verbose_cout << "Initialize the perturbation class" << std::endl;
+    perturbation.init_transient();
 
     this->run();
   }
@@ -388,7 +391,7 @@ template <int dim, int n_fe_degree>
     MatShellSetOperation(shell_T, MATOP_MULT,
       (void (*) ()) shell_time_matrix_spn<dim, n_fe_degree>);
       ;if (step == 0)
-      cout << "  Memory consumption of the matrix SPN: "
+    	  verbose_cout << "  Memory consumption of the matrix SPN: "
       << Tfree.memory_consumption() * 1e-6
       << " MB" << std::endl;
 
@@ -997,7 +1000,7 @@ template <int dim, int n_fe_degree>
     totalits += its;
 
     if (step % out_interval == 0)
-      cout << "   its: " << its << std::endl;
+    	verbose_cout << "   its: " << its << std::endl;
 
     verbose_cout << "solve_precursors... " << std::endl;
     solve_precursors();
@@ -1185,7 +1188,6 @@ template <int dim, int n_fe_degree>
   void TimeNeutronSPN<dim, n_fe_degree>::postprocess_time_step ()
   {
 
-//	AssertRelease(false, "Aqui hay que cambiar el postproceso con u y phi");
 
     for (unsigned int m1 = 0; m1 < n_moments; ++m1)
     {
@@ -1252,10 +1254,10 @@ template <int dim, int n_fe_degree>
 
     }
 
+
     power_total = norm / volume;
 
     phi_norm.reinit(phi[0]);
-
     phi_norm = phi[0];
     phi_norm *= 1.0 / power_total;
 
@@ -1478,9 +1480,6 @@ template <int dim, int n_fe_degree>
     cout << "Type of distributed scheme: " << time_scheme << std::endl
          << std::endl;
 
-    verbose_cout << "Initialize the perturbation class" << std::endl;
-    perturbation.init_transient();
-
     verbose_cout << std::fixed
                  << "   Init time computation...                CPU Time = "
                  << timer.cpu_time() << " s." << std::endl;
@@ -1493,9 +1492,7 @@ template <int dim, int n_fe_degree>
 
     if (print_timefile)
     {
-      filename_time = out_file;
-      filename_time.erase(filename_time.end() - 4, filename_time.end());
-      filename_time = filename_time + "_time.out";
+      filename_time = out_file + ".time";
       std::ofstream out(filename_time.c_str(), std::ios::out);
     }
 
@@ -1556,16 +1553,15 @@ template <int dim, int n_fe_degree>
 
       if (step % out_interval == 0)
       {
-        cout << " Step " << step << " at t=" << sim_time << std::endl;
-        cout << "                         Total Power " << power_total
-             << "   Time = "
-             << timer.cpu_time() << std::endl;
-        verbose_cout << "   Step Done." << " Time = " << timer.cpu_time()
-                     << " s."
-                     << std::endl;
-        PetscLogDouble memory;
-        PetscMemoryGetMaximumUsage(&memory);
-        cout << "   Max Memory " << memory * 1e-6 << " MB" << std::endl;
+		  cout << std::defaultfloat << std::setfill(' ');
+		  cout << " Step "<< std::setw(5) << step;
+		  cout << std::fixed << std::setprecision(4) << std::setfill('0');
+		  cout << " at t=" <<  std::setw(5)<< sim_time << std::flush;
+		  cout << std::fixed << std::setprecision(4) << std::setfill('0');
+		  cout << "   Total Power " <<  std::setw(6) << power_total;
+		  cout << std::fixed << std::setprecision(3) << std::setfill('0');
+		  cout   << "   CPU Time = "<<  std::setw(5);
+		  cout    << timer.cpu_time() << std::endl;
       }
 
       // Out things in the future will be a function
@@ -1574,6 +1570,8 @@ template <int dim, int n_fe_degree>
       delta_t.push_back(init_delta_t);
       step++;
       sim_time += delta_t[step];
+
+
 
     }
 
@@ -1595,20 +1593,21 @@ template <int dim, int n_fe_degree>
         10);
     }
 
-    cout << "Total its: " << totalits << ", mean by it:"
+    verbose_cout << "Total its: " << totalits << ", mean by it:"
          << double(totalits) / step
          << std::endl;
 
     if (initial_preconditioner == "multilevel")
-      cout << "Total its coarse level: " << preconditioner.total_its_coarse
+      verbose_cout << "Total its coarse level: " << preconditioner.total_its_coarse
       << ", mean by it (coarse level):"
       << double(preconditioner.total_its_coarse)
          / preconditioner.n_applications_coarse
       << std::endl;
 
-    cout << "            Finish in " << timer.cpu_time() << " s." << std::endl;
+    cout << "            Finished in " << timer.cpu_time() << " s." << std::endl;
 
   }
+
 
 template class TimeNeutronSPN<1, 1> ;
 template class TimeNeutronSPN<1, 2> ;

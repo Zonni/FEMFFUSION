@@ -30,7 +30,7 @@ set Boundary_Conditions  = 2 2
 # 
 # OUT OPTIONS
 # Filename where will be written the output.
-set Output_Filename      = 1D_ROM/1D_ROM_pod.out
+set Output_Filename      = 1D_ROM/1D_ROM_rampmat12_LUPOD10.out
 
 # True/false - Make a .vtk file with the output
 set Output_Flag          = false
@@ -68,9 +68,10 @@ set Slope_Down              = 0.0 -0.001
 set Cut_Time                = 0.1  1.0
 
 # ROM Parameters
-set ROM_Type_Snapshots  = ramp_time
+set ROM_Type_Snapshots  = ramp_time_mat12
 # Number of snapshots for the ROM method
 set N_Snapshots         = 10
+set LUPOD_Flag          = true
 
 
 

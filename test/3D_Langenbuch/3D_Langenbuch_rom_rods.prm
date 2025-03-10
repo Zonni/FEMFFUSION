@@ -44,7 +44,6 @@ set Out_Refinements     = 0
 
 
 
-
 # FILEAMES
 # Filename where it is stored the material cross section
 set XSECS_Filename      = test/3D_Langenbuch/3D_Langenbuch.xsec
@@ -71,4 +70,5 @@ set Time_End            = 1.0
 set Type_Perturbation   = Rods
 
 
+set ROM_Type_Snapshots = static_time
 

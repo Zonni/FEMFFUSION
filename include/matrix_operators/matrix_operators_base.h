@@ -85,7 +85,6 @@ std::string enum_to_string (MatrixFreeType matrix_free);
 PetscErrorCode get_enum_from_options (const std::string &keyword,
   MatrixFreeType &result);
 
-
 // -------------------------------------------------------------------------------------------------------//
 // -------------------------------------------------------------------------------------------------------//
 // -------------------------------------------------------------------------------------------------------//
@@ -179,6 +178,22 @@ template <int dim, int n_fe_degree>
      */
     void vmult_add (PETScWrappers::MPI::BlockVector &dst,
       const PETScWrappers::MPI::BlockVector &src) const;
+
+    /**
+     * @brief FIXME
+     */
+    void vmult_row (
+      double &dst,
+      const PETScWrappers::MPI::BlockVector &src,
+      unsigned int row) const;
+
+    /**
+     * @brief FIXME
+     */
+    void vmult_add_row (
+      double &dst,
+      const PETScWrappers::MPI::BlockVector &src,
+      unsigned int row) const;
 
     // ----------------------------------------------------------------- //
     // --- PETScWrappers::MPI::BlockVector Adjoint Multiplications  --- //
@@ -279,6 +294,16 @@ template <int dim, int n_fe_degree>
       PETScWrappers::MPI::Vector &v1,
       PETScWrappers::MPI::Vector &v2,
       const PETScWrappers::MPI::Vector &v3) const;
+
+    /**
+     *
+     */
+    void vmult_add_row (
+      const unsigned int row,
+      const unsigned int col,
+      double &dst,
+      const PETScWrappers::MPI::Vector &src,
+      unsigned int dst_row) const;
 
     // ----------------------------------------------------------------- //
     // -------------------- Block Multiplications ---------------------- //
@@ -428,6 +453,22 @@ template <int dim, int n_fe_degree>
       const PETScWrappers::MPI::BlockVector &src) const;
 
     /**
+     * @brief FIXME
+     */
+    void vmult_row (
+      double &dst,
+      const PETScWrappers::MPI::BlockVector &src,
+      unsigned int row) const;
+
+    /**
+     * @brief FIXME
+     */
+    void vmult_add_row (
+      double &dst,
+      const PETScWrappers::MPI::BlockVector &src,
+      unsigned int row) const;
+
+    /**
      * @brief Complete matrix-vector multiplication.
      * dst = dst + FisionMatrix * src
      */
@@ -547,6 +588,16 @@ template <int dim, int n_fe_degree>
       const unsigned int col,
       PETScWrappers::MPI::Vector &dst,
       const PETScWrappers::MPI::Vector &src) const;
+
+    /**
+     *
+     */
+    void vmult_add_row (
+      const unsigned int row,
+      const unsigned int col,
+      double &dst,
+      const PETScWrappers::MPI::Vector &src,
+      unsigned int dst_row) const;
 
     /**
      * v1 = v2 + A * v3

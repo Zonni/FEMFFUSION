@@ -43,10 +43,9 @@ template <int dim>
     xs_amplitude = prm.get_double("Amplitude");
     out_phase = prm.get_double("Out_Phase");
 
-//    mat_changing = prm.get_integer("Material_Changing") - 1;
     parse_vector(prm.get("Material_Changing"), mat_changing);
-    for (unsigned int i=0; i<mat_changing.size(); i++)
-    mat_changing[i]=mat_changing[i]-1;
+    for (unsigned int i = 0; i < mat_changing.size(); i++)
+      mat_changing[i] = mat_changing[i] - 1;
     group_changing = prm.get_integer("Group_Changing") - 1;
     xs_pert_name = prm.get("XS_Name");
     lower_case(xs_pert_name);
@@ -55,8 +54,8 @@ template <int dim>
     if (type_perturbation == "AECL")
       materials_no_bars = materials.get_materials_vector();
 
-    if ((perturbation_function == "Sinus" and xs_pert_name == "all") or perturbation_function
-                                                                        == "Noise_7g")
+    if ((perturbation_function == "Sinus" and xs_pert_name == "all")
+        or perturbation_function == "Noise_7g")
     {
       parse_vector(prm.get("Amplitudes"), amplitudes);
     }
@@ -68,10 +67,11 @@ template <int dim>
       perturbation_function = "Sinus";
 
     // if ramp perturbation
-    if (perturbation_function == "Ramp"){
-    parse_vector(prm.get("Slope_Up"), slope_up);
-    parse_vector(prm.get("Slope_Down"), slope_down);
-    parse_vector(prm.get("Cut_Time"), cut_time);
+    if (perturbation_function == "Ramp")
+    {
+      parse_vector(prm.get("Slope_Up"), slope_up);
+      parse_vector(prm.get("Slope_Down"), slope_down);
+      parse_vector(prm.get("Cut_Time"), cut_time);
     }
 
     // vibration parameters
@@ -518,9 +518,8 @@ template <int dim>
     unsigned int)
   {
 
-//	AssertRelease(false,
-//			"We must obtain the vectors volume_per_plane and power_axial");
-
+    //	AssertRelease(false,
+    //			"We must obtain the vectors volume_per_plane and power_axial");
     //std::cout << "move_bar_flux_weighting" << std::endl;
 
     const unsigned int move_dim = dim - 1;
@@ -553,7 +552,7 @@ template <int dim>
         is_done[cell->user_index()] = true;
         if (plant_pos == cell->user_index() % n_assemblies_per_plane)
         {
-//          std::cout<<"bar"<<bar<<"cell :"<<cell->user_index()<<std::endl;
+          //std::cout<<"bar"<<bar<<"cell :"<<cell->user_index()<<std::endl;
           getMaxMinVertex(cell, move_dim, maxp, minp);
           // The bar_pos is in the middle of the cell.
           // We create a new material at the end of the defined materials
@@ -576,8 +575,6 @@ template <int dim>
                               * power_axial[plane])
                            / (volume_per_plane[plane - 1]
                               + (1 - frac) * volume_per_plane[plane]);
-
-              std::cout << "2: " << std::endl;
 
               flux_bar = (volume_per_plane[plane + 1]
                           * power_axial[plane + 1]
@@ -746,172 +743,174 @@ template <int dim>
 /**
  * @brief Perturbate a xsec with a function
  */
-template<int dim>
-void Perturbation<dim>::apply_function_to_perturb(double sim_time)
-{
+template <int dim>
+  void Perturbation<dim>::apply_function_to_perturb (double sim_time)
+  {
+    if (type_perturbation == "Flux_Distributed") // FIXME no es Flux ditributed es a todos los materiales?
+    {
+      mat_changing.resize(materials.get_n_mats());
+      for (unsigned int nmat = 0; nmat < materials.get_n_mats(); nmat++)
+        mat_changing[nmat] = nmat;
 
-	if (type_perturbation == "Flux_Distributed")
-	{
-		mat_changing.resize(materials.get_n_mats());
-		for (int nmat = 0; nmat < static_cast<int>(materials.get_n_mats());
-				nmat++)
-			mat_changing[nmat] = nmat;
+      modify_xsec(sim_time, mat_changing);
+    }
+    else if (type_perturbation == "Single_Material"
+             or type_perturbation == "Out_Of_Phase"
+             or type_perturbation == "Ramp_Two_Mats")
+    {
+      modify_xsec(sim_time, mat_changing);
+    }
 
-		modify_xsec(sim_time, mat_changing);
-	}
-	else if (type_perturbation == "Single_Material"
-			or type_perturbation == "Out_Of_Phase"
-			or type_perturbation == "Ramp_Two_Mats")
-	{
-		modify_xsec(sim_time, mat_changing);
-	}
-
-}
+  }
 
 /**
  * @brief Perturbate a xsec with a function
  */
-template<int dim>
-void Perturbation<dim>::modify_xsec(double sim_time, std::vector<int> mat_chan)
-{
+template <int dim>
+  void Perturbation<dim>::modify_xsec (
+    double sim_time,
+    std::vector<unsigned int> mat_chan)
+  {
 
-	std::vector<double> new_xsec(n_groups);
-	std::vector<std::vector<double>> new_xsec_all(4,
-			std::vector<double>(n_groups));
+    std::vector<double> new_xsec(n_groups);
+    std::vector<std::vector<double> > new_xsec_all(4,
+      std::vector<double>(n_groups));
 
-	unsigned int nmat;
+    unsigned int nmat;
+    for (unsigned int nm = 0; nm < mat_chan.size(); nm++)
+    {
+      nmat = mat_chan[nm];
 
-	for (unsigned int nm = 0; nm < mat_chan.size(); nm++)
-	{
+      if (perturbation_function == "Sinus")
+      {
 
-		if (mat_chan[nm]<0)
-			continue;
+        if (group_changing != static_cast<unsigned int>(-1)) // One energy groups is selected
+        {
+          AssertRelease(xs_pert_name != "all",
+            "This perturbation is only valid for sigmaf or sigmaa");
+          for (unsigned int ng = 0; ng < n_groups; ng++)
+            new_xsec[ng] = xsec_init[ng][nmat];
 
-		nmat = mat_chan[nm];
+          new_xsec[group_changing] += xs_amplitude
+                                      * sin(2 * M_PI * frequency * sim_time + M_PI * nm);
 
-		// The xs_amplitudes in the previous inputs (12/2020) are in %
-		if (perturbation_function == "Sinus")
-		{
+        }
+        else // All energy groups are selected
+        {
+          unsigned int xsec_am = 0;
+          for (unsigned int ng = 0; ng < n_groups; ng++)
+          {
+            if (xs_pert_name == "sigma_f" or xs_pert_name == "sigma_a")
+              new_xsec[ng] = xsec_init[ng][nmat]
+                  + xs_amplitude * sin(2 * M_PI * frequency * sim_time + M_PI * nm);
+            else if (xs_pert_name == "all")
+              for (unsigned xsec = 0; xsec < 4; xsec++)
+              {
+                new_xsec_all[xsec][ng] = xsec_init_all[xsec][ng][nmat]
+                                         + amplitudes[xsec_am] * sin(
+                                             2 * M_PI * frequency * sim_time + M_PI * nm);
+                xsec_am++;
+              }
+          }
+        }
+      }
+      else if (perturbation_function == "Constant") // FIXME + 1e-4 es Normal?? No seria un Step y com el valor Amplitude
+      {
+        for (unsigned int ng = 0; ng < n_groups; ng++)
+        {
+          if (sim_time > 0.0)
+            new_xsec[ng] = xsec_init[ng][nmat] + 1e-4;
+          else
+            new_xsec[ng] = xsec_init[ng][nmat];
+        }
+      }
+      else if (perturbation_function == "Ramp")
+      {
+        if (group_changing != static_cast<unsigned int>(-1)) // One energy groups is selected
+        {
+          for (unsigned int ng = 0; ng < n_groups; ng++)
+            new_xsec[ng] = xsec_init[ng][nmat];
 
-			if (group_changing > -1)
-			{
-				AssertRelease(xs_pert_name != "all",
-						"This perturbation is only valid for sigmaf or sigmaa");
-				for (unsigned int ng = 0; ng < n_groups; ng++)
-					new_xsec[ng] = xsec_init[ng][nmat];
+          if (sim_time <= cut_time[nm])
+            new_xsec[group_changing] += xsec_init[group_changing][nmat]
+                                        * (slope_up[nm] * sim_time);
+          else
+            new_xsec[group_changing] = xsec_init[group_changing][nmat]
+                + xsec_init[group_changing][nmat] * slope_up[nm] * cut_time[nm]
+                                       - xsec_init[group_changing][nmat] * slope_down[nm]
+                                         * (sim_time - cut_time[nm]);
+//            new_xsec[group_changing] += xsec_init[group_changing][nmat]
+//                                        * (slope_up[nm] * cut_time[nm])
+//                                        - (xsec_init[group_changing][nmat]
+//                                           + xsec_init[group_changing][nmat]
+//                                             * (slope_down[nm] * cut_time[nm]))
+//                                          * (slope_down[nm] * (sim_time - cut_time[nm]));
+        }
+        else // All groups changing
+        {
+          //std::cout << " ALL GRUPS " << "mat " << nmat << std::endl;
+          //std::cout << " new_xsec.size() " << new_xsec.size()<< std::endl;
 
-				new_xsec[group_changing] += xs_amplitude
-						* sin(2 * M_PI * frequency * sim_time + M_PI * nm);
+          for (unsigned int ng = 0; ng < n_groups; ng++)
+          {
+            if (sim_time <= cut_time[nm])
+            {
+              new_xsec[ng] = xsec_init[ng][nmat]
+                             * (1 + (slope_up[nm] * sim_time));
+            }
+            else  // sim_time > cut_time[nm]
+            {
+              // TODO check
+              new_xsec[ng] = xsec_init[ng][nmat]
+                             + xsec_init[ng][nmat] * slope_up[nm] * cut_time[nm]
+                             - xsec_init[ng][nmat] * slope_down[nm]
+                               * (sim_time - cut_time[nm]);
+//              new_xsec[ng] += xsec_init[ng][nmat]
+//                                          * (slope_up[nm] * cut_time[nm])
+//                                          - (xsec_init[ng][nmat]
+//                                             + xsec_init[ng][nmat]
+//                                               * (slope_down[nm] * cut_time[nm]))
+//                                            * (slope_down[nm] * (sim_time - cut_time[nm]));
+            }
+          }
+        }
+      }
+      else if (perturbation_function == "Ramp_hex")
+      // Exact values for ...TODO
+      {
+        new_xsec[0] = xsec_init[0][nmat];
+        if (sim_time <= 1.0)
+        {
+          new_xsec[1] = 0.118870 * (1 - sim_time) + 0.016917 * sim_time;
+        }
+        else if ((sim_time > 1.0) and sim_time < 2.0)
+        {
+          new_xsec[1] = 0.118870 * (sim_time - 1)
+                        + 0.016917 * (2 - sim_time);
+        }
+        else
+        {
+          new_xsec[1] = 0.118870;
+        }
+      }
+      else if (perturbation_function == "Noise_7g")
+      // Exact values for the C5G7 Noise Benchmark in Neutron Noise
+      {
+        materials.modify_xsec_7g(xs_pert_name, sim_time, amplitudes, nmat);
+      }
+      else
+      {
+        AssertRelease(false, "Incorrect Perturbation_Function defined");
+      }
 
-			}
-			else
-			{
-				unsigned int xsec_am = 0;
-				for (unsigned int ng = 0; ng < n_groups; ng++)
-				{
-					if (xs_pert_name == "sigma_f" or xs_pert_name == "sigma_a")
-						new_xsec[ng] = xsec_init[ng][nmat]
-								+ xs_amplitude
-										* sin(
-												2 * M_PI * frequency * sim_time
-														+ M_PI * nm);
-					else if (xs_pert_name == "all")
-						for (unsigned xsec = 0; xsec < 4; xsec++)
-						{
-							new_xsec_all[xsec][ng] =
-									xsec_init_all[xsec][ng][nmat]
-											+ amplitudes[xsec_am]
-													* sin(
-															2 * M_PI * frequency
-																	* sim_time
-																	+ M_PI
-																			* nm);
-							xsec_am++;
-						}
-				}
-			}
+      if (xs_pert_name == "sigma_f" or xs_pert_name == "sigma_a")
+        materials.modify_xsec(xs_pert_name, nmat, new_xsec);
+      else if (xs_pert_name == "all")
+        materials.modify_xsec_all(xs_pert_name, nmat, new_xsec_all);
 
-		}
-		else if (perturbation_function == "Constant")
-		{
-			for (unsigned int ng = 0; ng < n_groups; ng++)
-			{
-				if (sim_time > 0.0)
-					new_xsec[ng] = xsec_init[ng][nmat] + 1e-4;
-				else
-					new_xsec[ng] = xsec_init[ng][nmat];
-			}
-		}
-		else if (perturbation_function == "Ramp")
-		{
+    }
 
-			if (group_changing > -1)
-			{
-				for (unsigned int ng = 0; ng < n_groups; ng++)
-					new_xsec[ng] = xsec_init[ng][nmat];
-
-				if (sim_time <= cut_time[nm])
-					new_xsec[group_changing] += xsec_init[group_changing][nmat]
-							* (slope_up[nm] * sim_time);
-				else
-					new_xsec[group_changing] += xsec_init[group_changing][nmat]
-							* (slope_up[nm] * cut_time[nm])
-							- (xsec_init[group_changing][nmat]
-									+ xsec_init[group_changing][nmat]
-											* (slope_down[nm] * cut_time[nm]))
-									* (slope_down[nm]
-											* (sim_time - cut_time[nm]));
-			}
-			else
-			{
-				for (unsigned int ng = 0; ng < n_groups; ng++)
-					if (sim_time <= cut_time[nm])
-						new_xsec[ng] = xsec_init[ng][nmat]
-								* (1 + (slope_up[nm] * sim_time));
-					else
-						new_xsec[ng] =
-								xsec_init[ng][nmat]
-										+ xsec_init[ng][nmat]
-												* (slope_up[nm] * cut_time[nm])
-										- (xsec_init[ng][nmat]
-												+ xsec_init[ng][nmat]
-														* (slope_down[nm]
-																* cut_time[nm]))
-												* (slope_down[nm]
-														* (sim_time
-																- cut_time[nm]));
-			}
-		}
-		else if (perturbation_function == "Ramp_hex")
-		{
-			new_xsec[0] = xsec_init[0][nmat];
-			if (sim_time <= 1.0)
-			{
-				new_xsec[1] = 0.118870 * (1 - sim_time) + 0.016917 * sim_time;
-			}
-			else if ((sim_time > 1.0) and sim_time < 2.0)
-			{
-				new_xsec[1] = 0.118870 * (sim_time - 1)
-						+ 0.016917 * (2 - sim_time);
-			}
-			else
-			{
-				new_xsec[1] = 0.118870;
-			}
-		}
-		else if (perturbation_function == "Noise_7g")
-		{
-			materials.modify_xsec_7g(xs_pert_name, sim_time, amplitudes, nmat);
-		}
-
-		if (xs_pert_name == "sigma_f" or xs_pert_name == "sigma_a")
-			materials.modify_xsec(xs_pert_name, nmat, new_xsec);
-		else if (xs_pert_name == "all")
-			materials.modify_xsec_all(xs_pert_name, nmat, new_xsec_all);
-
-	}
-
-}
+  }
 
 /*
  * @brief Move Vibrating
@@ -928,8 +927,7 @@ template <int dim>
     vib_pos[2 * direction + 1] = vib_pos_static[2 * direction + 1]
                                  + xs_amplitude * sin(2 * M_PI * frequency * sim_time);
     verbose_cout << "   Vibrating in "
-                 << round(xs_amplitude * sin(2 * M_PI * frequency * sim_time) * 10,
-                   4)
+                 << round(xs_amplitude * sin(2 * M_PI * frequency * sim_time) * 10, 4)
                  << " mm" << " assembly goes from "
                  << round(vib_pos[2 * direction], 4)
                  << " cm to "
@@ -1085,8 +1083,9 @@ template <>
 
     ConditionalOStream cell_cout(std::cout, false);
     typename DoFHandler<2>::active_cell_iterator cell =
-                                                        dof_handler.begin_active(), endc =
-        dof_handler.end();
+                                                        dof_handler.begin_active(),
+        endc =
+               dof_handler.end();
     for (cell = dof_handler.begin_active(); cell != endc; ++cell)
     {
       // plant_bar_pos = cell->user_index() % n_assemblies_per_plane;

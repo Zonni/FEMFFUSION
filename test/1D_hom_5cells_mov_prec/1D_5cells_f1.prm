@@ -60,8 +60,10 @@ set Time_End            = 1.0
 # Frecuency of the vibration in Hz
 set Frequency           = 1.0 
 
-# Amplitude instability in %
+# Amplitude instability in over 1
 set Amplitude           = 0.1
+
+set Perturbation_Function = Sinus
 
 # Cross Section where the Sigma_f1/Sigma_a1...
 set XS_Name             = Sigma_f1

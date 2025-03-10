@@ -71,7 +71,7 @@ set Cut_Time                = 3.5  2.0
 set ROM_Type_Snapshots  = ramp_time_mat1 ramp_time_mat12 ramp_time_mat2
 set ROM_Time_Break_Snapshots  = 2.0 3.5
 # Number of snapshots for the ROM method
-set N_Snapshots         = 10
+set N_Snapshots         = 5
 
 
 

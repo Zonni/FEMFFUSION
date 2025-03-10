@@ -55,6 +55,8 @@ template <int dim, int n_fe_degree, typename number>
     zero_matrix = false;
     listen_to_material_id = false;
     boundary_req = false;
+
+    apply_on_row_index = 0;
   }
 
 /**
@@ -220,9 +222,90 @@ template <int dim, int n_fe_degree, typename number>
       // Distribute the local values in the global vector
       fe_eval.distribute_local_to_global(dst);
     }
-
   }
 
+/**
+ *
+ */
+template <int dim, int n_fe_degree, typename number>
+  void MassOperator<dim, n_fe_degree, number>::cell_local_apply_row (
+    const dealii::MatrixFree<dim, number> &matfree_data,
+    ParallelVector &dst,
+    const ParallelVector &src,
+    const std::pair<unsigned int, unsigned int> &cell_range) const
+  {
+    std::cout << " cell_local_apply_row:" << std::endl;
+
+    VectorizedArray<double> alpha_va;
+    // Only first two template parameters always required
+    // <dimension, n_fe_degree, quad_degree, n_components, number_type>
+    FEEvaluation<dim, n_fe_degree, n_fe_degree + 1, 1, number> fe_eval(
+      matfree_data);
+
+    const unsigned int dofs_per_cell = fe_eval.dofs_per_cell;
+    std::vector<types::global_dof_index> local_dof_indices(dofs_per_cell);
+
+    // Loop over the cells range we are working in this kernel
+    for (unsigned int cell = cell_range.first; cell < cell_range.second; ++cell)
+    {
+      alpha_va = 0;
+
+      for (unsigned int v = 0;
+          v < matfree_data.n_active_entries_per_cell_batch(cell);
+          ++v)
+      {
+        typename DoFHandler<dim>::cell_iterator cell_it =
+                                                          matfree_data.get_cell_iterator(
+                                                            cell, v);
+
+        cell_it->get_dof_indices(local_dof_indices);
+
+        // If row  is in local_dof_indices
+        if (std::find(local_dof_indices.begin(), local_dof_indices.end(),
+              apply_on_row_index)
+            != local_dof_indices.end())
+        {
+          std::cout << "AQUÍ CELL" << cell_it << std::endl;
+          print_vector(local_dof_indices);
+
+          // Get Material
+          if (listen_to_material_id)
+          {
+
+            alpha_va[v] = (*alpha)[cell_it->material_id()];
+          }
+          else
+          {
+            alpha_va[v] = (*alpha)[(*materials)[cell_it->user_index()]];
+          }
+
+          // Reinit Values
+          fe_eval.reinit(cell);
+
+          // Read in the values of the source vector including the resolution constraints.
+          // This stores u_cell.
+          fe_eval.read_dof_values(src);
+
+          // Compute only unit cell values  (not gradients or hessians)
+          fe_eval.evaluate(true, false, false);
+
+          // Jacobi transformation:
+          //  alpha * values(in real space) * JxW
+          //AssertIndexRange(cell, materials->size());
+
+          for (unsigned int q = 0; q < fe_eval.n_q_points; ++q)
+            fe_eval.submit_value(alpha_va * fe_eval.get_value(q), q);
+
+          // Summation over all quadrature points in the cell.
+          // Only integrate the values, not the gradients
+          fe_eval.integrate(true, false);
+
+          // Distribute the local values in the global vector
+          fe_eval.distribute_local_to_global(dst);
+        }
+      }
+    }
+  }
 /**
  *
  */
@@ -413,6 +496,52 @@ template <int dim, int n_fe_degree, typename number>
     else
     {
       matfree_data.cell_loop(&MassOperator::cell_local_apply, this, dst_vec,
+        src_vec);
+    }
+    copy_to_Vector(dst, dst_vec);
+
+  }
+
+/**
+ *
+ */
+template <int dim, int n_fe_degree, typename number>
+  void MassOperator<dim, n_fe_degree, number>::vmult_add_row (
+    PETScWrappers::MPI::Vector &dst,
+    const PETScWrappers::MPI::Vector &src,
+    unsigned int row)
+  {
+
+    if (zero_matrix) // If zero matrix do not add anything
+      return;
+
+    ParallelVector dst_vec;
+    ParallelVector src_vec;
+    matfree_data.initialize_dof_vector(dst_vec);
+    matfree_data.initialize_dof_vector(src_vec);
+
+    LinearAlgebra::ReadWriteVector<double> rwv(src_vec.locally_owned_elements());
+    rwv.import(src, VectorOperation::insert);
+    src_vec.import(rwv, VectorOperation::insert);
+
+    rwv.import(dst, VectorOperation::insert);
+    dst_vec.import(rwv, VectorOperation::insert);
+
+    if (boundary_req)
+    {
+
+      matfree_data.loop(&MassOperator::cell_local_apply,
+        &MassOperator::cell_face_apply,
+        &MassOperator::cell_boundary_apply, this, dst_vec, src_vec,
+        /*zero_dst =*/false,
+        MatrixFree<dim, number>::DataAccessOnFaces::values,
+        MatrixFree<dim, number>::DataAccessOnFaces::values);
+      // FIXME for apply_on_row
+    }
+    else
+    {
+      apply_on_row_index = row;
+      matfree_data.cell_loop(&MassOperator::cell_local_apply_row, this, dst_vec,
         src_vec);
     }
     copy_to_Vector(dst, dst_vec);

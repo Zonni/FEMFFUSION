@@ -125,7 +125,6 @@ void prm_declare_entries (ParameterHandler &prm)
   prm.declare_entry("STA_Filename", "none.sta", Patterns::FileName(),
     "Load Steady state calculation from a previous one.");
 
-
   // Solver Options
   prm.declare_entry("Renumbering", "Reversed_Cuthill_McKee",
     Patterns::Selection("Cuthill_McKee | Reversed_Cuthill_McKee"
@@ -168,7 +167,7 @@ void prm_declare_entries (ParameterHandler &prm)
 
   // Noise Calculation
   prm.declare_entry("Noise_Calculation", "false", Patterns::Bool(),
-    "# True/false - Activate Noise Calculation");
+    "True/false - Activate Noise Calculation");
   prm.declare_entry("DS_Filename", "", Patterns::FileName(),
     "Filename where it is stored the perturbation data");
   prm.declare_entry("DYN_Filename", "", Patterns::FileName(),
@@ -194,11 +193,13 @@ void prm_declare_entries (ParameterHandler &prm)
     Patterns::Selection("euler | arkode | dealii | petsc"),
     "TS_Solver defined euler | arkode | dealii | petsc");
   prm.declare_entry("Type_Time_Preconditioner", "fixed",
-      Patterns::Selection("fixed | good-broyden | bad-broyden "),
-      "Time Preconditioner defined fixed | good-broyden | bad-broyden");
+    Patterns::Selection("fixed | good-broyden | bad-broyden "),
+    "Time Preconditioner defined fixed | good-broyden | bad-broyden");
   prm.declare_entry("Initial_Time_Preconditioner", "gs-cgilu",
-      Patterns::Selection("gs-cgilu | gs-ilu | diagonal"),
-      "Time Preconditioner defined fixed | good-broyden | bad-broyden");
+    Patterns::Selection("gs-cgilu | gs-ilu | diagonal"),
+    "Time Preconditioner defined fixed | good-broyden | bad-broyden");
+  prm.declare_entry("Print_Time_Dependent_Data", "false", Patterns::Bool(),
+    "True/ false - Print Radial Output data each time step");
 
   // Time Variables
   prm.declare_entry("Frequency", "1.0", Patterns::Double(),
@@ -231,7 +232,7 @@ void prm_declare_entries (ParameterHandler &prm)
   prm.declare_entry("Type_Perturbation", "None",
     Patterns::Selection(
       "Flux_Distributed | Single_Material | Out_Of_Phase | Ramp_Two_Mats | Step_Change_Material "
-      "| Rods | AECL | Mechanical_Vibration | Read_XS_File | Read_XML_File | C5G7-TD1.1 | None"),
+        "| Rods | AECL | Mechanical_Vibration | Read_XS_File | Read_XML_File | C5G7-TD1.1 | None"),
     "Distribution of the instability: Flux_Distributed or Single_Material");
   prm.declare_entry("Perturbation_Function", "Constant",
     Patterns::Selection("Constant | Ramp | Sinus | Ramp_hex | Noise_7g "),
@@ -245,14 +246,12 @@ void prm_declare_entries (ParameterHandler &prm)
     Patterns::Selection("volhom | fluxwei "),
     "Rod cusping method: volhom or fluxwei");
 
-
   prm.declare_entry("Save_Time", "false", Patterns::Bool(),
     "# True/false - Activate Save_Time");
   prm.declare_entry("Load_Time", "false", Patterns::Bool(),
     "# True/false - Activate Load_Time");
   prm.declare_entry("Reinit_File", "nofile", Patterns::FileName(),
     "# Filename where the reinit is saved/loaded");
-
 
   // Perturbations
   prm.declare_entry("Vibrating_Material", "0", Patterns::Integer(),
@@ -265,15 +264,14 @@ void prm_declare_entries (ParameterHandler &prm)
     "True/false - Make a pseudostatic calculation");
   prm.declare_entry("Read_XS_Filename", " ",
     Patterns::FileName(Patterns::FileName::FileType::input),
-    "Filename where the xsec of the read_xs_file perturbation.");
-
+    "Filename where the XS of the read_xs_file perturbation.");
   prm.declare_entry("Read_XML_Filename", " ",
     Patterns::FileName(Patterns::FileName::FileType::input),
-    "Filename where the xsec of the read_xml_file perturbation.");
+    "Filename where the XS of the read_xml_file perturbation.");
 
   // ROM variables
   prm.declare_entry("ROM_Transient", "false", Patterns::Bool(),
-      "# True/false - Activate ROM Calculation");
+    "# True/false - Activate ROM Calculation");
   prm.declare_entry("ROM_Type_Snapshots", "", Patterns::Anything(),
     "Type of Snapshots used in ROM calculation");
   prm.declare_entry("ROM_Time_Break_Snapshots", "", Patterns::Anything(),
@@ -286,6 +284,13 @@ void prm_declare_entries (ParameterHandler &prm)
     "Slope for the ramp perturbation");
   prm.declare_entry("ROM_Cut_Time", "100.0", Patterns::Anything(),
     "Cut Time for the ramp perturbation");
+  // LUPOD
+  prm.declare_entry("LUPOD_Flag", "false", Patterns::Bool(),
+    "Activate LUPOD technique to optimize ROM");
+  prm.declare_entry("Epsilon_N", "0.0", Patterns::Double(0, 1.0),
+    "Epsilon_M of LUPOD technique");
+  prm.declare_entry("Epsilon_M", "0.0", Patterns::Double(0, 1.0),
+    "Epsilon_M of LUPOD technique");
 
 }
 
@@ -437,7 +442,7 @@ int main (int argc,
             else if (noise)
               NoiseDiffusion<1, 2> noise_prob(prm, static_prob, verbose, silent);
             else if (rom_transient)
-			  ROMKinetics<1, 2> rom_pro(prm, static_prob, verbose, silent);
+              ROMKinetics<1, 2> rom_pro(prm, static_prob, verbose, silent);
           }
           else if (fe_degree == 3)
           {
@@ -447,7 +452,7 @@ int main (int argc,
             else if (noise)
               NoiseDiffusion<1, 3> noise_prob(prm, static_prob, verbose, silent);
             else if (rom_transient)
-			  ROMKinetics<1, 3> rom_pro(prm, static_prob, verbose, silent);
+              ROMKinetics<1, 3> rom_pro(prm, static_prob, verbose, silent);
 
           }
           else if (fe_degree == 4)
@@ -459,7 +464,7 @@ int main (int argc,
             else if (noise)
               NoiseDiffusion<1, 4> noise_prob(prm, static_prob, verbose, silent);
             else if (rom_transient)
-			  ROMKinetics<1, 4> rom_pro(prm, static_prob, verbose, silent);
+              ROMKinetics<1, 4> rom_pro(prm, static_prob, verbose, silent);
           }
           else if (fe_degree == 5)
           {
@@ -470,7 +475,7 @@ int main (int argc,
             else if (noise)
               NoiseDiffusion<1, 5> noise_prob(prm, static_prob, verbose, silent);
             else if (rom_transient)
-			  ROMKinetics<1, 5> rom_pro(prm, static_prob, verbose, silent);
+              ROMKinetics<1, 5> rom_pro(prm, static_prob, verbose, silent);
           }
         }
         else if (dim == 2)
@@ -483,7 +488,7 @@ int main (int argc,
             else if (noise)
               NoiseDiffusion<2, 1> noise_prob(prm, static_prob, verbose, silent);
             else if (rom_transient)
-			  ROMKinetics<2, 1> rom_pro(prm, static_prob, verbose, silent);
+              ROMKinetics<2, 1> rom_pro(prm, static_prob, verbose, silent);
           }
           else if (fe_degree == 2)
           {
@@ -493,7 +498,7 @@ int main (int argc,
             else if (noise)
               NoiseDiffusion<2, 2> noise_prob(prm, static_prob, verbose, silent);
             else if (rom_transient)
-			  ROMKinetics<2, 2> rom_pro(prm, static_prob, verbose, silent);
+              ROMKinetics<2, 2> rom_pro(prm, static_prob, verbose, silent);
           }
           else if (fe_degree == 3)
           {
@@ -503,7 +508,7 @@ int main (int argc,
             else if (noise)
               NoiseDiffusion<2, 3> noise_prob(prm, static_prob, verbose, silent);
             else if (rom_transient)
-			  ROMKinetics<2, 3> rom_pro(prm, static_prob, verbose, silent);
+              ROMKinetics<2, 3> rom_pro(prm, static_prob, verbose, silent);
           }
           else if (fe_degree == 4)
           {
@@ -513,7 +518,7 @@ int main (int argc,
             else if (noise)
               NoiseDiffusion<2, 4> noise_prob(prm, static_prob, verbose, silent);
             else if (rom_transient)
-			  ROMKinetics<2, 4> rom_pro(prm, static_prob, verbose, silent);
+              ROMKinetics<2, 4> rom_pro(prm, static_prob, verbose, silent);
           }
           else if (fe_degree == 5)
           {
@@ -523,7 +528,7 @@ int main (int argc,
             else if (noise)
               NoiseDiffusion<2, 5> noise_prob(prm, static_prob, verbose, silent);
             else if (rom_transient)
-			  ROMKinetics<2, 5> rom_pro(prm, static_prob, verbose, silent);
+              ROMKinetics<2, 5> rom_pro(prm, static_prob, verbose, silent);
           }
         }
         else if (dim == 3)
@@ -536,7 +541,7 @@ int main (int argc,
             else if (noise)
               NoiseDiffusion<3, 1> noise_prob(prm, static_prob, verbose, silent);
             else if (rom_transient)
-			  ROMKinetics<3, 1> rom_pro(prm, static_prob, verbose, silent);
+              ROMKinetics<3, 1> rom_pro(prm, static_prob, verbose, silent);
           }
           else if (fe_degree == 2)
           {
@@ -547,7 +552,7 @@ int main (int argc,
             else if (noise)
               NoiseDiffusion<3, 2> noise_prob(prm, static_prob, verbose, silent);
             else if (rom_transient)
-			  ROMKinetics<3, 2> rom_pro(prm, static_prob, verbose, silent);
+              ROMKinetics<3, 2> rom_pro(prm, static_prob, verbose, silent);
           }
           else if (fe_degree == 3)
           {
@@ -557,7 +562,7 @@ int main (int argc,
             else if (noise)
               NoiseDiffusion<3, 3> noise_prob(prm, static_prob, verbose, silent);
             else if (rom_transient)
-			  ROMKinetics<3, 3> rom_pro(prm, static_prob, verbose, silent);
+              ROMKinetics<3, 3> rom_pro(prm, static_prob, verbose, silent);
           }
           else if (fe_degree == 4)
           {
@@ -567,7 +572,7 @@ int main (int argc,
             else if (noise)
               NoiseDiffusion<3, 4> noise_prob(prm, static_prob, verbose, silent);
             else if (rom_transient)
-			  ROMKinetics<3, 4> rom_pro(prm, static_prob, verbose, silent);
+              ROMKinetics<3, 4> rom_pro(prm, static_prob, verbose, silent);
           }
           else if (fe_degree == 5)
           {
@@ -577,7 +582,7 @@ int main (int argc,
             else if (noise)
               NoiseDiffusion<3, 5> noise_prob(prm, static_prob, verbose, silent);
             else if (rom_transient)
-			  ROMKinetics<3, 5> rom_pro(prm, static_prob, verbose, silent);
+              ROMKinetics<3, 5> rom_pro(prm, static_prob, verbose, silent);
           }
         }
       }

@@ -69,7 +69,7 @@ set Time_End            = 6.0
 # Frecuency of the vibration in Hz
 set Frequency           =1.0
 
-# Amplitude instability in %
+# Amplitude instability over 1
 set Amplitude           = 0.01
 
 # Cross Section where the Sigma_f/Sigma_a

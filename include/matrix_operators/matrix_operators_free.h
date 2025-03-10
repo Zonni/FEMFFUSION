@@ -146,6 +146,13 @@ template <int dim, int n_fe_degree, typename number>
     /**
      * @brief
      */
+    void vmult_add_row (PETScWrappers::MPI::Vector &dst,
+      const PETScWrappers::MPI::Vector &src,
+      unsigned int row_dst);
+
+    /**
+     * @brief
+     */
     void Tvmult_add (PETScWrappers::MPI::Vector &dst,
       const PETScWrappers::MPI::Vector &src) const;
 
@@ -183,6 +190,15 @@ template <int dim, int n_fe_degree, typename number>
       const ParallelVector &src,
       const std::pair<unsigned int, unsigned int> &cell_range) const;
 
+    /**
+     * @brief
+     */
+    void cell_local_apply_row (
+      const dealii::MatrixFree<dim, number> &matfree_data,
+      ParallelVector &dst,
+      const ParallelVector &src,
+      const std::pair<unsigned int, unsigned int> &cell_range) const;
+
     void cell_boundary_apply (const dealii::MatrixFree<dim, number> &matfree_data,
       ParallelVector &dst,
       const ParallelVector &src,
@@ -207,6 +223,10 @@ template <int dim, int n_fe_degree, typename number>
     bool boundary_req;
     const std::vector<unsigned int> *boundary_conditions;
     double bc_coeff;
+
+    // ROM - LUPOD
+    unsigned int apply_on_row_index;
+
   };
 
 // TODO Make a common base class that initializes all the common parameters that use the

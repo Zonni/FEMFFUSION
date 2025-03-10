@@ -82,5 +82,17 @@ void run_tests_utils ();
  */
 void run_test_static_rom (const std::string &input_file, unsigned int n_tests);
 
+/**
+ * @brief
+ */
+void run_test_rom_LUPOD_1 ();
+
+/**
+ * @brief
+ */
+void run_test_rom_LUPOD_2 ();
+
+
+
 #endif
 

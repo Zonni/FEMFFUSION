@@ -613,6 +613,43 @@ template <int dim, int n_fe_degree>
       matrix_blocks[row][col]->vmult_add(v1, v3);
   }
 
+/**
+ *
+ */
+template <int dim, int n_fe_degree>
+  void TransportMatrixBase<dim, n_fe_degree>::vmult_row (
+    double &dst,
+    const PETScWrappers::MPI::BlockVector &src,
+    unsigned int row) const
+  {
+
+    dst = 0.0;
+
+    this->vmult_add_row(dst, src, row);
+  }
+
+/**
+ * @brief Complete matrix-vector multiplication.
+ * dst = dst + FisionMatrixBase * src
+ */
+template <int dim, int n_fe_degree>
+  void TransportMatrixBase<dim, n_fe_degree>::vmult_add_row (
+    double &dst,
+    const PETScWrappers::MPI::BlockVector &src,
+    unsigned int row) const
+  {
+    AssertDimension(src.n_blocks(), n_blocks);
+    AssertDimension(src.size(), this->m());
+
+    const unsigned int row_block = static_cast<unsigned int>(row / this->n_dofs_block);
+    const unsigned int row_index_on_block = row %  this->n_dofs_block;
+
+    for (unsigned int j = 0; j < n_blocks; j++)
+    {
+      this->vmult_add_row(row_block, j, dst, src.block(j), row_index_on_block);
+    }
+  }
+
 // ----------------------------------------------------------------- //
 // -------------------- Block Multiplications ---------------------- //
 // ------------------------------ Vec ------------------------------ //
@@ -763,6 +800,37 @@ template <int dim, int n_fe_degree>
     }
   }
 
+/**
+ *
+ */
+template <int dim, int n_fe_degree>
+  void TransportMatrixBase<dim, n_fe_degree>::vmult_add_row (
+    const unsigned int row,
+    const unsigned int col,
+    double &dst,
+    const PETScWrappers::MPI::Vector &src,
+    unsigned int row_index_on_block) const
+  {
+    AssertIndexRange(row, n_blocks);
+    AssertIndexRange(col, n_blocks);
+
+    //if (matrixfree_type == non_diagonal or matrixfree_type == full_matrixfree)
+    //  mass_mf_blocks[row][col]->vmult_add_row(dst, src, dst_row);
+    //else FIXME
+    //  matrix_blocks[row][col]->vmult_add(dst, src, dst_row);
+    AssertRelease(matrixfree_type == full_allocated,
+      "LUPOD ONLY IMPLEMENTED FOR full_allocated");
+
+    PetscInt ncols;
+    const PetscInt *cols;
+    const PetscScalar *vals;
+    MatGetRow((*matrix_blocks[row][col]), row_index_on_block, &ncols, &cols, &vals);
+    for (PetscInt j = 0; j < ncols; j++)
+      dst += src[cols[j]] * vals[j];
+
+    MatRestoreRow((*matrix_blocks[row][col]), row_index_on_block, &ncols, &cols, &vals);
+  }
+
 //-------------------------------------------------------------------------------------------//
 //  ---------------------------------------------------------------------------------------- //
 //-------------------------------------------------------------------------------------------//
@@ -873,6 +941,43 @@ template <int dim, int n_fe_degree>
   }
 
 /**
+ *
+ */
+template <int dim, int n_fe_degree>
+  void FisionMatrixBase<dim, n_fe_degree>::vmult_row (
+    double &dst,
+    const PETScWrappers::MPI::BlockVector &src,
+    unsigned int row) const
+  {
+    AssertIndexRange(row, src.size());
+
+    dst = 0.0;
+    this->vmult_add_row(dst, src, row);
+  }
+
+/**
+ * @brief Complete matrix-vector multiplication.
+ * dst = dst + FisionMatrixBase * src
+ */
+template <int dim, int n_fe_degree>
+  void FisionMatrixBase<dim, n_fe_degree>::vmult_add_row (
+    double &dst,
+    const PETScWrappers::MPI::BlockVector &src,
+    unsigned int row) const
+  {
+    AssertDimension(src.n_blocks(), n_blocks);
+    AssertDimension(src.size(), this->m());
+    AssertIndexRange(row, src.size());
+
+    const unsigned int row_block = static_cast<unsigned int>(row / this->n_dofs_block);
+    const unsigned int row_index_on_block = row % this->n_dofs_block;
+       for (unsigned int j = 0; j < n_blocks; j++)
+    {
+      this->vmult_add_row(row_block, j, dst, src.block(j), row_index_on_block);
+    }
+  }
+
+/**
  * @brief Complete matrix-vector multiplication.
  * dst = dst + FisionMatrixBase * src
  */
@@ -896,7 +1001,7 @@ template <int dim, int n_fe_degree>
 /**
  * @brief Complete matrix-vector multiplication.
  * dst = TimeMassMatrix * src
-// */
+ // */
 //template <int dim, int n_fe_degree>
 //  void FisionMatrixBase<dim, n_fe_degree>::vmult_velocities (
 //    PETScWrappers::MPI::BlockVector &dst,
@@ -914,7 +1019,6 @@ template <int dim, int n_fe_degree>
 //    }
 //
 //  }
-
 // ----------------------------------------------------------------- //
 // --- PETScWrappers::MPI::BlockVector Transpose Multiplications --- //
 // ----------------------------------------------------------------- //
@@ -1002,7 +1106,6 @@ template <int dim, int n_fe_degree>
 //    return val;
 //
 //  }
-
 // ----------------------------------------------------------------- //
 // --------- ParallelBlockVector Complete Multiplications  --------- //
 // ----------------------------------------------------------------- //
@@ -1062,7 +1165,6 @@ template <int dim, int n_fe_degree>
 //      dst.block(i) /= velocities[i];
 //    }
 //  }
-
 /**
  * @brief Complete matrix-vector multiplication.
  * dst = FisionMatrixBase * src
@@ -1101,7 +1203,6 @@ template <int dim, int n_fe_degree>
 //    return val;
 //
 //  }
-
 // ----------------------------------------------------------------- //
 // --------- ParallelBlockVector Complete Multiplications  --------- //
 // ----------------------------------------------------------------- //
@@ -1151,7 +1252,8 @@ template <int dim, int n_fe_degree>
  *
  */
 template <int dim, int n_fe_degree>
-  void FisionMatrixBase<dim, n_fe_degree>::vmult (const unsigned int row,
+  void FisionMatrixBase<dim, n_fe_degree>::vmult (
+    const unsigned int row,
     const unsigned int col,
     PETScWrappers::MPI::Vector &dst,
     const PETScWrappers::MPI::Vector &src) const
@@ -1170,7 +1272,8 @@ template <int dim, int n_fe_degree>
  *
  */
 template <int dim, int n_fe_degree>
-  void FisionMatrixBase<dim, n_fe_degree>::vmult_add (const unsigned int row,
+  void FisionMatrixBase<dim, n_fe_degree>::vmult_add (
+    const unsigned int row,
     const unsigned int col,
     PETScWrappers::MPI::Vector &dst,
     const PETScWrappers::MPI::Vector &src) const
@@ -1186,10 +1289,42 @@ template <int dim, int n_fe_degree>
   }
 
 /**
+ *
+ */
+template <int dim, int n_fe_degree>
+  void FisionMatrixBase<dim, n_fe_degree>::vmult_add_row (
+    const unsigned int row,
+    const unsigned int col,
+    double &dst,
+    const PETScWrappers::MPI::Vector &src,
+    unsigned int dst_row_on_block) const
+  {
+    AssertIndexRange(row, n_blocks);
+    AssertIndexRange(col, n_blocks);
+
+    //if (matrixfree_type == non_diagonal or matrixfree_type == full_matrixfree)
+    //  mass_mf_blocks[row][col]->vmult_add_row(dst, src, dst_row);
+    //else FIXME
+    //matrix_blocks[row][col]->vmult_add_row(dst, src, dst_row);
+    AssertRelease(matrixfree_type == full_allocated,
+      "LUPOD ONLY IMPLEMENTED FOR full_allocated");
+
+    PetscInt ncols;
+    const PetscInt *cols;
+    const PetscScalar *vals;
+    MatGetRow((*matrix_blocks[row][col]), dst_row_on_block, &ncols, &cols, &vals);
+    for (PetscInt j = 0; j < ncols; j++)
+      dst += src[cols[j]] * vals[j];
+
+    MatRestoreRow((*matrix_blocks[row][col]), dst_row_on_block, &ncols, &cols, &vals);
+  }
+
+/**
  * v1 = v2 + A * v3
  */
 template <int dim, int n_fe_degree>
-  void FisionMatrixBase<dim, n_fe_degree>::vmult_add (const unsigned int row,
+  void FisionMatrixBase<dim, n_fe_degree>::vmult_add (
+    const unsigned int row,
     const unsigned int col,
     PETScWrappers::MPI::Vector &v1,
     PETScWrappers::MPI::Vector &v2,

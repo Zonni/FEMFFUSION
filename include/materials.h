@@ -442,7 +442,7 @@ class Materials
    *
    */
   void change_mat_value (
-    std::vector<int> old_material);
+    std::vector<unsigned int> old_material);
 
   /**
    *

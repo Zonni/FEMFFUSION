@@ -1,0 +1,80 @@
+# 
+# ---------------------------------------------------------------------------
+#
+
+# Dimension of the problem (1, 2 or 3)
+set Dimension                = 1
+
+# Number of eigenvalues required
+set N_Eigenvalues            = 1
+
+# Energy groups
+set Energy_Groups            = 1
+
+
+#
+# REACTOR and MESH DEFINITION
+# Finite element degree
+set FE_Degree               = 1
+ 
+# Number of global refinements
+set N_Refinements           = 0
+
+# Number of cells per dimension
+set Mesh_Size               = 10
+set Cell_Pitch_x            = 10* 5.00
+
+# Boundary Conditopns (LEFT RIGHT DOWN UP)   (0 ZeroFlux) (1 ZeroCurrent) (2 Vaccum) (3 Albedo)
+set Boundary_Conditions     = 2 2
+ 
+# 
+# OUT OPTIONS
+# Filename where will be written the output.
+set Output_Filename         = 1D_ROM_1g/1D_ROM_pod_dyn11.out
+
+# True/false - Make a .vtk file with the output
+set Output_Flag              = false
+
+# True/ false - Print Radial Output data each time step
+set Print_Time_Dependent_Data = true
+
+
+
+# TIME OPTIONS
+# True/false - Activate ROM Calculation
+set ROM_Transient           = true
+
+# Delta time of the iteration
+set Time_Delta              = 0.001
+set Time_End                = 1.0
+ 
+# Input types
+set XSECS_Filename          = 1D_ROM_1g/1D_ROM.xsec
+set XSEC_Type               = XSEC
+
+
+
+# Cross Section where the Sigma_f/Sigma_a
+set XS_Name                 = Sigma_a
+
+# Distribution of the instability: Flux_Distributed or Single_Material
+set Type_Perturbation       = Ramp_Two_Mats
+set Material_Changing       = 2 3
+
+
+# Type of instability Constant | Ramp
+set Perturbation_Function   = Ramp
+set Slope_Up                = -0.500 0.0
+set Slope_Down              = 0.0 -0.500
+set Cut_Time                = 0.1  0.5
+
+#
+# ROM Parameters
+set ROM_Type_Snapshots      = time_dyn
+# Number of snapshots for the ROM method
+set N_Snapshots             = 11
+set LUPOD_Flag              = false
+
+
+
+

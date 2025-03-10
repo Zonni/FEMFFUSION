@@ -1,13 +1,11 @@
 /*
- * rom_kinetics.h
- *
- *  Created on: 28 feb 2024
- *      Author: amanda
+ * @file   rom_kinetics.h
+ * @brief  Implementation of a (time dependent) Reduced Order Model
+ * using the Proper Orthogonal decomposition
  */
 
 #ifndef ROM_KINETICS_H_
 #define ROM_KINETICS_H_
-
 
 #include <deal.II/base/logstream.h>
 #include <deal.II/base/quadrature_lib.h>
@@ -60,14 +58,14 @@
 using namespace dealii;
 
 template <int dim, int n_fe_degree>
-PetscErrorCode FormFunctionROM_system (TS ts,
+  PetscErrorCode FormFunctionROM_system (TS ts,
     PetscReal time,
     Vec N,
     Vec NDOT,
     void *ctx);
 
 template <int dim, int n_fe_degree>
-PetscErrorCode PostStep (TS ts);
+  PetscErrorCode PostStep (TS ts);
 
 // Here begins the important class EigenvalueProblem that defines all the problem
 template <int dim, int n_fe_degree>
@@ -75,65 +73,76 @@ template <int dim, int n_fe_degree>
   {
     public:
 
-	ROMKinetics (ParameterHandler &prm,
+    ROMKinetics (ParameterHandler &prm,
       StaticDiffusion<dim, n_fe_degree> &static_problem,
       const bool verbose,
       const bool silent,
-      const bool run=true);
+      const bool run = true);
 
     void run ();
 
     // Build problem
-	void init_time_computation();
-	void get_snapshots(ParameterHandler &prm,StaticDiffusion<dim, n_fe_degree> &static_problem,
-			std::vector<PETScWrappers::MPI::BlockVector> &_snapshots,
-			std::string t_snap);
-	void get_snapshots_modes(StaticDiffusion<dim, n_fe_degree> &static_problem,
-			std::vector<PETScWrappers::MPI::BlockVector> &_snapshots);
-	void get_snapshots_bar(StaticDiffusion<dim, n_fe_degree> &static_problem,
-			std::vector<PETScWrappers::MPI::BlockVector> &_snapshots,
-			unsigned int bar_bank);
-	void get_snapshots_bar_ihs(
-			StaticDiffusion<dim, n_fe_degree> &static_problem,
-			std::vector<PETScWrappers::MPI::BlockVector> &_snapshots);
+    void init_time_computation ();
+    void get_snapshots (ParameterHandler &prm,
+      StaticDiffusion<dim, n_fe_degree> &static_problem,
+      std::vector<PETScWrappers::MPI::BlockVector> &_snapshots,
+      std::string t_snap);
+    void get_snapshots_modes (StaticDiffusion<dim, n_fe_degree> &static_problem,
+      std::vector<PETScWrappers::MPI::BlockVector> &_snapshots);
+    void get_snapshots_bar (StaticDiffusion<dim, n_fe_degree> &static_problem,
+      std::vector<PETScWrappers::MPI::BlockVector> &_snapshots,
+      unsigned int bar_bank);
+    void get_snapshots_bar_ihs (
+      StaticDiffusion<dim, n_fe_degree> &static_problem,
+      std::vector<PETScWrappers::MPI::BlockVector> &_snapshots);
 
-	void get_snapshots_bar_time_variation(
-			StaticDiffusion<dim, n_fe_degree> &static_problem,
-			std::vector<PETScWrappers::MPI::BlockVector> &_snapshots);
+    void get_snapshots_bar_time_variation (
+      StaticDiffusion<dim, n_fe_degree> &static_problem,
+      std::vector<PETScWrappers::MPI::BlockVector> &_snapshots);
 
-	void get_snapshots_ramp_change(ParameterHandler &prm,
-			StaticDiffusion<dim, n_fe_degree> &static_problem,
-			std::vector<PETScWrappers::MPI::BlockVector> &_snapshots,
-			unsigned int mat_chan, double num_mat);
+    void get_snapshots_ramp_change (ParameterHandler &prm,
+      StaticDiffusion<dim, n_fe_degree> &static_problem,
+      std::vector<PETScWrappers::MPI::BlockVector> &_snapshots,
+      unsigned int mat_chan,
+      double num_mat);
 
-	void get_snapshots_ramp_time(
-			StaticDiffusion<dim, n_fe_degree> &static_problem,
-			std::vector<PETScWrappers::MPI::BlockVector> &_snapshots);
+    void get_snapshots_static_time (
+      StaticDiffusion<dim, n_fe_degree> &static_problem,
+      std::vector<PETScWrappers::MPI::BlockVector> &_snapshots);
 
-	void get_snapshots_ramp_time_dyn(
-			ParameterHandler &prm,
-			StaticDiffusion<dim, n_fe_degree> &static_problem,
-			std::vector<PETScWrappers::MPI::BlockVector> &_snapshots);
+    void get_snapshots_time_dyn (
+      ParameterHandler &prm,
+      StaticDiffusion<dim, n_fe_degree> &static_problem,
+      std::vector<PETScWrappers::MPI::BlockVector> &_snapshots);
 
-	void get_snapshots_ramp(
-			StaticDiffusion<dim, n_fe_degree> &static_problem,
-			std::vector<PETScWrappers::MPI::BlockVector> &_snapshots,
-			unsigned int mat_chan, double num_mat);
+    void get_snapshots_ramp (
+      StaticDiffusion<dim, n_fe_degree> &static_problem,
+      std::vector<PETScWrappers::MPI::BlockVector> &_snapshots,
+      unsigned int mat_chan,
+      double num_mat);
 
+    void get_parameters_from_command_line ();
 
-	void get_parameters_from_command_line();
+    void update_xsec ();
 
-	void update_xsec();
+    void compute_pod_basis (
+      std::vector<PETScWrappers::MPI::BlockVector> &_snapshots);
+    void assemble_matrices ();
+    void assemble_ROM_matrices ();
 
-	void compute_pod_basis(
-			std::vector<PETScWrappers::MPI::BlockVector> &_snapshots);
-	void assemble_matrices();
-	void assemble_ROM_matrices();
+    void compute_pod_basis_LUPOD (
+      std::vector<PETScWrappers::MPI::BlockVector> &_snapshots,
+      double epsilon_M,
+      double epsilon_N);
+
+    void qr (const LAPACKFullMatrix<double> &A,
+      LAPACKFullMatrix<double> &Q,
+      LAPACKFullMatrix<double> &R);
 
     void print_matrices ();
 
     // Solver
-    void solve_system_petsc();
+    void solve_system_petsc ();
     void compute_RHS ();
     void solve_LHS ();
     void solve_precursors ();
@@ -142,7 +151,6 @@ template <int dim, int n_fe_degree>
     void postprocess_time_step ();
     void postprocess_noise ();
     void output_results ();
-
 
     // Parallel
     MPI_Comm comm;
@@ -177,7 +185,7 @@ template <int dim, int n_fe_degree>
     VelocityMatrix<dim, n_fe_degree> V;
     FisionDelayedMatrix<dim, n_fe_degree> F;
     TransportMatrix<dim, n_fe_degree> L;
-    std::vector<SpectraBetaFission<dim, n_fe_degree>> XBF;
+    std::vector<SpectraBetaFission<dim, n_fe_degree> > XBF;
 
     // Output
     std::vector<double> time_vect;
@@ -189,7 +197,6 @@ template <int dim, int n_fe_degree>
     std::vector<double> print_time_vect;
     std::vector<double> power_axial;
     std::vector<double> volume_per_plane;
-
 
     Timer timer;
 
@@ -206,7 +213,6 @@ template <int dim, int n_fe_degree>
     bool print_timefile;
     bool print_rhs;
     std::ofstream out_matlab;
-
 
     unsigned int step;
     unsigned int print_step;
@@ -225,11 +231,9 @@ template <int dim, int n_fe_degree>
     double aux_power;
     double norm0;
 
-
     std::string type_perturbation;
 
-
-    MatrixFreeType matrixfree_type;
+    //MatrixFreeType matrixfree_type;
     MatrixFreeType matrixfree_type_time;
     bool listen_to_material_id;
 
@@ -252,9 +256,7 @@ template <int dim, int n_fe_degree>
     std::vector<PETScWrappers::MPI::BlockVector> snap_basis_old;
     Vec coeffs_n;
 
-
-
-     // ROM Matrices
+    // ROM Matrices
     FullMatrix<double> rominvV, romL, romF;
     std::vector<FullMatrix<double>> romXBF;
 
@@ -269,8 +271,18 @@ template <int dim, int n_fe_degree>
 
     bool update;
 
+    // LUPOD data
+    bool LUPOD_flag;
+    double epsilon_N;
+    double epsilon_M;
+    std::vector<unsigned int> snaps;   // Store selected snapshot indices
+    std::vector<unsigned int> points;  // Store collocation point indices
+    std::vector<Vector<double> > snap_basis_red;
+    //std::vector<PETScWrappers::MPI::BlockVector> snap_basis_full;
+    LAPACKFullMatrix<double> U_reduced;
+    FullMatrix<double> U_full;
+
     private:
   };
-
 
 #endif /* ROM_KINETICS_H_ */

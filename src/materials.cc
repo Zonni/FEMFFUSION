@@ -757,11 +757,11 @@ void Materials::set_sigma_t (
   sigma_t[group][mat] = sigma_t_coeff;
 }
 
-void Materials::change_mat_value (std::vector<int> material_changing)
+void Materials::change_mat_value (std::vector<unsigned int> material_changing)
 {
 
-	AssertRelease(material_changing.size() == 2,
-			"To apply the step perturbation Material_Changing must have 2 elements");
+  AssertRelease(material_changing.size() == 2,
+    "To apply the step perturbation Material_Changing must have 2 elements");
   for (unsigned int c = 0; c < materials_vector.size(); c++)
     if (materials_vector[c] == material_changing[0])
       materials_vector[c] = material_changing[1];
@@ -862,7 +862,8 @@ void Materials::create_new_mixed_mat (const unsigned int new_mat,
 /**
  *
  */
-void Materials::create_new_mixed_mat_flux (const unsigned int new_mat,
+void Materials::create_new_mixed_mat_flux (
+  const unsigned int new_mat,
   const double frac,
   const unsigned int mat_bar,
   const unsigned int mat_no_bar,
@@ -1016,7 +1017,8 @@ void Materials::make_critical (const double &keffective)
 /**
  *
  */
-void Materials::modify_xsec (std::string xsec_type,
+void Materials::modify_xsec (
+  std::string xsec_type,
   unsigned int mat,
   std::vector<double> &new_xsec)
 {
@@ -1189,9 +1191,10 @@ void Materials::modify_xsec_c5g7_td11 (
 }
 
 /**
- * FIXME Is this function necesary?
+ * FIXME Is this function necessary?
  */
-void Materials::create_new_added_mat (const unsigned int new_mat,
+void Materials::create_new_added_mat (
+  const unsigned int new_mat,
   const double frac,
   double inc_xsec_r,
   const unsigned int mat_no_bar,
@@ -1241,7 +1244,8 @@ void Materials::create_new_added_mat (const unsigned int new_mat,
 /**
  *
  */
-void Materials::add_perturbation_xsec (std::string xsec_type,
+void Materials::add_perturbation_xsec (
+  std::string xsec_type,
   unsigned int mat,
   std::vector<double> &delta_xsec)
 {
@@ -1305,7 +1309,8 @@ void Materials::add_perturbation_xsec (std::string xsec_type,
 /**
  *
  */
-void Materials::add_perturbation_xsec (std::string xsec_type,
+void Materials::add_perturbation_xsec (
+  std::string xsec_type,
   double &coeff)
 {
   double nu;

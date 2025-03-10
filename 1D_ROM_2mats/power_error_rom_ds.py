@@ -5,7 +5,7 @@ Editor de Spyder
 Este es un archivo temporal.
 """
 import sys
-#sys.path.append('../postprocess')
+sys.path.append('../postprocess')
 from utils import get_td_power, get_td_time
 import numpy as np
 import matplotlib.pyplot as plt
@@ -35,16 +35,11 @@ params = {'backend': 'pdf',
 rcParams.update(params)
 
 
-labels = ['FOM','POD_3','POD_5','POD_10']
-out_files =['1D_ROM_ds.out','1D_ROM_pod_mats_3.out', '1D_ROM_pod_mats_5.out', '1D_ROM_pod_mats_10.out'    ]
+labels = ['FOM','POD_10','RPOD_5+5+5']
+out_files =['1D_ROM_ds.out','1D_ROM_pod_ramp12.out', '1D_ROM_pod_reinit.out'  ]
 
 
-#out_time_files =['1D_ROM_ds_time.out','1D_ROM_pod_mats_time.out',
-#     ]
 
-# labels = ['FOM','POD-5','RPOD-5']
-# out_files =['1D_ROM_ds.out'
-#     ]
 out_time_files =[ ]
     
 
@@ -77,25 +72,25 @@ for i in range(len(out_files)):
     print(i)
     ax.plot(time[i], powers[i],  label=labels[i])
 
-    x = time[i]
-    y = powers[i]
-    spl = CubicSpline(x, y)
-    ynew=spl(time[0])
+    # x = time[i]
+    # y = powers[i]
+    # spl = CubicSpline(x, y)
+    # ynew=spl(time[0])
 
-    error_power = np.mean(abs(powers[0]-ynew)/powers[0]) *100
-    err_local = []
-    max_errs = []
+    # error_power = np.mean(abs(powers[0]-ynew)/powers[0]) *100
+    # err_local = []
+    # max_errs = []
     
-    if local_pows:
-        for t in range(len(local_pows[0])):
-            mean_err, maxs, _, _ = compare_distributions(local_pows[i][t], local_pows[0][t] )
-            err_local.append(mean_err)
-            max_errs.append(maxs)
-        mean_local_err = np.mean(err_local)
+    # if local_pows:
+    #     for t in range(len(local_pows[0])):
+    #         mean_err, maxs, _, _ = compare_distributions(local_pows[i][t], local_pows[0][t] )
+    #         err_local.append(mean_err)
+    #         max_errs.append(maxs)
+    #     mean_local_err = np.mean(err_local)
     
     
-        data = [labels[i], error_power, mean_local_err, max(max_errs)]
-        print(latex_row(data))
+    #     data = [labels[i], error_power, mean_local_err, max(max_errs)]
+    #     print(latex_row(data))
     
 
 ax.grid(True)

@@ -94,6 +94,37 @@ def parse_file(filename, begin='', end='default', n_max_lines=-1):
     f.close()
     return out
 
+def parse_time_file(filename):
+    """ Parse a File 
+    filename = 'tests/test1.out.test'
+    parse_time_file(filename)
+    [1.0, 1.0]
+    """
+    f = open(filename)
+    line = ' '
+    step = []
+    time = []
+    power = []
+    while (line != ''):
+        line = f.readline()
+        # Begin Found
+        if line[0:7] == 'Time in':
+            line = f.readline()
+            num =  line.split()
+            step.append(int(num[0]))
+            time.append(float(num[1]))
+        elif line[0:4] == 'Powe':
+            power.append([])
+            line = f.readline()
+            for num in line.split():
+                # If end is found also terminate
+                power[-1].append(float(num))
+
+
+
+    f.close()
+    return step, time, power
+
 def parse_file_complex(filename, begin='', end='default', n_max_lines=-1):
     """ Parse a File and return what is below a begin title.
     It must be defined a the begin title and the end word or/and the maximum

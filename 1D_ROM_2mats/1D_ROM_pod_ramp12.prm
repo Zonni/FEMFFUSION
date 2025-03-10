@@ -30,7 +30,7 @@ set Boundary_Conditions  = 2 2
 # 
 # OUT OPTIONS
 # Filename where will be written the output.
-set Output_Filename      = 1D_ROM_2mats/1D_ROM_pod_mats_10.out
+set Output_Filename      = 1D_ROM_2mats/1D_ROM_pod_ramp12.out
 
 # True/false - Make a .vtk file with the output
 set Output_Flag          = false
@@ -51,22 +51,16 @@ set Time_End            = 10.0
 # Input types
 set XSECS_Filename       = 1D_ROM_2mats/1D_ROM.xsec
 
-
-
-# Cross Section where the Sigma_f/Sigma_a
-set XS_Name             = Sigma_a
-
-
 # Distribution of the instability: Flux_Distributed or Single_Material
-set Type_Perturbation   = Ramp_Two_Mats
-set Material_Changing = 2 3
-
-
+set Type_Perturbation       = Ramp_Two_Mats
+set Material_Changing       = 2    3
 # Type of instability Constant | Ramp
 set Perturbation_Function   = Ramp
 set Slope_Up                = -0.005 0.0
 set Slope_Down              = 0.0 -0.004
 set Cut_Time                = 3.5  2.0
+# Cross Section where the Sigma_f/Sigma_a
+set XS_Name                 = Sigma_a
 
 # ROM Parameters
 set ROM_Type_Snapshots  = ramp_time_mat12

@@ -20,6 +20,8 @@
 #include "../include/matrix_operators/matrix_operators_petsc.h"
 #include "../include/printing.h"
 
+#include <filesystem>
+
 using namespace dealii;
 
 /**
@@ -712,9 +714,16 @@ template <int dim, int n_fe_degree>
   void StaticSPN<dim, n_fe_degree>::postprocess ()
   {
 
-    materials.make_critical(eigenvalues[0]);
+//    materials.make_critical(eigenvalues[0]);
 
-    // Erase the content of output file
+    // Create Folder if Does not exist
+    std::size_t pos = out_file.find_last_of('/');
+    std::string folderPath = (pos != std::string::npos) ? out_file.substr(0, pos) : "";
+    if (!std::filesystem::exists(folderPath)) {
+        std::filesystem::create_directory(folderPath);
+    }
+
+    // Create and Erase the content of output file
     std::ofstream out(out_file.c_str(), std::ios::out);
 
     // Get the scalar flux phi_0
@@ -881,6 +890,10 @@ template <int dim, int n_fe_degree>
         {
           u[eig].block(b) /= norm;
         }
+
+
+
+
 
         // Calculate the axial power distribution
         std::vector<double> power_axial;
@@ -1051,8 +1064,6 @@ template <int dim, int n_fe_degree>
       true,
       precision);
 
-    std::cout << "phi_sol[0].size(): " << u[0].size() << std::endl;
-
     out.close();
   }
 
@@ -1149,6 +1160,7 @@ template <int dim, int n_fe_degree>
          << " MB" << std::endl;
 
     verbose_cout << "postprocess..." << std::flush;
+    materials.make_critical(eigenvalues[0]);
     postprocess();
     verbose_cout << "Done!" << std::endl;
 
