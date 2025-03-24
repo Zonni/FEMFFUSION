@@ -60,13 +60,13 @@
 
 #include "../include/time_computation.h"
 #include "../include/utils.h"
-#include "../include/materials.h"
-#include "../include/perturbation.h"
+#include "../include/io/printing.h"
+#include "../include/io/materials.h"
+#include "../include/io/perturbation.h"
 #include "../include/eps_solvers/eps_solver.h"
 #include "../include/matrix_operators/matrix_operators_petsc_time.h"
 #include "../include/static_diffusion.h"
-#include "../include/printing.h"
-#include "../include/preconditioner.h"
+
 
 using namespace dealii;
 
@@ -79,7 +79,7 @@ template <int dim, int n_fe_degree>
     StaticDiffusion<dim, n_fe_degree> &static_problem,
     const bool verbose,
     const bool silent,
-	const bool to_run) :
+    const bool to_run) :
       comm(MPI_COMM_WORLD),
       n_mpi_processes(Utilities::MPI::n_mpi_processes(comm)),
       this_mpi_process(Utilities::MPI::this_mpi_process(comm)),
@@ -186,12 +186,12 @@ template <int dim, int n_fe_degree>
     verbose_cout << "Initialize the perturbation class" << std::endl;
     perturbation.init_transient();
 
-    n_matsvecs=0;
+    n_matsvecs = 0;
 
     if (to_run)
-    this->run();
+      this->run();
   }
-
+// Here begins the important class EigenvalueProblem that defines all the problemlayed_fractions, delayed_decay_constants;
 /**
  * @brief
  * It sets  up the precursors density function and make some other calculations
@@ -250,7 +250,7 @@ template <int dim, int n_fe_degree>
 
       }
     }
-    else if (time_scheme == "semi-implicit-euler")
+    else if (time_scheme == "semi-implicit-euler")// Here begins the important class EigenvalueProblem that defines all the problemlayed_fractions, delayed_decay_constants;
     {
 
       // for semi-implicit-euler
@@ -291,7 +291,6 @@ template <int dim, int n_fe_degree>
     get_bool_from_options("-print_timefile", print_timefile);
     get_bool_from_options("-print_rhs", print_rhs);
     get_bool_from_options("-adaptive_timestep", adaptive_timestep);
-    get_bool_from_options("-vver_reactor", vver_reactor);
 
     // Integers
     get_uint_from_options("-n_out_ref", n_out_ref);
@@ -319,61 +318,61 @@ template <int dim, int n_fe_degree>
   void TimeNeutronDiffusion<dim, n_fe_degree>::update_xsec ()
   {
 
-    		if (type_perturbation == "Flux_Distributed"
-			or type_perturbation == "Single_Material"
-			or type_perturbation == "Out_Of_Phase"
-			or type_perturbation == "Ramp_Two_Mats")
-	{
-		verbose_cout << "Apply function to perturbed " << std::endl;
-		perturbation.apply_function_to_perturb(sim_time);
-		verbose_cout << " Done!" << std::endl;
-	}
-	else if (type_perturbation == "Rods")
-	{
-		verbose_cout << "Moving rods: time" << sim_time << std::endl;
-		perturbation.move_bars(sim_time);
-		verbose_cout << " Done!" << std::endl;
-	}
-	else if (type_perturbation == "AECL")
-	{
-		verbose_cout << "Perturbed the AECL transient: " << std::endl;
-		perturbation.move_th(sim_time);
-		verbose_cout << " Done!" << std::endl;
-	}
-	else if (type_perturbation == "Step_Change_Material")
-	{
-		verbose_cout << "Perturbed the Step_Change_Material: " << std::endl;
-		perturbation.step_change_material(sim_time);
-		verbose_cout << " Done!" << std::endl;
-	}
-	else if (type_perturbation == "Mechanical_Vibration")
-	{
-		verbose_cout << "   move_vibrating... " << std::flush;
-		perturbation.move_vibrating(sim_time);
-		verbose_cout << " Done!" << std::endl;
-	}
-	else if (type_perturbation == "C5G7-TD1.1")
-	{
-		verbose_cout << "Apply perturbation C5G7-TD1.1: " << std::endl;
-		perturbation.apply_c5G7_perturb(sim_time);
-		verbose_cout << " Done!" << std::endl;
-	}
-	else if (type_perturbation == "Read_XS_File")
-	{
-		verbose_cout << "   move_read_xs_file... " << std::flush;
-		perturbation.move_read_xs_file(sim_time);
-		verbose_cout << " Done!" << std::endl;
-	}
-	else if (type_perturbation == "Read_XML_File")
-	{
-		verbose_cout << "   move_read_XML_file... " << std::flush;
-		perturbation.move_read_xml_file(sim_time, t_end);
-		verbose_cout << " Done!" << std::endl;
-	}
-	else
-	{
-		AssertRelease(false, "Invalid type of perturbation");
-	}
+    if (type_perturbation == "Flux_Distributed"
+        or type_perturbation == "Single_Material"
+        or type_perturbation == "Out_Of_Phase"
+        or type_perturbation == "Ramp_Two_Mats")
+    {
+      verbose_cout << "Apply function to perturbed " << std::endl;
+      perturbation.apply_function_to_perturb(sim_time);
+      verbose_cout << " Done!" << std::endl;
+    }
+    else if (type_perturbation == "Rods")
+    {
+      verbose_cout << "Moving rods: time" << sim_time << std::endl;
+      perturbation.move_bars(sim_time);
+      verbose_cout << " Done!" << std::endl;
+    }
+    else if (type_perturbation == "AECL")
+    {
+      verbose_cout << "Perturbed the AECL transient: " << std::endl;
+      perturbation.move_th(sim_time);
+      verbose_cout << " Done!" << std::endl;
+    }
+    else if (type_perturbation == "Step_Change_Material")
+    {
+      verbose_cout << "Perturbed the Step_Change_Material: " << std::endl;
+      perturbation.step_change_material(sim_time);
+      verbose_cout << " Done!" << std::endl;
+    }
+    else if (type_perturbation == "Mechanical_Vibration")
+    {
+      verbose_cout << "   move_vibrating... " << std::flush;
+      perturbation.move_vibrating(sim_time);
+      verbose_cout << " Done!" << std::endl;
+    }
+    else if (type_perturbation == "C5G7-TD1.1")
+    {
+      verbose_cout << "Apply perturbation C5G7-TD1.1: " << std::endl;
+      perturbation.apply_c5G7_perturb(sim_time);
+      verbose_cout << " Done!" << std::endl;
+    }
+    else if (type_perturbation == "Read_XS_File")
+    {
+      verbose_cout << "   move_read_xs_file... " << std::flush;
+      perturbation.move_read_xs_file(sim_time);
+      verbose_cout << " Done!" << std::endl;
+    }
+    else if (type_perturbation == "Read_XML_File")
+    {
+      verbose_cout << "   move_read_XML_file... " << std::flush;
+      perturbation.move_read_xml_file(sim_time, t_end);
+      verbose_cout << " Done!" << std::endl;
+    }
+    else
+    {
+      AssertRelease(false, "Invalid type of perturbation");
+    }
   }
 
 /*
@@ -1437,8 +1436,8 @@ template <int dim, int n_fe_degree>
 
       norm /= volume;
 
-	  // Normalize the values of the power and fluxes per cell
-	  normalize_vector(power_per_assembly[0], norm);
+      // Normalize the values of the power and fluxes per cell
+      normalize_vector(power_per_assembly[0], norm);
 
 //
 //      for (unsigned int i=0; i<power_per_assembly[0].size(); i++)
@@ -1967,19 +1966,19 @@ template <int dim, int n_fe_degree>
       // ------------------------------------------------------------------------
       if (step % out_interval == 0)
       {
-      cout << std::defaultfloat << std::setfill(' ');
-      cout << " Step "<< std::setw(5) << step;
-      cout << std::fixed << std::setprecision(4) << std::setfill('0');
-      cout << " at t=" <<  std::setw(5)<< sim_time << std::flush;
-      cout << std::fixed << std::setprecision(4) << std::setfill('0');
-      cout << "   Total Power " <<  std::setw(6) << power_total;
-      cout << std::fixed << std::setprecision(3) << std::setfill('0');
-      cout   << "   CPU Time = "<<  std::setw(5);
-      cout    << timer.cpu_time() << std::endl;
+        cout << std::defaultfloat << std::setfill(' ');
+        cout << " Step " << std::setw(5) << step;
+        cout << std::fixed << std::setprecision(4) << std::setfill('0');
+        cout << " at t=" << std::setw(5) << sim_time << std::flush;
+        cout << std::fixed << std::setprecision(4) << std::setfill('0');
+        cout << "   Total Power " << std::setw(6) << power_total;
+        cout << std::fixed << std::setprecision(3) << std::setfill('0');
+        cout << "   CPU Time = " << std::setw(5);
+        cout << timer.cpu_time() << std::endl;
 
-      verbose_cout << "   Step Done." << " Time = " << timer.cpu_time()
-                   << " s."
-                   << std::endl;
+        verbose_cout << "   Step Done." << " Time = " << timer.cpu_time()
+                     << " s."
+                     << std::endl;
       }
 
       // ------------------------------------------------------------------------
@@ -2042,8 +2041,8 @@ template <int dim, int n_fe_degree>
       out_matlab.close();
 
     verbose_cout << "Total its: " << totalits << ", mean by it:"
-         << double(totalits) / step
-         << std::endl;
+                 << double(totalits) / step
+                 << std::endl;
 
     if (initial_preconditioner == "multilevel")
       cout << "Total its coarse level: " << preconditioner.total_its_coarse

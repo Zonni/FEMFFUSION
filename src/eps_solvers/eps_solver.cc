@@ -27,10 +27,10 @@
 #include <stdio.h>
 
 #include "../../include/eps_solvers/eps_solver.h"
-#include "../../include/pc_multilevel.h"
+#include "../../include/eps_solvers/pc_multilevel.h"
 #include "../../include/static_diffusion.h"
 #include "../../include/static_spn.h"
-#include "../../include/printing.h"
+#include "../../include/io/printing.h"
 
 using namespace dealii;
 
@@ -463,7 +463,7 @@ template <int dim, int n_fe_degree>
       problem.tol_ksp = 1e-5;
       problem.solver_type = "gd";
       problem.matrixfree_type = non_diagonal;
-      problem.run();
+      problem.run(prm);
       eigenvalues = problem.eigenvalues;
 
       std::vector<BlockVector<double> > phi_coarse(n_eigenvalues,

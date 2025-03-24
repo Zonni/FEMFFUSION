@@ -3,9 +3,6 @@
  * @brief  Implementation of SystemMatrixTime to handle block matrices.
  */
 
-#include "../../include/matrix_operators/matrix_operators_petsc_time.h"
-#include "../../include/matrix_operators/matrix_operators_base.h"
-
 #include <deal.II/dofs/dof_handler.h>
 #include <deal.II/dofs/dof_iterator_selector.h>
 
@@ -30,6 +27,9 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+
+#include "../../include/matrix_operators/matrix_operators_petsc_time.h"
+#include "../../include/matrix_operators/matrix_operators_base.h"
 
 using namespace dealii;
 

@@ -27,7 +27,7 @@
 #include <vector>
 #include <map>
 
-#include "../pc_multilevel.h"
+#include "pc_multilevel.h"
 
 #include "../matrix_operators/matrix_operators_base.h"
 #include "../matrix_operators/matrix_operators_petsc.h"

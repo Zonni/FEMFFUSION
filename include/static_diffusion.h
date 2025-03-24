@@ -60,8 +60,8 @@
 #include <set>
 #include <algorithm>
 
-#include "materials.h"
-#include "perturbation.h"
+#include "io/materials.h"
+#include "io/perturbation.h"
 #include "eps_solvers/eps_solver_2g.h"
 #include "matrix_operators/matrix_operators_petsc.h"
 
@@ -83,7 +83,7 @@ template <int dim, int n_fe_degree>
       const bool to_init = false,
       std::string modes = "none");
 
-    void run ();
+    void run (ParameterHandler &prm);
 
     // Parse input files
     void parse_xsec_ext_file (std::string);
@@ -101,7 +101,7 @@ template <int dim, int n_fe_degree>
     void assemble_system_gamma ();
     void assemble_coarse_system ();
     PetscErrorCode print_matrices ();
-    void show_cells();
+    void show_cells ();
 
     /**
      * @brief Solvers
@@ -114,12 +114,12 @@ template <int dim, int n_fe_degree>
 
     // Output results
     void postprocess ();
-    void postprocess2();
+    void postprocess2 ();
     void output_results () const;
 
     // save and load
-    void load_static_calculation(std::string &file);
-    void save_static_calculation(std::string &file);
+    void load_static_calculation (std::string &file);
+    void save_static_calculation (std::string &file);
 
     std::vector<double> eigenvalues;
     std::vector<PETScWrappers::MPI::BlockVector> phi;
@@ -145,7 +145,6 @@ template <int dim, int n_fe_degree>
     bool show_eps_convergence;
     bool residual_norm;
     bool spectral_index;
-    bool listen_to_material_id;
     bool p_init;
     bool to_init;
     bool refine_y;
@@ -166,7 +165,6 @@ template <int dim, int n_fe_degree>
     unsigned int n_dofs;
     unsigned int n_cells;
     unsigned int n_assemblies;
-    unsigned int n_mats;
     unsigned int n_eigenvalues;
     unsigned int n_out_ref;
 

@@ -403,19 +403,6 @@ template <typename Number>
 /**
  *
  */
-template <int dim>
-  std::pair<unsigned int, RefinementCase<dim> > getRefPair (std::string str);
-
-template <int dim>
-  void getRefinement (const std::string &filename,
-    const std::string &header,
-    std::vector<std::pair<unsigned int, RefinementCase<dim> > > &out,
-    std::vector<unsigned int> &nCol,
-    const int height);
-
-/**
- *
- */
 template <class number>
   void parse_multiline_vector (std::ifstream &input_file,
     unsigned int nlines,
@@ -521,25 +508,6 @@ unsigned int findRow (const std::vector<unsigned int> nCol,
   int &sum);
 
 /**
- * @brief Returns the side 0 or 1 of the point in the reference cell depending of the cut
- * direction. The cut direction indicates the in which dimenension it is defined
- * the side
- */
-template <int dim>
-  unsigned int getSide (const unsigned int cut_dir,
-    const Point<dim> &point);
-
-/**
- *  @brief Returns the side 0 or 1 of the point in the reference cell depending of the cut
- *  direction. The cut direction indicates the in which dimenension it is defined
- *  the side.
- */
-template <int dim>
-  unsigned int getSide (const unsigned int cut_dir,
-    const Point<dim> &point,
-    const unsigned int N);
-
-/**
  * @brief Make the geometry points from a specific triangulation, and its vector of cell
  * centers.
  */
@@ -573,58 +541,6 @@ void parse_vector_in_file (const std::string &file,
   std::vector<unsigned int> &vector_out,
   const unsigned int n_lines = 1,
   const unsigned int expected_vector_size = -1);
-
-/**
- *
- */
-void parse_file (unsigned int mat_name,
-  std::string file,
-  std::string intro,
-  std::vector<double> &D1v,
-  std::vector<double> &D2v,
-  std::vector<double> &SigmaA1v,
-  std::vector<double> &SigmaA2v,
-  std::vector<double> &Sigma12v,
-  std::vector<double> &SigmaF1v,
-  std::vector<double> &SigmaF2v);
-
-/**
- *
- */
-void parse_file (unsigned int mat_name,
-  std::string file,
-  std::string intro,
-  std::vector<double> &dfs_left_0,
-  std::vector<double> &dfs_right_0,
-  std::vector<double> &dfs_left_1,
-  std::vector<double> &dfs_right_1);
-
-/**
- *
- */
-void parse_file (unsigned int mat_name,
-  std::string file,
-  std::string intro,
-  std::vector<double> &df_faces,
-  unsigned int n);
-
-/**
- *
- */
-void parse_file (std::string file,
-  std::string intro,
-  std::vector<std::vector<double> > &dfs_poly,
-  unsigned int n);
-
-/**
- *
- */
-void parse_file (unsigned int mat_name,
-  std::string file,
-  std::string intro,
-  std::vector<double> &shape_fun,
-  unsigned int n,
-  unsigned int nlines);
 
 /**
  * @brief This function construct the default rectangular geometry_points.
@@ -672,7 +588,8 @@ void parse_vector (std::string input,
  * @input The output vector.
  * @input The expected length. If 0, do not check the length.
  */
-void parse_vector (std::string input,
+void parse_vector (
+  std::string input,
   std::vector<double> &out,
   unsigned int length = 0);
 
@@ -697,7 +614,7 @@ void parse_vector (std::string input,
 
 void parse_vector (std::string input,
   std::vector<std::string> &out,
-  unsigned int length=0);
+  unsigned int length = 0);
 
 /**
  *
@@ -1047,13 +964,15 @@ template <>
  * @brief Interpolates the discrete function in, which is a vector on the grid before the refinement, to the function out which then is a vector on the refined grid
  */
 template <int dim>
-  void interpolate_operator (const DoFHandler<dim> &dof_handler,
+  void interpolate_operator (
+    const DoFHandler<dim> &dof_handler,
     const std::vector<std::vector<unsigned int> > &cell_map,
     const PETScWrappers::MPI::Vector &vec_in,
     PETScWrappers::MPI::Vector &vec_out);
 
 template <int dim>
-  void restriction_operator (const DoFHandler<dim> &dof_handler,
+  void restriction_operator (
+    const DoFHandler<dim> &dof_handler,
     const std::vector<std::vector<unsigned int> > &cell_map,
     const PETScWrappers::MPI::Vector &vec_in,
     PETScWrappers::MPI::Vector &vec_out);
@@ -1063,7 +982,8 @@ template <int dim>
  * with n_fe_degree=p_coarse into the dof_handler
  */
 template <int dim>
-  void solution_transfer_dof (const Triangulation<dim> &tria,
+  void solution_transfer_dof (
+    const Triangulation<dim> &tria,
     unsigned int p_coarse,
     const DoFHandler<dim> &dof_handler,
     const FE_Q<dim> &fe,
@@ -1075,7 +995,8 @@ template <int dim>
  * with n_fe_degree=p_coarse into the dof_handler
  */
 template <int dim>
-  void solution_transfer_dof (const Triangulation<dim> &tria,
+  void solution_transfer_dof (
+    const Triangulation<dim> &tria,
     unsigned int p_coarse,
     const DoFHandler<dim> &dof_handler,
     const FE_Q<dim> &fe,
@@ -1088,7 +1009,8 @@ template <int dim>
  */
 template <int dim>
   void
-  set_transfer_matrix (const FE_Q<dim> &fe_in,
+  set_transfer_matrix (
+    const FE_Q<dim> &fe_in,
     const FE_Q<dim> &fe_out,
     FullMatrix<double> &transfer_mat);
 
@@ -1097,7 +1019,8 @@ template <int dim>
  * to use the solution_interpolate_dof
  */
 template <int dim>
-  void set_transfer_matrix (const FiniteElement<dim> &fe_in,
+  void set_transfer_matrix (
+    const FiniteElement<dim> &fe_in,
     const FiniteElement<dim> &fe_out,
     FullMatrix<double> &transfer_mat);
 
@@ -1120,7 +1043,8 @@ template <int dim>
  * the dof_handler_out and the transfer mat
  */
 template <int dim>
-  void solution_interpolate_dof (const DoFHandler<dim> &dof_handler_in,
+  void solution_interpolate_dof (
+    const DoFHandler<dim> &dof_handler_in,
     const DoFHandler<dim> &dof_handler_out,
     const FullMatrix<double> &transfer_mat,
     PETScWrappers::MPI::BlockVector &sol_in,
@@ -1129,14 +1053,16 @@ template <int dim>
 /**
  *
  */
-const std::vector<unsigned int> child_pos (const unsigned int child,
+const std::vector<unsigned int> child_pos (
+  const unsigned int child,
   const unsigned int n_levels,
   unsigned int dim);
 
 /**
  *
  */
-bool child_at_face (const unsigned int face,
+bool child_at_face (
+  const unsigned int face,
   const unsigned int child,
   const unsigned int n_children,
   const unsigned int dim);

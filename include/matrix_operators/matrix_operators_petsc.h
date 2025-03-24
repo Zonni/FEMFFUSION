@@ -54,7 +54,7 @@
 #include <fstream>
 #include <sstream>
 
-#include "../materials.h"
+#include "../io/materials.h"
 #include "matrix_operators_base.h"
 #include "matrix_operators_free.h"
 
@@ -85,8 +85,7 @@ template <int dim, int n_fe_degree>
       const Materials &materials,
       const std::vector<unsigned int>& boundary_conditions,
       const std::vector<double>& albedo_factors,
-      const MatrixFreeType & matrix_free_type = non_diagonal,
-      bool listen_to_material_id = false);
+      const MatrixFreeType & matrix_free_type = non_diagonal);
 
     /**
      *
@@ -113,7 +112,6 @@ template <int dim, int n_fe_degree>
      */
     void reinit_non_diagonal (
       const Materials &materials,
-      bool listen_to_material_id,
       const std::vector<unsigned int>& boundary_conditions,
       const std::vector<double>& albedo_factors);
 
@@ -122,7 +120,6 @@ template <int dim, int n_fe_degree>
      */
     void reinit_full_matrixfree (
       const Materials &materials,
-      bool listen_to_material_id,
       const std::vector<unsigned int>& boundary_conditions,
       const std::vector<double>& albedo_factors);
 
@@ -174,8 +171,7 @@ template <int dim, int n_fe_degree>
       const Materials &materials,
       const std::vector<unsigned int>& boundary_conditions,
       const std::vector<double>& albedo_factors,
-      const MatrixFreeType & matrix_free_type = non_diagonal,
-      bool listen_to_material_id = false);
+      const MatrixFreeType & matrix_free_type = non_diagonal);
 
     /**
      *
@@ -198,7 +194,6 @@ template <int dim, int n_fe_degree>
      */
     void reinit_full_matrixfree (
       const Materials &materials,
-      bool listen_to_material_id,
       const std::vector<unsigned int>& boundary_conditions,
       const std::vector<double>& albedo_factors);
 
@@ -246,8 +241,7 @@ template <int dim, int n_fe_degree>
       const Materials &materials,
       const std::vector<unsigned int>& boundary_conditions,
       const std::vector<double>& albedo_factors,
-      const MatrixFreeType & matrix_free_type = non_diagonal,
-      bool listen_to_material_id = false);
+      const MatrixFreeType & matrix_free_type = non_diagonal);
 
     /**
      *
@@ -269,7 +263,6 @@ template <int dim, int n_fe_degree>
      */
     void reinit_non_diagonal (
       const Materials &materials,
-      bool listen_to_material_id,
       const std::vector<unsigned int>& boundary_conditions,
       const std::vector<double>& albedo_factors);
 
@@ -278,7 +271,6 @@ template <int dim, int n_fe_degree>
      */
     void reinit_full_matrixfree (
       const Materials &materials,
-      bool listen_to_material_id,
       const std::vector<unsigned int>& boundary_conditions,
       const std::vector<double>& albedo_factors);
 
@@ -326,8 +318,7 @@ template <int dim, int n_fe_degree>
      * cross sections.
      */
     void reinit (const Materials & materials,
-      const MatrixFreeType & matrix_free_type = non_diagonal,
-      bool listen_to_material_id = false);
+      const MatrixFreeType & matrix_free_type = non_diagonal);
 
     /**
      * @brief
@@ -373,8 +364,7 @@ template <int dim, int n_fe_degree>
      * cross sections.
      */
     void reinit (const Materials & materials,
-      const MatrixFreeType & matrix_free_type = non_diagonal,
-      bool listen_to_material_id = false);
+      const MatrixFreeType & matrix_free_type = non_diagonal);
 
     /**
      * @brief
@@ -424,8 +414,7 @@ template <int dim, int n_fe_degree>
      * cross sections.
      */
     void reinit (const Materials & materials,
-      const MatrixFreeType & matrix_free_type = non_diagonal,
-      bool listen_to_material_id = false);
+      const MatrixFreeType & matrix_free_type = non_diagonal);
 
     /**
      * @brief
@@ -475,8 +464,7 @@ template <int dim, int n_fe_degree>
      * cross sections.
      */
     void reinit (const Materials & materials,
-      const MatrixFreeType & matrix_free_type = non_diagonal,
-      bool listen_to_material_id = false);
+      const MatrixFreeType & matrix_free_type = non_diagonal);
 
     /**
      * @brief
@@ -526,8 +514,7 @@ template <int dim, int n_fe_degree>
      * cross sections.
      */
     void reinit (const Materials & materials,
-      const MatrixFreeType & matrix_free_type = non_diagonal,
-      bool listen_to_material_id = false);
+      const MatrixFreeType & matrix_free_type = non_diagonal);
 
     /**
      * @brief
@@ -569,9 +556,10 @@ public:
 	 * @brief Allocate and assemble the matrix associated to this materials and fission
 	 * cross sections.
 	 */
-	void reinit(const Materials &materials,
-			const MatrixFreeType &matrix_free_type = non_diagonal, const unsigned int _type_precursor=0,
-			bool listen_to_material_id = false);
+	void reinit(
+	  const Materials &materials,
+			const MatrixFreeType &matrix_free_type = non_diagonal,
+			const unsigned int _type_precursor=0);
 
 	void clear();
 	/**

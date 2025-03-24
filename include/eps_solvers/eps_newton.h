@@ -23,8 +23,7 @@
 
 #include <deal.II/dofs/dof_handler.h>
 
-#include "../pc_multilevel.h"
-
+#include "pc_multilevel.h"
 #include "../matrix_operators/matrix_operators_base.h"
 #include "../matrix_operators/matrix_operators_petsc.h"
 #include "../matrix_operators/matrix_operators_spn.h"
@@ -65,30 +64,29 @@ template <int dim, int n_fe_degree>
   {
     public:
 
-    SolverNewton (TransportMatrixBase<dim, n_fe_degree> & L,
-      FisionMatrixBase<dim, n_fe_degree> & M,
+    SolverNewton (TransportMatrixBase<dim, n_fe_degree> &L,
+      FisionMatrixBase<dim, n_fe_degree> &M,
       unsigned int _n_eigenvalues,
-      std::vector<PETScWrappers::MPI::BlockVector>& phi_initial,
-      Timer& _timer,
+      std::vector<PETScWrappers::MPI::BlockVector> &phi_initial,
+      Timer &_timer,
       bool show_eps_convergence = false);
 
-    void solve (std::vector<double>& eigenvalues_locking,
-      std::vector<PETScWrappers::MPI::BlockVector>& phi_sol);
+    void solve (std::vector<double> &eigenvalues_locking,
+      std::vector<PETScWrappers::MPI::BlockVector> &phi_sol);
 
-
-      void solve_adjoint (
-        std::vector<double> & eigenvalues_locking,
-        std::vector<PETScWrappers::MPI::BlockVector>& _phi_init,
-        std::vector<PETScWrappers::MPI::BlockVector>& phi_directo,
-        std::vector<PETScWrappers::MPI::BlockVector>& phi_adj);
+    void solve_adjoint (
+      std::vector<double> &eigenvalues_locking,
+      std::vector<PETScWrappers::MPI::BlockVector> &_phi_init,
+      std::vector<PETScWrappers::MPI::BlockVector> &phi_directo,
+      std::vector<PETScWrappers::MPI::BlockVector> &phi_adj);
 
     void setup_preconditioner ();
 
     void gram_schmidt_mod (
-      std::vector<PETScWrappers::MPI::BlockVector>& phi1_ort);
+      std::vector<PETScWrappers::MPI::BlockVector> &phi1_ort);
 
-    void rayleigh_ritz_gen (std::vector<PETScWrappers::MPI::BlockVector>& Z,
-      std::vector<PETScWrappers::MPI::BlockVector>& V,
+    void rayleigh_ritz_gen (std::vector<PETScWrappers::MPI::BlockVector> &Z,
+      std::vector<PETScWrappers::MPI::BlockVector> &V,
       std::vector<double> &LAM);
 
 //    void validate (
@@ -96,51 +94,46 @@ template <int dim, int n_fe_degree>
 //      double eig,
 //      double &norm);
 
-      void validate (
-        std::vector<PETScWrappers::MPI::BlockVector>& Z,
-        std::vector<double> eig,
-        double &norm);
+    void validate (
+      std::vector<PETScWrappers::MPI::BlockVector> &Z,
+      std::vector<double> eig,
+      double &norm);
 
     void correction_newton_shell (
-      std::vector<PETScWrappers::MPI::BlockVector>& Z,
-      const std::vector<double>& eigenvalues,
-      std::vector<PETScWrappers::MPI::BlockVector>& V,
+      std::vector<PETScWrappers::MPI::BlockVector> &Z,
+      const std::vector<double> &eigenvalues,
+      std::vector<PETScWrappers::MPI::BlockVector> &V,
       unsigned int n_iter);
 
     void apply_pc_gs (
-      PETScWrappers::MPI::BlockVector& in,
-      PETScWrappers::MPI::BlockVector& out);
-
-
+      PETScWrappers::MPI::BlockVector &in,
+      PETScWrappers::MPI::BlockVector &out);
 
     void apply_pc_gs_adj (
-      PETScWrappers::MPI::BlockVector& in,
-      PETScWrappers::MPI::BlockVector& out);
-
-
-
+      PETScWrappers::MPI::BlockVector &in,
+      PETScWrappers::MPI::BlockVector &out);
 
     PetscErrorCode apply_pc_chebyshev (
-      PETScWrappers::MPI::BlockVector& in,
-      PETScWrappers::MPI::BlockVector& out);
+      PETScWrappers::MPI::BlockVector &in,
+      PETScWrappers::MPI::BlockVector &out);
 
     PetscErrorCode apply_pc_multilevel (
-      PETScWrappers::MPI::BlockVector& in,
-      PETScWrappers::MPI::BlockVector& out);
+      PETScWrappers::MPI::BlockVector &in,
+      PETScWrappers::MPI::BlockVector &out);
 
     /**
      *
      */
-      void gram_schmidt_bior (
-        std::vector<
-            PETScWrappers::MPI::BlockVector>& phi,
-        std::vector<
-            PETScWrappers::MPI::BlockVector>& phiadj);
+    void gram_schmidt_bior (
+      std::vector<
+          PETScWrappers::MPI::BlockVector> &phi,
+      std::vector<
+          PETScWrappers::MPI::BlockVector> &phiadj);
 
     ~SolverNewton ();
 
-    TransportMatrixBase<dim, n_fe_degree>& L;
-    FisionMatrixBase<dim, n_fe_degree>& M;
+    TransportMatrixBase<dim, n_fe_degree> &L;
+    FisionMatrixBase<dim, n_fe_degree> &M;
 
     MPI_Comm comm;
     ConditionalOStream cout;
@@ -177,8 +170,7 @@ template <int dim, int n_fe_degree>
     Timer time_pc;
     Timer epstimer;
 
-    PetscInt* indx;
-
+    PetscInt *indx;
 
     double tol_ksp;
     double tol_eps;
@@ -192,7 +184,6 @@ template <int dim, int n_fe_degree>
     std::vector<PETScWrappers::MPI::BlockVector> Z_mat;
     std::vector<PETScWrappers::MPI::BlockVector> LZ_mat;
     Mat PLZ_mat;
-
 
     std::vector<double> eigenvalues;
 

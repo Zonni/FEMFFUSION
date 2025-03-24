@@ -6,16 +6,19 @@
 #include <math.h>
 
 #include "../include/test.h"
+#include "../include/utils.h"
 #include "../include/femffusion.h"
 #include "../include/static_diffusion.h"
 #include "../include/static_spn.h"
 #include "../include/static_full_spn.h"
-#include "../include/noise_diffusion.h"
-#include "../include/noise_spn.h"
-#include "../include/noise_full_spn.h"
 #include "../include/time_computation.h"
-#include "../include/rom_kinetics.h"
-#include "../include/utils.h"
+
+#include "../include/noise/noise_diffusion.h"
+#include "../include/noise/noise_spn.h"
+#include "../include/noise/noise_full_spn.h"
+
+#include "../include/rom/rom_kinetics.h"
+
 
 using namespace dealii;
 
@@ -26,18 +29,20 @@ int run_tests ()
 {
   std::string input_file, out_file;
 
-  // FIXME
+
   //
-  // -------------------- TEST STATIC ROM -------------------- //
+  // ---------------------- TEST ROM ----------------------- //
   //
   //
-  //input_file = "test/3D_Langenbuch/3D_Langenbuch_rom_rods.prm";
-  //run_test_static_rom(input_file, 10);
+
 
   // input_file = "test/1D_hom_5cells_mov_prec/1D_5cells_f1_rom.prm";
   run_test_rom_LUPOD_1();
   // input_file = "test/1D_hom_5cells_mov_prec/1D_5cells_f1_rom.prm";
   run_test_rom_LUPOD_2();
+
+  //input_file = "test/3D_Langenbuch/3D_Langenbuch_rom_rods.prm";
+  //run_test_static_rom(input_file, 3);
 
 #ifdef DEBUG
   std::cout<<" Compiled in DEBUG mode! "<<std::endl;
@@ -1753,7 +1758,7 @@ void run_test_static_rom (
     static_prob.perturbation.move_bars(nt * time_step);
 
     // Compute eigenvalues with ROM method
-    rom_prob.compute_pod_basis(rom_prob.snapshots[0]);
+    rom_prob.compute_pod_basis_LUPOD_monolithic(rom_prob.snapshots[0]);
 
     // We use the matrices of the static problem because F in ROM is multiplied by (1-beta)
     static_prob.assemble_system_lambda();
@@ -1784,7 +1789,6 @@ void run_test_static_rom (
       + " and calculated Static "
       + num_to_str(static_eig[nt])
       + '.');
-
   }
 
   std::cout << " Passed!" << std::endl;
@@ -1823,59 +1827,54 @@ void run_test_rom_LUPOD_1 ()
                                                  { 3, 1, 4 };
   std::vector<unsigned int> snaps_reference =
                                                 { 3, 1, 4 };
-  std::cout << "rom_prob.snaps" << std::endl;
-  print_vector(rom_prob.snaps);
-  std::cout << " rom_prob.points" << std::endl;
-  print_vector(rom_prob.points);
-  std::cout << " rom_prob.epsilon_M "<< rom_prob.epsilon_M << std::endl;
-  std::cout << " rom_prob.epsilon_N "<< rom_prob.epsilon_N  << std::endl;
+  //  std::cout << "rom_prob.snaps" << std::endl;
+  //  print_vector(rom_prob.snaps);
+  //  std::cout << " rom_prob.points" << std::endl;
+  //  print_vector(rom_prob.points);
+  //  std::cout << " rom_prob.epsilon_M " << rom_prob.epsilon_M << std::endl;
+  //  std::cout << " rom_prob.epsilon_N " << rom_prob.epsilon_N << std::endl;
 
   assert_vectors_similar(rom_prob.snaps, snaps_reference, tol);
   assert_vectors_similar(rom_prob.points, points_reference, tol);
 
   PETScWrappers::MPI::Vector dst0;
   std::vector<std::vector<double> >
-  U_red_ref_std =
-                    {
-                        { -7.554602e-01, +4.166607e-01, -5.056419e-01 },
-                        { -4.931731e-01, -8.696971e-01, +2.018046e-02 },
-                        { -4.313468e-01, +2.646145e-01, +8.625074e-01 }
-                    };
+  U_red_ref =
+                {
+                    { -7.554602e-01, +4.166607e-01, -5.056419e-01 },
+                    { -4.931731e-01, -8.696971e-01, +2.018046e-02 },
+                    { -4.313468e-01, +2.646145e-01, +8.625074e-01 }
+                };
 
-  LAPACKFullMatrix<double> U_red_ref(rom_prob.U_reduced.m(), rom_prob.U_reduced.n());
-  // Copy elements
-  for (unsigned int i = 0; i < rom_prob.U_reduced.m(); ++i)
-    for (unsigned int j = 0; j < rom_prob.U_reduced.n(); ++j)
-      U_red_ref(i, j) = U_red_ref_std[i][j];
+  // Test Elements
+  for (unsigned int i = 0; i < rom_prob.snap_basis_red.size(); ++i)
+    for (unsigned int j = 0; j < rom_prob.snap_basis_red[0].size(); ++j)
+    {
+      AssertRelease(is_similar(U_red_ref[j][i], rom_prob.snap_basis_red[i][j], tol),
+        "Error in U_red_ref[" + num_to_str(i) + "]" + "[" + num_to_str(i) + "]");
+    }
 
-  U_red_ref.add(-1.0, rom_prob.U_reduced);
-
-  AssertRelease(U_red_ref.linfty_norm() < tol,
-    "  Error in U_full, error: " + num_to_str(U_red_ref.linfty_norm()));
   // singular_values = { 1.52834, 0.587737, 0.0365, 3.23611e-16}
 
   // Test U_full
   std::vector<std::vector<double> >
-  U_full_ref_std =
-                     {
-                         { +1.775534e-17, -9.415731e-17, -2.753979e-15 },
-                         { -4.931731e-01, -8.696971e-01, +2.018046e-02 },
-                         { -7.366730e-01, -3.752936e-01, +8.965586e-01 },
-                         { -7.554602e-01, +4.166607e-01, -5.056419e-01 },
-                         { -4.313468e-01, +2.646145e-01, +8.625074e-01 },
-                         { +5.697307e-17, -1.716882e-16, -1.704035e-15 },
-                     };
+  U_full_ref =
+                 {
+                     { +1.775534e-17, -9.415731e-17, -2.753979e-15 },
+                     { -4.931731e-01, -8.696971e-01, +2.018046e-02 },
+                     { -7.366730e-01, -3.752936e-01, +8.965586e-01 },
+                     { -7.554602e-01, +4.166607e-01, -5.056419e-01 },
+                     { -4.313468e-01, +2.646145e-01, +8.625074e-01 },
+                     { +5.697307e-17, -1.716882e-16, -1.704035e-15 },
+                 };
 
-  FullMatrix<double> U_full_ref(rom_prob.U_full.m(), rom_prob.U_full.n());
-  // Copy elements
-  for (unsigned int i = 0; i < rom_prob.U_full.m(); ++i)
-    for (unsigned int j = 0; j < rom_prob.U_full.n(); ++j)
-      U_full_ref(i, j) = U_full_ref_std[i][j];
-
-  U_full_ref.add(rom_prob.U_full, -1.0);
-  std::cout << " 3" << std::endl;
-  AssertRelease(U_full_ref.linfty_norm() < tol,
-    "  Error in U_full, error: " + num_to_str(U_full_ref.linfty_norm()));
+  // Test Elements
+  for (unsigned int i = 0; i < rom_prob.snap_basis.size(); ++i)
+    for (unsigned int j = 0; j < rom_prob.snap_basis[0].size(); ++j)
+    {
+      AssertRelease(is_similar(U_full_ref[j][i], rom_prob.snap_basis[i][j], tol),
+        "Error in U_full[" + num_to_str(i) + "]" + "[" + num_to_str(i) + "]");
+    }
 
   std::cout << " Passed!" << std::endl;
 }
@@ -1916,48 +1915,55 @@ void run_test_rom_LUPOD_2 ()
 
   assert_vectors_similar(rom_prob.snaps, snaps_reference, tol);
   assert_vectors_similar(rom_prob.points, points_reference, tol);
-  std::vector<std::vector<double>>
-  u_red_ref =
+  std::vector<std::vector<double> >
+  U_red_ref =
                 {
                     { -0.729106, -0.684401 },
                     { -0.684401, +0.729106 }
                 };
 
-  AssertRelease(is_similar(rom_prob.U_reduced(0, 0), u_red_ref[0][0], tol),
-    "  Error in U_reduced(0, 0) ");
-  AssertRelease(is_similar(rom_prob.U_reduced(0, 1), u_red_ref[0][1], tol),
-    "  Error in U_reduced(0, 1) ");
-  AssertRelease(is_similar(rom_prob.U_reduced(1, 0), u_red_ref[1][0], tol),
-    "  Error in U_reduced(1, 0) ");
-  AssertRelease(is_similar(rom_prob.U_reduced(1, 1), u_red_ref[1][1], tol),
-    "  Error in U_reduced(1, 1) ");
+  // Test Elements
+  for (unsigned int i = 0; i < rom_prob.snap_basis_red.size(); ++i)
+    for (unsigned int j = 0; j < rom_prob.snap_basis_red[0].size(); ++j)
+    {
+      AssertRelease(is_similar(U_red_ref[j][i], rom_prob.snap_basis_red[i][j], tol),
+        "Error in U_red[" + num_to_str(i) + "]" + "[" + num_to_str(i) + "]");
+    }
 
   // Test U_full
-  std::vector<std::vector<double> >
-  U_full_ref_std =
-                     {
-                         { -0.000000001266899, +0.000000001404289 },
-                         { -0.588889993842957, -0.762939586299597 },
-                         { -0.330700849029543, -0.481982160696203 },
-                         { -0.758143532925241, -0.159583583017522 },
-                         { -0.729105631228219, -0.684401182429795 },
-                         { -0.684401182429795, +0.729105631228219 },
-                         { -0.741655760998246, +0.443931888864489 },
-                         { -0.375852267581478, +0.439099210411635 },
-                         { -0.561536596313876, +0.710273354101464 },
-                         { -0.000000002552288, +0.000000002829072 },
-                         { -0.180285863103333, +0.163023661494686 },
-                     };
+  std::vector<std::vector<double> > U_full_ref =
+                                                   {
+                                                       { -0.000000001266899,
+                                                         +0.000000001404289 },
+                                                       { -0.588889993842957,
+                                                         -0.762939586299597 },
+                                                       { -0.330700849029543,
+                                                         -0.481982160696203 },
+                                                       { -0.758143532925241,
+                                                         -0.159583583017522 },
+                                                       { -0.729105631228219,
+                                                         -0.684401182429795 },
+                                                       { -0.684401182429795,
+                                                         +0.729105631228219 },
+                                                       { -0.741655760998246,
+                                                         +0.443931888864489 },
+                                                       { -0.375852267581478,
+                                                         +0.439099210411635 },
+                                                       { -0.561536596313876,
+                                                         +0.710273354101464 },
+                                                       { -0.000000002552288,
+                                                         +0.000000002829072 },
+                                                       { -0.180285863103333,
+                                                         +0.163023661494686 },
+                                                   };
 
-  FullMatrix<double> U_full_ref(rom_prob.U_full.m(), rom_prob.U_full.n());
-  // Copy elements
-  for (unsigned int i = 0; i < rom_prob.U_full.m(); ++i)
-    for (unsigned int j = 0; j < rom_prob.U_full.n(); ++j)
-      U_full_ref(i, j) = U_full_ref_std[i][j];
-
-  U_full_ref.add(rom_prob.U_full, -1.0);
-  AssertRelease(U_full_ref.linfty_norm() < tol, "  Error in U_full_ref ");
-
+  // Test Elements
+  for (unsigned int i = 0; i < rom_prob.snap_basis.size(); ++i)
+    for (unsigned int j = 0; j < rom_prob.snap_basis[0].size(); ++j)
+    {
+      AssertRelease(is_similar(U_full_ref[j][i], rom_prob.snap_basis[i][j], tol),
+        "Error in U_full[" + num_to_str(i) + "]" + "[" + num_to_str(i) + "]");
+    }
   // singular_values = { 0.740887,: 0.337672}
 
   // Test vmult_row

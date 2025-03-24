@@ -45,30 +45,34 @@
 #include <petscksp.h>
 #include <petscis.h>
 
-#include "utils.h"
 #include "matrix_operators/matrix_operators_petsc.h"
 #include "matrix_operators/matrix_operators_petsc_time.h"
 #include "matrix_operators/matrix_operators_small_time_mat.h"
 #include "static_diffusion.h"
 #include "preconditioner.h"
+#include "utils.h"
+
+using namespace dealii;
 
 /**
  *
  */
-
-using namespace dealii;
-
 template <int dim, int n_fe_degree>
   void shell_time_matrix (Mat shell_mat,
     Vec src_,
     Vec dst_);
 
+/**
+ *
+ */
 template <int dim, int n_fe_degree>
   PetscErrorCode apply_preconditioner (PC pc,
     Vec src_,
     Vec dst_);
 
-// Here begins the important class EigenvalueProblem that defines all the problem
+/**
+ *
+ */
 template <int dim, int n_fe_degree>
   class TimeNeutronDiffusion
   {
@@ -78,7 +82,7 @@ template <int dim, int n_fe_degree>
       StaticDiffusion<dim, n_fe_degree> &static_problem,
       const bool verbose,
       const bool silent,
-	  const bool to_run=true);
+      const bool to_run = true);
 
     void run ();
 
@@ -114,8 +118,8 @@ template <int dim, int n_fe_degree>
     void output_results ();
 
     // Reinit
-    void save_time_calculation(std::string &file);
-    void load_time_calculation(std::string &file);
+    void save_time_calculation (std::string &file);
+    void load_time_calculation (std::string &file);
 
     // Parallel
     MPI_Comm comm;
@@ -152,7 +156,6 @@ template <int dim, int n_fe_degree>
 
     Preconditioner<dim, n_fe_degree> preconditioner;
 
-
     PETScWrappers::MPI::SparseMatrix P;
     std::vector<PETScWrappers::MPI::SparseMatrix*> LP, M, L;
     std::vector<std::vector<PETScWrappers::MPI::SparseMatrix*>> X;
@@ -187,7 +190,7 @@ template <int dim, int n_fe_degree>
     bool print_rhs;
     std::ofstream out_matlab;
 
-    // Reinit
+    // Reinit>
     bool save_time;
     bool load_time;
     std::string reinit_file;
@@ -241,14 +244,13 @@ template <int dim, int n_fe_degree>
     std::vector<unsigned int> &assem_per_dim;
 
     // Precursors
-    std::vector<std::vector<double>> delayed_fractions, delayed_decay_constants;
-    std::vector<std::vector<std::vector<double>>> delayed_spectra;
+    //std::vector<std::vector<double>> delayed_
+    std::vector<std::vector<std::vector<double> > > delayed_spectra;
     std::vector<double> delayed_fraction_sum;
     std::vector<std::vector<double>> velocities_vector;
 
     // adaptive time step
     bool adaptive_timestep;
-    bool vver_reactor;
     PETScWrappers::MPI::BlockVector u0, u1, u2;
 
     unsigned int n_matsvecs;

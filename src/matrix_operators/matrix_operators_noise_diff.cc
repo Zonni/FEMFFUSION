@@ -3,9 +3,6 @@
  * @brief
  */
 
-#include "../../include/matrix_operators/matrix_operators_noise_diff.h"
-#include "../../include/matrix_operators/matrix_operators_base.h"
-
 #include <deal.II/dofs/dof_handler.h>
 #include <deal.II/dofs/dof_iterator_selector.h>
 
@@ -29,6 +26,9 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+
+#include "../../include/matrix_operators/matrix_operators_noise_diff.h"
+#include "../../include/matrix_operators/matrix_operators_base.h"
 
 using namespace dealii;
 

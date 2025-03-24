@@ -50,12 +50,13 @@
 #include <typeinfo>
 #include <string>
 
+
 #include <iostream>
 #include <fstream>
 #include <sstream>
 
-#include "../materials.h"
-#include "../complex_perturbation.h"
+#include "../io/materials.h"
+#include "../noise/complex_perturbation.h"
 #include "matrix_operators_base.h"
 #include "matrix_operators_complex_base.h"
 #include "matrix_operators_free.h"
@@ -63,6 +64,7 @@
 
 using namespace dealii;
 typedef LinearAlgebra::distributed::Vector<double> ParallelVector;
+typedef std::complex<double> complex;
 
 /**
  * @brief Calculate the precursors factor depending on a materials
@@ -71,7 +73,7 @@ void calculate_precursors_factor (
   const unsigned int mat_id,
   const Materials &materials,
   const double &omega,
-  std::vector<complex> &prec_factor);
+  std::vector<std::complex<double> > &prec_factor);
 
 // -------------------------------------------------------------------------------------------------------//
 // -------------------------------------------------------------------------------------------------------//
@@ -138,7 +140,7 @@ template <int dim, int n_fe_degree>
       const unsigned int mat_id,
       const Materials &materials,
       const ComplexPerturbation &pert,
-      std::vector<std::vector<complex> > &B_factor);
+      std::vector<std::vector<std::complex<double> > > &B_factor);
 
     /**
      *
@@ -198,7 +200,7 @@ template <int dim, int n_fe_degree>
       const unsigned int pert_id,
       const Materials &materials,
       const ComplexPerturbation &pert,
-      std::vector<std::vector<complex> > &B_factor);
+      std::vector<std::vector<std::complex<double> > > &B_factor);
 
     /**
      * @brief Allocate and assemble the matrix associated to this materials and fission

@@ -41,7 +41,7 @@ out_files =['1D_ROM_td.out',
             '1D_ROM_pod_sta20.out',
             '1D_ROM_rampmat12_10.out',
             '1D_ROM_rampmat12_LUPOD10.out',
-            '1D_ROM_reinit_10.out'
+            '1D_ROM_rampmat12_LUPOD20.out',
             ]
 # out_time_files =['1D_ROM_ds_time.out','1D_ROM_pod_mats_time.out'
 #                  ]

@@ -38,7 +38,7 @@ which is required for this tutorial step."
 ENDIF()
 
 SET (TARGET ${TARGET}.exe)
-
+#include_directories(${CMAKE_SOURCE_DIR}/include)
 DEAL_II_INITIALIZE_CACHED_VARIABLES()
 PROJECT(${TARGET})
 DEAL_II_INVOKE_AUTOPILOT()

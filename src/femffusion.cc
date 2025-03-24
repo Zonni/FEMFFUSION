@@ -14,12 +14,13 @@
 #include "../include/static_sdpn.h"
 #include "../include/test.h"
 #include "../include/performance.h"
-#include "../include/noise_diffusion.h"
-#include "../include/noise_spn.h"
-#include "../include/noise_full_spn.h"
+#include "../include/noise/noise_diffusion.h"
+#include "../include/noise/noise_spn.h"
+#include "../include/noise/noise_full_spn.h"
 #include "../include/time_computation.h"
 #include "../include/time_computation_spn.h"
-#include "../include/rom_kinetics.h"
+#include "../include/rom/rom_kinetics.h"
+#include "../include/rom/rom_static.h"
 
 /**
  * Print the FEMFFUSION logo.
@@ -232,7 +233,7 @@ void prm_declare_entries (ParameterHandler &prm)
   prm.declare_entry("Type_Perturbation", "None",
     Patterns::Selection(
       "Flux_Distributed | Single_Material | Out_Of_Phase | Ramp_Two_Mats | Step_Change_Material "
-        "| Rods | AECL | Mechanical_Vibration | Read_XS_File | Read_XML_File | C5G7-TD1.1 | None"),
+        "| Rods | AECL | Mechanical_Vibration | Read_XS_File | Read_XML_File | C5G7-TD1.1 | Random_XS| None"),
     "Distribution of the instability: Flux_Distributed or Single_Material");
   prm.declare_entry("Perturbation_Function", "Constant",
     Patterns::Selection("Constant | Ramp | Sinus | Ramp_hex | Noise_7g "),
@@ -268,8 +269,12 @@ void prm_declare_entries (ParameterHandler &prm)
   prm.declare_entry("Read_XML_Filename", " ",
     Patterns::FileName(Patterns::FileName::FileType::input),
     "Filename where the XS of the read_xml_file perturbation.");
+  prm.declare_entry("XS_Perturbation_Fraction", "0.0", Patterns::Double(),
+    "True/false - Make a pseudostatic calculation");
 
   // ROM variables
+  prm.declare_entry("ROM_Static", "false", Patterns::Bool(),
+    "# True/false - Activate ROM Static Calculation");
   prm.declare_entry("ROM_Transient", "false", Patterns::Bool(),
     "# True/false - Activate ROM Calculation");
   prm.declare_entry("ROM_Type_Snapshots", "", Patterns::Anything(),
@@ -284,6 +289,9 @@ void prm_declare_entries (ParameterHandler &prm)
     "Slope for the ramp perturbation");
   prm.declare_entry("ROM_Cut_Time", "100.0", Patterns::Anything(),
     "Cut Time for the ramp perturbation");
+  prm.declare_entry("ROM_Group_Wise", "Monolithic",
+    Patterns::Selection("Group_Wise | Monolithic"),
+    "Type of Snapshots used in ROM calculation");
   // LUPOD
   prm.declare_entry("LUPOD_Flag", "false", Patterns::Bool(),
     "Activate LUPOD technique to optimize ROM");
@@ -356,8 +364,7 @@ int main (int argc,
       }
       if (!strcmp("-p", argv[i]) or !strcmp("--performance", argv[i]))
       {
-        Utilities::MPI::MPI_InitFinalize mpi_initialization(argc, argv,
-          1);
+        Utilities::MPI::MPI_InitFinalize mpi_initialization(argc, argv, 1);
         {
           run_performance_matmult();
           run_performance_solvers();
@@ -409,6 +416,9 @@ int main (int argc,
       // Get ROM Calculation
       bool rom_transient = prm.get_bool("ROM_Transient");
 
+      // Get ROM Calculation
+      bool rom_static = prm.get_bool("ROM_Static");
+
       AssertRelease(dim >= 0 and dim <= 3,
         "Spatial dimension not valid,  dim = " + num_to_str(dim));
 
@@ -432,6 +442,9 @@ int main (int argc,
               NoiseDiffusion<1, 1> noise_prob(prm, static_prob, verbose, silent);
             else if (rom_transient)
               ROMKinetics<1, 1> rom_pro(prm, static_prob, verbose, silent);
+            else if (rom_static)
+              ROMStatic<1, 1> rom_pro(prm, static_prob, verbose, silent);
+
           }
           else if (fe_degree == 2)
           {
@@ -443,6 +456,8 @@ int main (int argc,
               NoiseDiffusion<1, 2> noise_prob(prm, static_prob, verbose, silent);
             else if (rom_transient)
               ROMKinetics<1, 2> rom_pro(prm, static_prob, verbose, silent);
+            else if (rom_static)
+              ROMStatic<1, 2> rom_pro(prm, static_prob, verbose, silent);
           }
           else if (fe_degree == 3)
           {
@@ -453,7 +468,8 @@ int main (int argc,
               NoiseDiffusion<1, 3> noise_prob(prm, static_prob, verbose, silent);
             else if (rom_transient)
               ROMKinetics<1, 3> rom_pro(prm, static_prob, verbose, silent);
-
+            else if (rom_static)
+              ROMStatic<1, 3> rom_pro(prm, static_prob, verbose, silent);
           }
           else if (fe_degree == 4)
           {
@@ -465,6 +481,8 @@ int main (int argc,
               NoiseDiffusion<1, 4> noise_prob(prm, static_prob, verbose, silent);
             else if (rom_transient)
               ROMKinetics<1, 4> rom_pro(prm, static_prob, verbose, silent);
+            else if (rom_static)
+              ROMStatic<1, 4> rom_pro(prm, static_prob, verbose, silent);
           }
           else if (fe_degree == 5)
           {
@@ -476,6 +494,8 @@ int main (int argc,
               NoiseDiffusion<1, 5> noise_prob(prm, static_prob, verbose, silent);
             else if (rom_transient)
               ROMKinetics<1, 5> rom_pro(prm, static_prob, verbose, silent);
+            else if (rom_static)
+              ROMStatic<1, 5> rom_pro(prm, static_prob, verbose, silent);
           }
         }
         else if (dim == 2)
@@ -489,6 +509,8 @@ int main (int argc,
               NoiseDiffusion<2, 1> noise_prob(prm, static_prob, verbose, silent);
             else if (rom_transient)
               ROMKinetics<2, 1> rom_pro(prm, static_prob, verbose, silent);
+            else if (rom_static)
+              ROMStatic<2, 1> rom_pro(prm, static_prob, verbose, silent);
           }
           else if (fe_degree == 2)
           {
@@ -499,6 +521,8 @@ int main (int argc,
               NoiseDiffusion<2, 2> noise_prob(prm, static_prob, verbose, silent);
             else if (rom_transient)
               ROMKinetics<2, 2> rom_pro(prm, static_prob, verbose, silent);
+            else if (rom_static)
+              ROMStatic<2, 2> rom_pro(prm, static_prob, verbose, silent);
           }
           else if (fe_degree == 3)
           {
@@ -509,6 +533,8 @@ int main (int argc,
               NoiseDiffusion<2, 3> noise_prob(prm, static_prob, verbose, silent);
             else if (rom_transient)
               ROMKinetics<2, 3> rom_pro(prm, static_prob, verbose, silent);
+            else if (rom_static)
+              ROMStatic<2, 3> rom_pro(prm, static_prob, verbose, silent);
           }
           else if (fe_degree == 4)
           {
@@ -519,6 +545,8 @@ int main (int argc,
               NoiseDiffusion<2, 4> noise_prob(prm, static_prob, verbose, silent);
             else if (rom_transient)
               ROMKinetics<2, 4> rom_pro(prm, static_prob, verbose, silent);
+            else if (rom_static)
+              ROMStatic<2, 4> rom_pro(prm, static_prob, verbose, silent);
           }
           else if (fe_degree == 5)
           {
@@ -529,6 +557,8 @@ int main (int argc,
               NoiseDiffusion<2, 5> noise_prob(prm, static_prob, verbose, silent);
             else if (rom_transient)
               ROMKinetics<2, 5> rom_pro(prm, static_prob, verbose, silent);
+            else if (rom_static)
+              ROMStatic<2, 5> rom_pro(prm, static_prob, verbose, silent);
           }
         }
         else if (dim == 3)
@@ -553,6 +583,8 @@ int main (int argc,
               NoiseDiffusion<3, 2> noise_prob(prm, static_prob, verbose, silent);
             else if (rom_transient)
               ROMKinetics<3, 2> rom_pro(prm, static_prob, verbose, silent);
+            else if (rom_static)
+              ROMStatic<3, 2> rom_pro(prm, static_prob, verbose, silent);
           }
           else if (fe_degree == 3)
           {
@@ -563,6 +595,8 @@ int main (int argc,
               NoiseDiffusion<3, 3> noise_prob(prm, static_prob, verbose, silent);
             else if (rom_transient)
               ROMKinetics<3, 3> rom_pro(prm, static_prob, verbose, silent);
+            else if (rom_static)
+              ROMStatic<3, 3> rom_pro(prm, static_prob, verbose, silent);
           }
           else if (fe_degree == 4)
           {
@@ -573,6 +607,8 @@ int main (int argc,
               NoiseDiffusion<3, 4> noise_prob(prm, static_prob, verbose, silent);
             else if (rom_transient)
               ROMKinetics<3, 4> rom_pro(prm, static_prob, verbose, silent);
+            else if (rom_static)
+              ROMStatic<3, 4> rom_pro(prm, static_prob, verbose, silent);
           }
           else if (fe_degree == 5)
           {
@@ -583,6 +619,8 @@ int main (int argc,
               NoiseDiffusion<3, 5> noise_prob(prm, static_prob, verbose, silent);
             else if (rom_transient)
               ROMKinetics<3, 5> rom_pro(prm, static_prob, verbose, silent);
+            else if (rom_static)
+              ROMStatic<3, 5> rom_pro(prm, static_prob, verbose, silent);
           }
         }
       }

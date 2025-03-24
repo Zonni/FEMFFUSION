@@ -3,9 +3,6 @@
  * @brief
  */
 
-#include "../../include/matrix_operators/matrix_operators_petsc.h"
-#include "../../include/matrix_operators/matrix_operators_base.h"
-
 #include <deal.II/dofs/dof_handler.h>
 #include <deal.II/dofs/dof_iterator_selector.h>
 
@@ -30,6 +27,10 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+
+#include "../../include/matrix_operators/matrix_operators_petsc.h"
+#include "../../include/matrix_operators/matrix_operators_base.h"
+
 
 using namespace dealii;
 
@@ -56,8 +57,7 @@ template <int dim, int n_fe_degree>
     const Materials &materials,
     const std::vector<unsigned int> &boundary_conditions,
     const std::vector<double> &albedo_factors,
-    const MatrixFreeType &_matrixfree_type,
-    bool listen_to_material_id)
+    const MatrixFreeType &_matrixfree_type)
   {
 
     this->matrixfree_type = _matrixfree_type;
@@ -74,12 +74,11 @@ template <int dim, int n_fe_degree>
 
     if (this->matrixfree_type == non_diagonal)
     {
-      reinit_non_diagonal(materials, listen_to_material_id, boundary_conditions,
-        albedo_factors);
+      reinit_non_diagonal(materials, boundary_conditions, albedo_factors);
     }
     else if (this->matrixfree_type == full_matrixfree)
     {
-      reinit_full_matrixfree(materials, listen_to_material_id, boundary_conditions,
+      reinit_full_matrixfree(materials, boundary_conditions,
         albedo_factors);
     }
     else if (this->matrixfree_type == full_allocated)
@@ -115,7 +114,6 @@ template <int dim, int n_fe_degree>
 template <int dim, int n_fe_degree>
   void TransportMatrix<dim, n_fe_degree>::reinit_non_diagonal (
     const Materials &materials,
-    bool listen_to_material_id,
     const std::vector<unsigned int> &boundary_conditions,
     const std::vector<double> &albedo_factors)
   {
@@ -158,7 +156,7 @@ template <int dim, int n_fe_degree>
           this->mass_mf_blocks[gi][gj]->reinit(constraints,
             materials.get_materials_vector(),
             this->coeffs[gi][gj],
-            listen_to_material_id);
+            materials.listen_to_material_id);
         }
 
     //  --------- Matrices of the diagonal  ---------
@@ -195,7 +193,6 @@ template <int dim, int n_fe_degree>
 template <int dim, int n_fe_degree>
   void TransportMatrix<dim, n_fe_degree>::reinit_full_matrixfree (
     const Materials &materials,
-    bool listen_to_material_id,
     const std::vector<unsigned int> &boundary_conditions,
     const std::vector<double> &albedo_factors)
   {
@@ -206,26 +203,24 @@ template <int dim, int n_fe_degree>
       std::vector<MassOperator<dim, n_fe_degree, double>*>(this->n_blocks));
     this->poison_mf_blocks.resize(this->n_blocks);
 
-
     coeffs.resize(n_groups);
     //
 
     for (unsigned int to_g = 0; to_g < n_groups; to_g++)
+    {
+      coeffs[to_g].resize(n_groups);
+      for (unsigned int from_g = 0; from_g < n_groups; from_g++)
       {
-	coeffs[to_g].resize (n_groups);
-	for (unsigned int from_g = 0; from_g < n_groups; from_g++)
-	  {
-	    coeffs[to_g][from_g].reinit (n_mats);
-	    if (to_g != from_g)
-	      for (unsigned int mat = 0; mat < n_mats; mat++)
-		{
-		  coeffs[to_g][from_g][mat] = -materials.get_sigma_s (from_g,
-								      to_g,
-								      mat);
-		}
-	  }
+        coeffs[to_g][from_g].reinit(n_mats);
+        if (to_g != from_g)
+          for (unsigned int mat = 0; mat < n_mats; mat++)
+          {
+            coeffs[to_g][from_g][mat] = -materials.get_sigma_s(from_g,
+              to_g,
+              mat);
+          }
       }
-
+    }
 
     coeffs_grad.resize(n_groups);
     coeffs_val.resize(n_groups);
@@ -276,7 +271,7 @@ template <int dim, int n_fe_degree>
           this->mass_mf_blocks[gi][gj]->reinit(constraints,
             materials.get_materials_vector(),
             this->coeffs[gi][gj],
-            listen_to_material_id);
+            materials.listen_to_material_id);
         }
         else // Diagonal
         {
@@ -666,8 +661,7 @@ template <int dim, int n_fe_degree>
     const Materials &materials,
     const std::vector<unsigned int> &boundary_conditions,
     const std::vector<double> &albedo_factors,
-    const MatrixFreeType &_matrixfree_type,
-    bool listen_to_material_id)
+    const MatrixFreeType &_matrixfree_type)
   {
 
     this->matrixfree_type = _matrixfree_type;
@@ -686,8 +680,7 @@ template <int dim, int n_fe_degree>
 
     if (this->matrixfree_type == full_matrixfree)
     {
-      reinit_full_matrixfree(materials, listen_to_material_id, boundary_conditions,
-        albedo_factors);
+      reinit_full_matrixfree(materials, boundary_conditions,        albedo_factors);
     }
     else if (this->matrixfree_type == full_allocated)
     {
@@ -722,7 +715,6 @@ template <int dim, int n_fe_degree>
 template <int dim, int n_fe_degree>
   void LeackageMatrix<dim, n_fe_degree>::reinit_full_matrixfree (
     const Materials &materials,
-    bool listen_to_material_id,
     const std::vector<unsigned int> &boundary_conditions,
     const std::vector<double> &albedo_factors)
   {
@@ -797,7 +789,7 @@ template <int dim, int n_fe_degree>
           this->mass_mf_blocks[gi][gj]->reinit(constraints,
             materials.get_materials_vector(),
             this->coeffs[gi][gj],
-            listen_to_material_id);
+            materials.listen_to_material_id);
         }
         else // Diagonal
         {
@@ -1006,8 +998,7 @@ template <int dim, int n_fe_degree>
     const Materials &materials,
     const std::vector<unsigned int> &boundary_conditions,
     const std::vector<double> &albedo_factors,
-    const MatrixFreeType &_matrixfree_type,
-    bool listen_to_material_id)
+    const MatrixFreeType &_matrixfree_type)
   {
 
     this->matrixfree_type = _matrixfree_type;
@@ -1024,12 +1015,11 @@ template <int dim, int n_fe_degree>
 
     if (this->matrixfree_type == non_diagonal)
     {
-      reinit_non_diagonal(materials, listen_to_material_id, boundary_conditions,
-        albedo_factors);
+      reinit_non_diagonal(materials,  boundary_conditions,        albedo_factors);
     }
     else if (this->matrixfree_type == full_matrixfree)
     {
-      reinit_full_matrixfree(materials, listen_to_material_id, boundary_conditions,
+      reinit_full_matrixfree(materials,  boundary_conditions,
         albedo_factors);
     }
     else if (this->matrixfree_type == full_allocated)
@@ -1065,7 +1055,6 @@ template <int dim, int n_fe_degree>
 template <int dim, int n_fe_degree>
   void AlphaMatrix<dim, n_fe_degree>::reinit_non_diagonal (
     const Materials &materials,
-    bool listen_to_material_id,
     const std::vector<unsigned int> &boundary_conditions,
     const std::vector<double> &albedo_factors)
   {
@@ -1109,7 +1098,7 @@ template <int dim, int n_fe_degree>
           this->mass_mf_blocks[gi][gj]->reinit(constraints,
             materials.get_materials_vector(),
             this->coeffs[gi][gj],
-            listen_to_material_id);
+            materials.listen_to_material_id);
         }
 
     //  --------- Matrices of the diagonal  ---------
@@ -1146,7 +1135,6 @@ template <int dim, int n_fe_degree>
 template <int dim, int n_fe_degree>
   void AlphaMatrix<dim, n_fe_degree>::reinit_full_matrixfree (
     const Materials &materials,
-    bool listen_to_material_id,
     const std::vector<unsigned int> &boundary_conditions,
     const std::vector<double> &albedo_factors)
   {
@@ -1222,7 +1210,7 @@ template <int dim, int n_fe_degree>
           this->mass_mf_blocks[gi][gj]->reinit(constraints,
             materials.get_materials_vector(),
             this->coeffs[gi][gj],
-            listen_to_material_id);
+            materials.listen_to_material_id);
         }
         else // Diagonal
         {
@@ -1571,8 +1559,7 @@ template <int dim, int n_fe_degree>
 template <int dim, int n_fe_degree>
   void FisionMatrix<dim, n_fe_degree>::reinit (
     const Materials &materials,
-    const MatrixFreeType &_matrixfree_type,
-    bool listen_to_material_id)
+    const MatrixFreeType &_matrixfree_type)
   {
     const unsigned int n_groups = materials.get_n_groups();
     this->n_blocks = n_groups;
@@ -1616,7 +1603,7 @@ template <int dim, int n_fe_degree>
           this->mass_mf_blocks[gi][gj]->reinit(constraints,
             materials.get_materials_vector(),
             coeffs[gi][gj],
-            listen_to_material_id);
+            materials.listen_to_material_id);
         }
     }
     else if (this->matrixfree_type == full_allocated)
@@ -1773,8 +1760,7 @@ template <int dim, int n_fe_degree>
 template <int dim, int n_fe_degree>
   void FisionDelayedMatrix<dim, n_fe_degree>::reinit (
     const Materials &materials,
-    const MatrixFreeType &_matrixfree_type,
-    bool listen_to_material_id)
+    const MatrixFreeType &_matrixfree_type)
   {
     const unsigned int n_groups = materials.get_n_groups();
     this->n_blocks = n_groups;
@@ -1789,18 +1775,19 @@ template <int dim, int n_fe_degree>
         std::vector<MassOperator<dim, n_fe_degree, double>*>(this->n_blocks));
       coeffs.resize(n_groups);
 
-
       // Fill coeffs
-      for (unsigned int to_g = 0; to_g < n_groups; to_g++){
-	  coeffs[to_g].resize(n_groups);
+      for (unsigned int to_g = 0; to_g < n_groups; to_g++)
+      {
+        coeffs[to_g].resize(n_groups);
         for (unsigned int from_g = 0; from_g < n_groups; from_g++)
         {
           coeffs[to_g][from_g].reinit(n_mats);
           for (unsigned int mat = 0; mat < n_mats; mat++)
           {
-		coeffs[to_g][from_g][mat] = materials.get_prompt_spectra(
-							mat, to_g) * materials.get_nu_sigma_f(from_g, mat)
-							* (1.0 - materials.get_delayed_fraction_sum(mat));
+            coeffs[to_g][from_g][mat] = materials.get_prompt_spectra(
+                                          mat, to_g)
+                                        * materials.get_nu_sigma_f(from_g, mat)
+                                        * (1.0 - materials.get_delayed_fraction_sum(mat));
           }
         }
       }
@@ -1822,7 +1809,7 @@ template <int dim, int n_fe_degree>
           this->mass_mf_blocks[gi][gj]->reinit(constraints,
             materials.get_materials_vector(),
             coeffs[gi][gj],
-            listen_to_material_id);
+            materials.listen_to_material_id);
         }
     }
     else if (this->matrixfree_type == full_allocated)
@@ -1907,9 +1894,10 @@ template <int dim, int n_fe_degree>
           for (unsigned int gj = 0; gj < materials.get_n_groups(); ++gj)
           {
             // Get the material coefficients:
-        	coeffs_matrix= materials.get_prompt_spectra(
-        	  							mat, gi) * materials.get_nu_sigma_f(gj, mat)
-        	  							* (1.0 - materials.get_delayed_fraction_sum(mat));
+            coeffs_matrix = materials.get_prompt_spectra(
+                              mat, gi)
+                            * materials.get_nu_sigma_f(gj, mat)
+                            * (1.0 - materials.get_delayed_fraction_sum(mat));
             cell_M.equ(coeffs_matrix, cell_val);
             constraints.distribute_local_to_global(cell_M, local_dof_indices,
               *(this->matrix_blocks[gi][gj]));
@@ -1981,8 +1969,7 @@ template <int dim, int n_fe_degree>
 template <int dim, int n_fe_degree>
   void GammaMatrix<dim, n_fe_degree>::reinit (
     const Materials &materials,
-    const MatrixFreeType &_matrixfree_type,
-    bool listen_to_material_id)
+    const MatrixFreeType &_matrixfree_type)
   {
     const unsigned int n_groups = materials.get_n_groups();
     this->n_blocks = n_groups;
@@ -2027,7 +2014,7 @@ template <int dim, int n_fe_degree>
           this->mass_mf_blocks[gi][gj]->reinit(constraints,
             materials.get_materials_vector(),
             coeffs[gi][gj],
-            listen_to_material_id);
+            materials.listen_to_material_id);
         }
     }
     else if (this->matrixfree_type == full_allocated)
@@ -2186,8 +2173,7 @@ template <int dim, int n_fe_degree>
 template <int dim, int n_fe_degree>
   void MassMatrix<dim, n_fe_degree>::reinit (
     const Materials &materials,
-    const MatrixFreeType &_matrixfree_type,
-    bool listen_to_material_id)
+    const MatrixFreeType &_matrixfree_type)
   {
     const unsigned int n_groups = materials.get_n_groups();
     this->n_blocks = n_groups;
@@ -2232,7 +2218,7 @@ template <int dim, int n_fe_degree>
           this->mass_mf_blocks[gi][gj]->reinit(constraints,
             materials.get_materials_vector(),
             coeffs[gi][gj],
-            listen_to_material_id);
+            materials.listen_to_material_id);
         }
     }
     else if (this->matrixfree_type == full_allocated)
@@ -2267,14 +2253,16 @@ template <int dim, int n_fe_degree>
     else
       AssertRelease(false, "Invalid matrixfree_type: " + this->matrixfree_type);
 
-	// Reinit de velocities
-	this->velocities.resize(materials.get_n_mats());
-	for (unsigned int mat = 0; mat < materials.get_n_mats(); mat++) {
-		this->velocities[mat].resize(materials.get_n_groups());
-		for (unsigned int gi = 0; gi < materials.get_n_groups(); ++gi) {
-			this->velocities[mat][gi] = materials.get_velocity(mat, gi);
-		}
-	}
+    // Reinit de velocities
+    this->velocities.resize(materials.get_n_mats());
+    for (unsigned int mat = 0; mat < materials.get_n_mats(); mat++)
+    {
+      this->velocities[mat].resize(materials.get_n_groups());
+      for (unsigned int gi = 0; gi < materials.get_n_groups(); ++gi)
+      {
+        this->velocities[mat][gi] = materials.get_velocity(mat, gi);
+      }
+    }
 
   }
 
@@ -2392,8 +2380,7 @@ template <int dim, int n_fe_degree>
 template <int dim, int n_fe_degree>
   void VelocityMatrix<dim, n_fe_degree>::reinit (
     const Materials &materials,
-    const MatrixFreeType &_matrixfree_type,
-    bool listen_to_material_id)
+    const MatrixFreeType &_matrixfree_type)
   {
     const unsigned int n_groups = materials.get_n_groups();
     this->n_blocks = n_groups;
@@ -2416,7 +2403,7 @@ template <int dim, int n_fe_degree>
           for (unsigned int mat = 0; mat < n_mats; mat++)
           {
             if (to_g == from_g)
-              coeffs[to_g][from_g][mat] = 1.0 / materials.get_velocity(mat,to_g);
+              coeffs[to_g][from_g][mat] = 1.0 / materials.get_velocity(mat, to_g);
           }
         }
 
@@ -2438,7 +2425,7 @@ template <int dim, int n_fe_degree>
           this->mass_mf_blocks[gi][gj]->reinit(constraints,
             materials.get_materials_vector(),
             coeffs[gi][gj],
-            listen_to_material_id);
+            materials.listen_to_material_id);
         }
     }
     else if (this->matrixfree_type == full_allocated)
@@ -2474,14 +2461,16 @@ template <int dim, int n_fe_degree>
       AssertRelease(false, "Invalid matrixfree_type: " + this->matrixfree_type);
 
     // Reinit de velocities
-	// Reinit de velocities
-	this->velocities.resize(materials.get_n_mats());
-	for (unsigned int mat = 0; mat < materials.get_n_mats(); mat++) {
-		this->velocities[mat].resize(materials.get_n_groups());
-		for (unsigned int gi = 0; gi < materials.get_n_groups(); ++gi) {
-			this->velocities[mat][gi] = materials.get_velocity(mat, gi);
-		}
-	}
+    // Reinit de velocities
+    this->velocities.resize(materials.get_n_mats());
+    for (unsigned int mat = 0; mat < materials.get_n_mats(); mat++)
+    {
+      this->velocities[mat].resize(materials.get_n_groups());
+      for (unsigned int gi = 0; gi < materials.get_n_groups(); ++gi)
+      {
+        this->velocities[mat][gi] = materials.get_velocity(mat, gi);
+      }
+    }
 
   }
 
@@ -2583,7 +2572,6 @@ template <int dim, int n_fe_degree>
     return;
   }
 
-
 //-------------------------------------------------------------------------------------------//
 //  ------------------- SpectraBetaFission    ------------------
 //-------------------------------------------------------------------------------------------//
@@ -2591,24 +2579,24 @@ template <int dim, int n_fe_degree>
  * @brief Constructor of FissionMatrix. Just copy references to DoFHandler and AffineConstraints.
  */
 template <int dim, int n_fe_degree>
-SpectraBetaFission<dim, n_fe_degree>::SpectraBetaFission (const MPI_Comm &comm,
+  SpectraBetaFission<dim, n_fe_degree>::SpectraBetaFission (const MPI_Comm &comm,
     const DoFHandler<dim> &dof_handler,
     const AffineConstraints<double> &constraints) :
       FisionMatrixBase<dim, n_fe_degree>(comm, dof_handler, constraints),
       dof_handler(dof_handler),
       constraints(constraints)
   {
-	type_precursor=0;
+    type_precursor = 0;
   }
 /**
  *
  */
 template <int dim, int n_fe_degree>
   void SpectraBetaFission<dim, n_fe_degree>::reinit (const Materials &materials,
-    const MatrixFreeType &_matrixfree_type, const unsigned int _type_precursor,
-    bool listen_to_material_id)
+    const MatrixFreeType &_matrixfree_type,
+    const unsigned int _type_precursor)
   {
-	type_precursor=_type_precursor;
+    type_precursor = _type_precursor;
     const unsigned int n_groups = materials.get_n_groups();
     this->n_blocks = n_groups;
     this->matrixfree_type = _matrixfree_type;
@@ -2629,10 +2617,11 @@ template <int dim, int n_fe_degree>
           coeffs[to_g][from_g].reinit(n_mats);
           for (unsigned int mat = 0; mat < n_mats; mat++)
           {
-		  coeffs[to_g][from_g][mat] = materials.get_delayed_spectra (
-		      mat, type_precursor, to_g)
-		      * materials.get_delayed_fraction (mat, type_precursor)
-		      * materials.get_nu_sigma_f(from_g, mat);
+            coeffs[to_g][from_g][mat] = materials.get_delayed_spectra(
+                                          mat, type_precursor, to_g)
+                                        * materials.get_delayed_fraction(mat,
+                                          type_precursor)
+                                        * materials.get_nu_sigma_f(from_g, mat);
           }
         }
 
@@ -2653,7 +2642,7 @@ template <int dim, int n_fe_degree>
               n_fe_degree, double>(matfree_data);
           this->mass_mf_blocks[gi][gj]->reinit(constraints,
             materials.get_materials_vector(), coeffs[gi][gj],
-            listen_to_material_id);
+            materials.listen_to_material_id);
         }
     }
     else if (this->matrixfree_type == full_allocated)
@@ -2740,10 +2729,10 @@ template <int dim, int n_fe_degree>
           for (unsigned int gj = 0; gj < materials.get_n_groups(); ++gj)
           {
             // Get the material coefficients:
-              xsec_value = materials.get_delayed_spectra (
-		      mat, type_precursor, gi)
-		      * materials.get_delayed_fraction (mat, type_precursor)
-		      * materials.get_nu_sigma_f(gj, mat);
+            xsec_value = materials.get_delayed_spectra(
+                           mat, type_precursor, gi)
+                         * materials.get_delayed_fraction(mat, type_precursor)
+                         * materials.get_nu_sigma_f(gj, mat);
             cell_M.equ(xsec_value, cell_val);
             constraints.distribute_local_to_global(cell_M,
               local_dof_indices, *(this->matrix_blocks[gi][gj]));

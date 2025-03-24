@@ -33,7 +33,7 @@
 #include <petscmat.h>
 #include <petscdraw.h>
 
-#include "../../include/pc_multilevel.h"
+#include "../../include/eps_solvers/pc_multilevel.h"
 #include "../../include/eps_solvers/eps_bifpam.h"
 
 /**

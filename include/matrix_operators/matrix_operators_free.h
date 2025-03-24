@@ -38,7 +38,7 @@
 #include <fstream>
 #include <sstream>
 
-#include "../materials.h"
+#include "../io/materials.h"
 #include "../femffusion.h"
 
 using namespace dealii;

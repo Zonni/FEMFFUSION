@@ -52,7 +52,7 @@
 #include <fstream>
 #include <sstream>
 
-#include "../materials.h"
+#include "../io/materials.h"
 #include "matrix_operators_free.h"
 
 using namespace dealii;

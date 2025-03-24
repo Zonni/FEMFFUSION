@@ -1,8 +1,7 @@
 /**
  *
- * @file   static_diffusion.h
- * @brief  Main file of the FemFusion program.
- *         A program to solve static neutron diffusion equation with the finite element method.
+ * @file   static_full_spn.h
+ * @brief
  */
 
 #ifndef STATIC_PN_H
@@ -57,7 +56,7 @@
 #include <petscksp.h>
 #include <petscis.h>
 
-#include "materials.h"
+#include "io/materials.h"
 #include "matrix_operators/matrix_operators_base.h"
 
 //#include "matrix_operators_pn.h"

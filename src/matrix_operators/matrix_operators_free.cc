@@ -27,7 +27,7 @@
 #include <sstream>
 
 #include "../../include/matrix_operators/matrix_operators_free.h"
-#include "../../include/materials.h"
+#include "../../include/io/materials.h"
 #include "../../include/femffusion.h"
 
 using namespace dealii;

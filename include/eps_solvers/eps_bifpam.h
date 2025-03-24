@@ -24,7 +24,7 @@
 #include "../matrix_operators/matrix_operators_petsc.h"
 #include "../matrix_operators/matrix_operators_spn.h"
 
-#include "../pc_multilevel.h"
+#include "pc_multilevel.h"
 
 #include <slepceps.h>
 #include <petscksp.h>

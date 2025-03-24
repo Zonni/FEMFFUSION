@@ -13,12 +13,12 @@
 #include "../include/static_spn.h"
 #include "../include/static_diffusion.h"
 #include "../include/femffusion.h"
-#include "../include/eps_solvers/eps_solver.h"
 #include "../include/test.h"
-#include "../include/prob_geom.h"
-#include "../include/input_geom.h"
+#include "../include/eps_solvers/eps_solver.h"
+#include "../include/io/prob_geom.h"
+#include "../include/io/input_geom.h"
+#include "../include/io/printing.h"
 #include "../include/matrix_operators/matrix_operators_petsc.h"
-#include "../include/printing.h"
 
 #include <filesystem>
 

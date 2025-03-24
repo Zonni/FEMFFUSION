@@ -13,11 +13,12 @@
 
 #include "../include/femffusion.h"
 #include "../include/static_diffusion.h"
-#include "../include/prob_geom.h"
-#include "../include/input_geom.h"
+#include "../include/io/prob_geom.h"
+#include "../include/io/input_geom.h"
+#include "../include/io/printing.h"
 #include "../include/matrix_operators/matrix_operators_petsc.h"
 #include "../include/eps_solvers/eps_solver.h"
-#include "../include/printing.h"
+
 
 #include <petscsys.h>
 
@@ -113,7 +114,7 @@ template <int dim, int n_fe_degree>
     // GEOMETRY SHAPE
     geo_type = prm.get("Geometry_Type");
     verbose_cout << "geo_type  " << geo_type << std::endl;
-    listen_to_material_id = (geo_type == "Composed");
+    bool listen_to_material_id = (geo_type == "Composed");
     if (geo_type != "Composed")
       get_mesh_shape(prm);
 
@@ -373,7 +374,7 @@ template <int dim, int n_fe_degree>
     if (to_init == false)
     {
       if (static_file == "none.sta" or save_static == true)
-        run();
+        run(prm);
 
       if (static_file != "none.sta" and save_static == false)
         load_static_calculation(static_file);
@@ -780,9 +781,8 @@ template <int dim, int n_fe_degree>
   void StaticDiffusion<dim, n_fe_degree>::assemble_system_lambda ()
   {
     // Allocate and assemble block matrices
-    T.reinit(materials, boundary_conditions, albedo_factors, matrixfree_type,
-      listen_to_material_id);
-    F.reinit(materials, matrixfree_type, listen_to_material_id);
+    T.reinit(materials, boundary_conditions, albedo_factors, matrixfree_type);
+    F.reinit(materials, matrixfree_type);
 
     // Print matrices if it is needed
     print_matrices();
@@ -803,9 +803,8 @@ template <int dim, int n_fe_degree>
   {
     // Allocate and assemble block matrices
     // CHANGE
-    L.reinit(materials, boundary_conditions, albedo_factors, matrixfree_type,
-      listen_to_material_id);
-    G.reinit(materials, matrixfree_type, listen_to_material_id);
+    L.reinit(materials, boundary_conditions, albedo_factors, matrixfree_type);
+    G.reinit(materials, matrixfree_type);
 
     memory_consumption = L.memory_consumption() + G.memory_consumption();
 
@@ -823,9 +822,8 @@ template <int dim, int n_fe_degree>
   {
 
     // Allocate and assemble block matrices
-    A.reinit(materials, boundary_conditions, albedo_factors, matrixfree_type,
-      listen_to_material_id);
-    V.reinit(materials, matrixfree_type, listen_to_material_id);
+    A.reinit(materials, boundary_conditions, albedo_factors, matrixfree_type);
+    V.reinit(materials, matrixfree_type);
 
     memory_consumption = A.memory_consumption() + V.memory_consumption();
 
@@ -1300,7 +1298,7 @@ template <int dim, int n_fe_degree>
  * everything. It also prints some results and time-line.
  */
 template <int dim, int n_fe_degree>
-  void StaticDiffusion<dim, n_fe_degree>::run ()
+  void StaticDiffusion<dim, n_fe_degree>::run (ParameterHandler &prm)
   {
     verbose_cout << "   Input files read" << std::endl;
     timer.start();
@@ -1336,7 +1334,7 @@ template <int dim, int n_fe_degree>
     cout << "   Grid Done." << " Time = " << timer.cpu_time() << " s."
          << std::endl;
     cout << "      Equations:  DIFFUSION" << std::endl;
-    cout << "      Number of Energy Groups:  "<< n_groups << std::endl;
+    cout << "      Number of Energy Groups:  " << n_groups << std::endl;
     cout << "      Matrix-free type: " << enum_to_string(matrixfree_type)
          << std::endl;
     cout << "      Number of active cells:  " << tria.n_active_cells()
@@ -1393,8 +1391,15 @@ template <int dim, int n_fe_degree>
     cout << "   Current Memory " << memory * 1e-6 << " MB" << std::endl;
 
     MPI_Barrier(comm);
+
+    // Get transient options
+    bool rom_static = prm.get_bool("ROM_Static");
+    if (!rom_static)
+    {
+      verbose_cout << "Make the reactor critical " << std::endl;
+      materials.make_critical(eigenvalues[0]);
+    }
     verbose_cout << "postprocess..." << std::flush;
-    materials.make_critical(eigenvalues[0]);
     postprocess();
     verbose_cout << "Done!" << std::endl;
 

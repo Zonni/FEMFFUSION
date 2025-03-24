@@ -57,8 +57,8 @@
 #include <petscksp.h>
 #include <petscis.h>
 
-#include "materials.h"
-#include "perturbation.h"
+#include "io/materials.h"
+#include "io/perturbation.h"
 #include "eps_solvers/eps_solver_2g.h"
 #include "matrix_operators/matrix_operators_sdpn.h"
 

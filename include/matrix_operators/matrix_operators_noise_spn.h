@@ -54,8 +54,8 @@
 #include <fstream>
 #include <sstream>
 
-#include "../materials.h"
-#include "../complex_perturbation.h"
+#include "../io/materials.h"
+#include "../noise/complex_perturbation.h"
 #include "matrix_operators_base.h"
 #include "matrix_operators_complex_base.h"
 #include "matrix_operators_free.h"

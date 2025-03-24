@@ -858,125 +858,6 @@ template void equ (const double a,
   const std::vector<double> &w,
   std::vector<double> &sol);
 
-template <int dim>
-  std::pair<unsigned int, RefinementCase<dim> > getRefPair (std::string str)
-  {
-    RefinementCase<dim> refCase;
-    if (str[1] == 'x')
-      refCase = RefinementCase<dim>::cut_x;
-    else if (str[1] == 'y')
-      refCase = RefinementCase<dim>::cut_y;
-    else if (str[1] == 'z' and dim == 3)
-      refCase = RefinementCase<dim>::cut_axis(2);
-    else if (str[1] == 'z' and dim == 2)
-      Assert(false, ExcMessage("Cannot refine in z in 2 dimensions!"))
-    else if (str[1] == 'i')
-      refCase = RefinementCase<dim>::isotropic_refinement;
-    else
-      Assert(false, ExcMessage("Refinement type not recognized"));
-    return std::make_pair(std::atoi(&str[0]), refCase);
-  }
-
-template std::pair<unsigned int, RefinementCase<3> > getRefPair (
-  std::string str);
-
-template <>
-  std::pair<unsigned int, RefinementCase<1> > getRefPair (std::string str)
-  {
-    RefinementCase<1> refCase;
-    if (str[1] == 'x')
-      refCase = RefinementCase<1>::cut_x;
-    else
-      Assert(false, ExcMessage("Refinement type not recognized"));
-    return std::make_pair(std::atoi(&str[0]), refCase);
-  }
-
-template <>
-  std::pair<unsigned int, RefinementCase<2> > getRefPair (std::string str)
-  {
-    RefinementCase<2> refCase;
-    if (str[1] == 'x')
-      refCase = RefinementCase<2>::cut_x;
-    else if (str[1] == 'y')
-      refCase = RefinementCase<2>::cut_y;
-    else if (str[1] == 'z')
-      Assert(false, ExcMessage("Cannot refine in z in 2 dimensions!"))
-    else if (str[1] == 'i')
-      refCase = RefinementCase<2>::isotropic_refinement;
-    else
-      Assert(false, ExcMessage("Refinement type not recognized"));
-    return std::make_pair(std::atoi(&str[0]), refCase);
-  }
-
-template <int dim>
-  void getRefinement (const std::string &filename,
-    const std::string &header,
-    std::vector<std::pair<unsigned int, RefinementCase<dim> > > &out,
-    std::vector<unsigned int> &nCol,
-    const int height)
-  {
-    std::ifstream myfile(filename.c_str(), std::ios::in);
-    std::string line;
-    unsigned int n_assemblies_per_plane = sum_vector(nCol);
-    unsigned int i;
-
-    std::string coeff, coeff2;
-    if (myfile.is_open())
-    {
-      while (myfile.good())
-      {
-        myfile >> line;
-        if (line == header)
-        {
-          for (int h = 0; h < height; h++)
-          {
-            myfile >> line; // Throw the word PLANE
-            myfile >> line; // Throw the plane number
-            for (i = 0; i < n_assemblies_per_plane; i++)
-            {
-              myfile >> coeff;
-
-              if (*coeff.rbegin() == '*') // Last char is a *
-              {
-                coeff = coeff.substr(0, coeff.size() - 1);
-                myfile >> coeff2;
-
-                unsigned int len = Utilities::string_to_int(coeff);
-                for (unsigned int j = 0; j < len; j++)
-                  out.push_back(getRefPair<dim>(coeff2));
-
-                i += len - 1;
-
-              }
-              else
-                out.push_back(getRefPair<dim>(coeff));
-
-            }
-
-          }
-          myfile.close();
-          return;
-        };
-      }
-    }
-  }
-
-template void getRefinement (const std::string &filename,
-  const std::string &header,
-  std::vector<std::pair<unsigned int, RefinementCase<1> > > &out,
-  std::vector<unsigned int> &nCol,
-  const int height);
-template void getRefinement (const std::string &filename,
-  const std::string &header,
-  std::vector<std::pair<unsigned int, RefinementCase<2> > > &out,
-  std::vector<unsigned int> &nCol,
-  const int height);
-template void getRefinement (const std::string &filename,
-  const std::string &header,
-  std::vector<std::pair<unsigned int, RefinementCase<3> > > &out,
-  std::vector<unsigned int> &nCol,
-  const int height);
-
 /* Function to parse a multi-line vector
  *  Also completes in nCol how many numbers per line there are.
  */
@@ -1399,37 +1280,6 @@ unsigned int findRow (const std::vector<unsigned int> nCol,
   return 1;
 }
 
-//
-// direction. The cut direction indicates the in which dimenension it is defined
-//  the side
-//
-template <int dim>
-  unsigned int getSide (const unsigned int cut_dir,
-    const Point<dim> &point)
-  {
-    if (point[cut_dir] > 0.5)
-      return 1;
-    return 0;
-  }
-
-/*
- * Returns the side 0 or 1 of the point in the reference cell depending of the cut
- * direction. The cut direction indicates the in which dimenension it is defined
- *  the side
- */
-template <int dim>
-  unsigned int getSide (const unsigned int cut_dir,
-    const Point<dim> &point,
-    const unsigned int N)
-  {
-    double inv = 1.0 / N;
-    for (unsigned int i = N - 1; i != 0; i--)
-      if (point[cut_dir] > (i * inv))
-        return i;
-    return 0;
-
-  }
-
 template <int dim>
   void makeGeometyPoints (
     const std::vector<std::pair<Point<dim>, unsigned int> > &centers,
@@ -1447,7 +1297,7 @@ template <int dim>
    *
    */
   {
-// Produce an ordered set of the x_center
+    // Produce an ordered set of the x_center
     std::set<double> x_center, y_center, z_center;
 
     for (unsigned int k = 0; k < centers.size(); ++k)
@@ -1599,179 +1449,6 @@ void parse_vector_in_file (const std::string &file,
   if (expected_vector_size != static_cast<unsigned int>(-1))
     AssertRelease(expected_vector_size == vector_out.size(),
       "Error in vector expected size");
-}
-
-void parse_file (unsigned int mat,
-  std::string file,
-  std::string intro,
-  std::vector<double> &D1v,
-  std::vector<double> &D2v,
-  std::vector<double> &SigmaA1v,
-  std::vector<double> &SigmaA2v,
-  std::vector<double> &Sigma12v,
-  std::vector<double> &SigmaF1v,
-  std::vector<double> &SigmaF2v)
-{
-  std::ifstream input(file.c_str(), std::ios::in);
-  std::string sub, Name;
-
-  // for every line
-  for (std::string line; getline(input, line);)
-  {
-
-    trim(line);
-
-    // First definition Material and XSecs:
-    if (line == intro)
-    {
-      std::vector<double> Xsec;
-      Xsec.reserve(7);
-      parse_multiline_vector(input, 1, Xsec, false);
-      Assert(Xsec.size()==7, ExcMessage("problem"));
-
-      D1v[mat] = Xsec[0];
-      D2v[mat] = Xsec[1];
-      SigmaA1v[mat] = Xsec[2];
-      SigmaA2v[mat] = Xsec[3];
-      Sigma12v[mat] = Xsec[4];
-      SigmaF1v[mat] = Xsec[5];
-      SigmaF2v[mat] = Xsec[6];
-
-      break;
-    }
-  }
-  input.close();
-}
-
-void parse_file (unsigned int mat,
-  std::string file,
-  std::string intro,
-  std::vector<double> &dfs_left_0,
-  std::vector<double> &dfs_right_0,
-  std::vector<double> &dfs_left_1,
-  std::vector<double> &dfs_right_1)
-{
-// TODO Hacer esta funcion un poco mas general no tan especializada.
-
-  std::ifstream input(file.c_str(), std::ios::in);
-  std::string sub, Name;
-
-// for every line
-  for (std::string line; getline(input, line);)
-  {
-    trim(line);
-    // First definition Material and XSecs:
-    if (line == intro)
-    {
-      std::vector<double> dfs;
-      dfs.reserve(4);
-      parse_multiline_vector(input, 1, dfs, false);
-      Assert(dfs.size()==4, ExcMessage("problem"))
-      dfs_left_0[mat] = dfs[0];
-      dfs_right_0[mat] = dfs[1];
-      dfs_left_1[mat] = dfs[2];
-      dfs_right_1[mat] = dfs[3];
-
-      break;
-    }
-  }
-  input.close();
-}
-
-void parse_file (unsigned int,
-  std::string file,
-  std::string intro,
-  std::vector<double> &df_faces,
-  unsigned int n)
-{
-  Assert(fexists(file),
-    ExcMessage("Required file " + file + " does not exist."));
-  std::ifstream input(file.c_str(), std::ios::in);
-  std::string sub, Name;
-
-  // for every line
-  for (std::string line; getline(input, line);)
-  {
-    trim(line);
-    // First definition Material and XSecs:
-    if (line == intro)
-    {
-      std::vector<double> dfs;
-      dfs.reserve(n);
-      parse_multiline_vector(input, 1, dfs, false);
-      Assert(dfs.size() == n,
-        ExcMessage("In file " + file +" , "+ intro + " there are not " + Utilities::int_to_string(n) + " elements, there are " + Utilities::int_to_string(dfs.size()) + "."));
-
-      for (unsigned int i = 0; i < df_faces.size(); i++)
-        df_faces[i] = dfs[i];
-
-      return;
-    }
-  }
-  input.close();
-  Assert(false, ExcMessage(intro + " does not found in file " + file));
-}
-
-void parse_file (std::string file,
-  std::string intro,
-  std::vector<std::vector<double> > &dfs_poly,
-  unsigned int n)
-{
-  Assert(fexists(file),
-    ExcMessage("Required file " + file + " does not exist."));
-  std::ifstream input(file.c_str(), std::ios::in);
-  std::string sub, Name;
-
-// for every line
-  for (std::string line; getline(input, line);)
-  {
-    trim(line);
-    // First definition Material and XSecs:
-    if (line == intro)
-    {
-      parse_multiline_vector(input, n, dfs_poly, false);
-      Assert(dfs_poly.size() == n,
-        ExcMessage("In file " + file +" , "+ intro + " there are not " + Utilities::int_to_string(n) + " elements, there are " + Utilities::int_to_string(dfs_poly.size()) + "."));
-      return;
-    }
-  }
-  input.close();
-  Assert(false, ExcMessage(intro + " does not found in file " + file));
-}
-
-void parse_file (unsigned int,
-  std::string file,
-  std::string intro,
-  std::vector<double> &shape_fun,
-  unsigned int n,
-  unsigned int nlines)
-{
-  Assert(fexists(file),
-    ExcMessage("Required file " + file + " does not exist."));
-  std::ifstream input(file.c_str(), std::ios::in);
-  std::string sub, Name;
-
-// for every line
-  for (std::string line; getline(input, line);)
-  {
-    trim(line);
-    // First definition Material and XSecs:
-    if (line == intro)
-    {
-      std::vector<double> vect;
-      vect.reserve(n);
-      parse_multiline_vector(input, nlines, vect, false);
-      Assert(vect.size() == n,
-        ExcMessage("In file " + file +", "+ intro + " there are not " + Utilities::int_to_string(n) + " elements, there are " + Utilities::int_to_string(vect.size()) + "."));
-
-      for (unsigned int i = 0; i < shape_fun.size(); i++)
-        shape_fun[i] = vect[i];
-
-      return;
-    }
-  }
-  input.close();
-  Assert(false, ExcMessage(intro + " does not found in file " + file));
 }
 
 /* std::vector<unsigned int> default_geometry_points(td::vector<unsigned int> n_cells_per_dim)
@@ -1982,13 +1659,12 @@ void parse_vector (std::string input,
   std::istringstream iss(input);
 
   double num;
-  out.reinit(n_blocks, PETSC_COMM_WORLD,  n_dofs_per_block, n_dofs_per_block);
-  for (unsigned int i=0; i< n_blocks *n_dofs_per_block; i++)
+  out.reinit(n_blocks, PETSC_COMM_WORLD, n_dofs_per_block, n_dofs_per_block);
+  for (unsigned int i = 0; i < n_blocks * n_dofs_per_block; i++)
   {
     iss >> num;
-     out[i] = num;
+    out[i] = num;
   }
-
 
   return;
 }
@@ -2008,13 +1684,12 @@ void parse_vector (std::string input,
   std::istringstream iss(input);
 
   double num;
-  out.reinit(PETSC_COMM_WORLD,  n_dofs, n_dofs);
-  for (unsigned int i=0; i< n_dofs; i++)
+  out.reinit(PETSC_COMM_WORLD, n_dofs, n_dofs);
+  for (unsigned int i = 0; i < n_dofs; i++)
   {
     iss >> num;
-     out[i] = num;
+    out[i] = num;
   }
-
 
   return;
 }
@@ -2042,8 +1717,8 @@ void parse_vector (std::string input,
     out.push_back(str);
   }
 
-  AssertRelease(out[0]!="",
-      "The number of arguments should be greater than 1");
+  AssertRelease(out[0] != "",
+    "The number of arguments should be greater than 1");
 
   return;
 }
@@ -2397,17 +2072,17 @@ template <int dim>
   }
 
 template void getMaxMinVertex (
-  TriaIterator<DoFCellAccessor<1, 1, false>  > cell,
+  TriaIterator<DoFCellAccessor<1, 1, false> > cell,
   unsigned int coord,
   double &maxp,
   double &minp);
 template void getMaxMinVertex (
-  TriaIterator<DoFCellAccessor<2, 2, false>  > cell,
+  TriaIterator<DoFCellAccessor<2, 2, false> > cell,
   unsigned int coord,
   double &maxp,
   double &minp);
 template void getMaxMinVertex (
-  TriaIterator<DoFCellAccessor<3, 3, false>  > cell,
+  TriaIterator<DoFCellAccessor<3, 3, false> > cell,
   unsigned int coord,
   double &maxp,
   double &minp);
@@ -3348,7 +3023,7 @@ void copy_to_Vec (Vec dst,
     {
       index_set = src[b].block(c).locally_owned_elements();
       int i = 0;
-      for ( IndexSet::ElementIterator it = index_set.begin();
+      for (IndexSet::ElementIterator it = index_set.begin();
           it != index_set.end(); it++, i++)
       {
         aray_vec[i + block_size_b * b + c * block_size_c] = src[b].block(c)[*it];

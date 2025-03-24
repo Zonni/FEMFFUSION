@@ -50,20 +50,21 @@
 
 #include <fstream>
 #include <iostream>
+#include <string>
+#include <math.h>
 
 #include <petscksp.h>
 #include <petscis.h>
 #include <petscmat.h>
 
+#include "../include/static_spn.h"
 #include "../include/time_computation_spn.h"
 #include "../include/utils.h"
-#include "../include/materials.h"
+#include "../include/io/materials.h"
+#include "../include/io/printing.h"
 #include "../include/matrix_operators/matrix_operators_spn_time.h"
-#include "../include/static_spn.h"
-#include "../include/printing.h"
 
-#include <string>
-#include <math.h>
+
 
 using namespace dealii;
 
@@ -139,7 +140,7 @@ template <int dim, int n_fe_degree>
 
     if (prec_flag == false)
     {
-    //n_prec = 0;
+      //n_prec = 0;
 //      beta = 0.0;
       materials.remove_precursors();
 
@@ -390,8 +391,9 @@ template <int dim, int n_fe_degree>
 
     MatShellSetOperation(shell_T, MATOP_MULT,
       (void (*) ()) shell_time_matrix_spn<dim, n_fe_degree>);
-      ;if (step == 0)
-    	  verbose_cout << "  Memory consumption of the matrix SPN: "
+    ;
+    if (step == 0)
+      verbose_cout << "  Memory consumption of the matrix SPN: "
       << Tfree.memory_consumption() * 1e-6
       << " MB" << std::endl;
 
@@ -1000,7 +1002,7 @@ template <int dim, int n_fe_degree>
     totalits += its;
 
     if (step % out_interval == 0)
-    	verbose_cout << "   its: " << its << std::endl;
+      verbose_cout << "   its: " << its << std::endl;
 
     verbose_cout << "solve_precursors... " << std::endl;
     solve_precursors();
@@ -1188,7 +1190,6 @@ template <int dim, int n_fe_degree>
   void TimeNeutronSPN<dim, n_fe_degree>::postprocess_time_step ()
   {
 
-
     for (unsigned int m1 = 0; m1 < n_moments; ++m1)
     {
       phi[m1] = 0.0;
@@ -1253,7 +1254,6 @@ template <int dim, int n_fe_degree>
       norm += power_cell;
 
     }
-
 
     power_total = norm / volume;
 
@@ -1553,15 +1553,15 @@ template <int dim, int n_fe_degree>
 
       if (step % out_interval == 0)
       {
-		  cout << std::defaultfloat << std::setfill(' ');
-		  cout << " Step "<< std::setw(5) << step;
-		  cout << std::fixed << std::setprecision(4) << std::setfill('0');
-		  cout << " at t=" <<  std::setw(5)<< sim_time << std::flush;
-		  cout << std::fixed << std::setprecision(4) << std::setfill('0');
-		  cout << "   Total Power " <<  std::setw(6) << power_total;
-		  cout << std::fixed << std::setprecision(3) << std::setfill('0');
-		  cout   << "   CPU Time = "<<  std::setw(5);
-		  cout    << timer.cpu_time() << std::endl;
+        cout << std::defaultfloat << std::setfill(' ');
+        cout << " Step " << std::setw(5) << step;
+        cout << std::fixed << std::setprecision(4) << std::setfill('0');
+        cout << " at t=" << std::setw(5) << sim_time << std::flush;
+        cout << std::fixed << std::setprecision(4) << std::setfill('0');
+        cout << "   Total Power " << std::setw(6) << power_total;
+        cout << std::fixed << std::setprecision(3) << std::setfill('0');
+        cout << "   CPU Time = " << std::setw(5);
+        cout << timer.cpu_time() << std::endl;
       }
 
       // Out things in the future will be a function
@@ -1570,8 +1570,6 @@ template <int dim, int n_fe_degree>
       delta_t.push_back(init_delta_t);
       step++;
       sim_time += delta_t[step];
-
-
 
     }
 
@@ -1594,8 +1592,8 @@ template <int dim, int n_fe_degree>
     }
 
     verbose_cout << "Total its: " << totalits << ", mean by it:"
-         << double(totalits) / step
-         << std::endl;
+                 << double(totalits) / step
+                 << std::endl;
 
     if (initial_preconditioner == "multilevel")
       verbose_cout << "Total its coarse level: " << preconditioner.total_its_coarse
@@ -1607,7 +1605,6 @@ template <int dim, int n_fe_degree>
     cout << "            Finished in " << timer.cpu_time() << " s." << std::endl;
 
   }
-
 
 template class TimeNeutronSPN<1, 1> ;
 template class TimeNeutronSPN<1, 2> ;
