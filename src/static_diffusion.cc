@@ -960,7 +960,7 @@ template <int dim, int n_fe_degree>
   {
 
     // Make reactor critical
-//	materials.make_critical(eigenvalues[0]);
+  //	materials.make_critical(eigenvalues[0]);
 
     std::vector<double> norm = std::vector<double>(n_eigenvalues);
 

@@ -63,6 +63,7 @@
 #include <slepcbv.h>
 
 #include "../../include/rom/rom_static.h"
+#include "../../include/rom/rom_utils.h"
 #include "../../include/rom/ihs.h"
 #include "../../include/utils.h"
 #include "../../include/io/materials.h"
@@ -90,13 +91,11 @@ template <int dim, int n_fe_degree>
       n_groups(_static_problem.n_groups),
       n_dofs(_static_problem.n_dofs),
       dof_handler(_static_problem.dof_handler),
-      constraints(_static_problem.constraints),
-      boundary_conditions(_static_problem.boundary_conditions),
       n_assemblies(_static_problem.n_assemblies),
       perturbation(_static_problem.perturbation),
       static_problem(_static_problem),
-      T(comm, dof_handler, constraints),
-      F(comm, dof_handler, constraints),
+      T(comm, dof_handler, _static_problem.constraints),
+      F(comm, dof_handler, _static_problem.constraints),
       assem_per_dim(_static_problem.materials.assem_per_dim)
   {
 
@@ -120,10 +119,7 @@ template <int dim, int n_fe_degree>
     get_string_from_options("-out_file", out_file);
     n_out_ref = static_problem.n_out_ref;
 
-    // Material parameters
-    albedo_factors = static_problem.albedo_factors;
-
-    // 	Time parameters
+    // 	Perturbation Parameters
     type_perturbation = prm.get("Type_Perturbation");
 
     verbose_cout << "Initialize the perturbation class in ROM" << std::endl;
@@ -131,6 +127,7 @@ template <int dim, int n_fe_degree>
     perturbation.init_transient();
 
     perturbation_frac = prm.get_double("XS_Perturbation_Fraction");
+    get_double_from_options("-xs_perturbation_fraction", perturbation_frac);
 
     // Reinit ROM data
     n_snap = prm.get_integer("N_Snapshots");
@@ -149,12 +146,15 @@ template <int dim, int n_fe_degree>
     get_snapshots(static_problem, snapshots, type_snapshots);
 
     // LUPOD
-    LUPOD_flag = prm.get_bool("LUPOD_Flag");
-    get_bool_from_options("-LUPOD", LUPOD_flag);
+    LUPOD_type = prm.get("LUPOD_Type");
+    get_string_from_options("-lupod_type", LUPOD_type);
     epsilon_N = prm.get_double("Epsilon_N");
     get_double_from_options("-epsilon_N", epsilon_N);
     epsilon_M = prm.get_double("Epsilon_M");
     get_double_from_options("-epsilon_M", epsilon_M);
+
+    n_LUPOD_points = prm.get_integer("N_LUPOD_Points");
+    get_uint_from_options("-n_lupod_points", n_LUPOD_points);
 
     this->run();
   }
@@ -316,7 +316,7 @@ template <int dim, int n_fe_degree>
     for (unsigned int ns = 0; ns < n_snap; ns++)
       snapshots[ns].reinit(local_dofs_vector, comm);
 
-    cout << "  Creating " << n_snap << " snapshots with IHS and " << frac_pert
+    cout << "    Creating " << n_snap << " snapshots with IHS and " << frac_pert
          << " perturbation fraction."
          << std::endl;
     // for each snapshot
@@ -462,591 +462,6 @@ template <int dim, int n_fe_degree>
   }
 
 /*
- * @brief Compute POD basis
- */
-template <int dim, int n_fe_degree>
-  void ROMStatic<dim, n_fe_degree>::compute_POD_basis_monolithic (
-    std::vector<PETScWrappers::MPI::BlockVector> &_snapshots)
-  {
-
-    cout << "   POD ----- Monolithic" << std::endl;
-    // TODO SET AN ENERGY THRSHOLD
-    dim_rom = _snapshots.size();
-    get_uint_from_options("-dim_rom", dim_rom);
-
-    snap_basis.resize(dim_rom);
-    for (unsigned int dr = 0; dr < dim_rom; dr++)
-      snap_basis[dr].reinit(local_dofs_vector, comm);
-
-    // Create the matrix with the snapshot to apply the SVD
-    Mat Mat_snap;
-    PetscInt i_snap, i_sv;
-    PetscInt *idm = new PetscInt[n_dofs * n_groups];
-    PetscScalar *values_snap = new PetscScalar[n_dofs * n_groups];
-
-    for (unsigned int j = 0; j < n_dofs * n_groups; j++)
-      idm[j] = j;
-
-    MatCreateDense(comm, n_dofs * n_groups, dim_rom, n_dofs * n_groups, dim_rom, NULL,
-      &Mat_snap);
-    for (i_snap = 0; i_snap < static_cast<int>(dim_rom); i_snap++)
-    {
-      for (unsigned k = 0; k < n_dofs * n_groups; k++)
-        values_snap[k] = _snapshots[i_snap][k];
-      MatSetValues(Mat_snap, n_dofs * n_groups, idm, 1, &i_snap, values_snap,
-        INSERT_VALUES);
-    }
-    MatAssemblyBegin(Mat_snap, MAT_FINAL_ASSEMBLY);
-    MatAssemblyEnd(Mat_snap, MAT_FINAL_ASSEMBLY);
-
-    SVD svd;
-    SVDCreate(comm, &svd);
-    SVDSetOperators(svd, Mat_snap, NULL);
-    SVDSetDimensions(svd, dim_rom, 2 * dim_rom, dim_rom);
-    SVDSetProblemType(svd, SVD_STANDARD);
-    SVDSetType(svd, SVDTRLANCZOS);
-
-    SVDSetFromOptions(svd);
-    SVDSolve(svd);
-
-    PETScWrappers::MPI::Vector u;
-    u.reinit(comm, n_dofs * n_groups, n_dofs * n_groups);
-    std::vector<double> singular_values(dim_rom);
-    for (i_sv = 0; i_sv < static_cast<int>(dim_rom); i_sv++)
-    {
-      SVDGetSingularTriplet(svd, i_sv, &(singular_values[i_sv]), u, NULL);
-      copy_to_BlockVector(snap_basis[i_sv], u);
-      cout << "      Singular value " << i_sv << ": " << std::scientific
-           << singular_values[i_sv]
-           << std::fixed << std::endl;
-    }
-
-    MatDestroy(&Mat_snap);
-    SVDDestroy(&svd);
-    u.clear();
-  }
-
-/*
- * @brief Compute POD basis
- */
-template <int dim, int n_fe_degree>
-  void ROMStatic<dim, n_fe_degree>::compute_POD_basis_group_wise (
-    std::vector<PETScWrappers::MPI::BlockVector> &_snapshots)
-  {
-    cout << "   POD ---- GROUP WISE " << std::endl;
-    unsigned int J = n_dofs;
-    unsigned int K = _snapshots.size();
-    dim_rom = n_groups * _snapshots.size();
-    get_uint_from_options("-dim_rom", dim_rom);
-
-    cout << "   K " << K << " n_dofs " << n_dofs << std::endl;
-
-    // Create the matrix with the snapshot to apply the SVD
-    std::vector<LAPACKFullMatrix<double> > S(n_groups, LAPACKFullMatrix<double>(J, K));
-    for (unsigned int g = 0; g < n_groups; g++)
-      S[g].reinit(J, K);
-
-    // Copy to Full Matrix
-    for (unsigned int g = 0; g < n_groups; g++)
-      for (unsigned int k = 0; k < K; k++)
-        for (unsigned int j = 0; j < J; j++)
-          S[g](j, k) = _snapshots[k].block(g)[j];
-
-    // Create U
-    std::vector<LAPACKFullMatrix<double> > U(n_groups, LAPACKFullMatrix<double>(J, K));
-    for (unsigned int g = 0; g < n_groups; g++)
-      U[g].reinit(J, K);
-
-    std::vector<Vector<double> > Sigma(n_groups, Vector<double>(K));
-    for (unsigned int g = 0; g < n_groups; g++)
-      Sigma[g].reinit(K, true);
-    for (unsigned int g = 0; g < n_groups; g++)
-    {
-      S[g].compute_svd();
-      // Retrieve values from SVD
-      U[g] = S[g].get_svd_u();
-
-      for (unsigned int i = 0; i < K; i++)
-      {
-        Sigma[g](i) = S[g].singular_value(i);
-        cout << "   Singular value g" << g << "  index " << i << ": "
-             << std::scientific
-             << Sigma[g](i)    //        << std::fixed
-             << std::endl;
-      }
-      cout << std::fixed;
-    }
-
-    // Determine the number of modes to retain based on epsilon_M
-    //FIXME
-    //    double total_energy = Sigma.l2_norm();
-    //    unsigned int M = 0;
-    //    for (unsigned int m = 0; m < N; ++m)
-    //    {
-    //      double leftout_energy = 0.0;
-    //      for (unsigned int m2 = m + 1; m2 < N; ++m2)
-    //        leftout_energy += Sigma(m2) * Sigma(m2);
-    //      leftout_energy = sqrt(leftout_energy);
-    //
-    //      if (leftout_energy / total_energy <= epsilon_M)
-    //      {
-    //        M = m + 1;
-    //        break;
-    //      }
-    //    }
-    //dim_rom = M;
-    // ---------------------------------------
-
-    // Copy snap_basis
-    snap_basis.resize(dim_rom);
-    for (unsigned int dr = 0; dr < dim_rom; dr++)
-      snap_basis[dr].reinit(local_dofs_vector, comm);
-
-    for (unsigned int g = 0; g < n_groups; g++)
-      for (unsigned int k = 0; k < K; k++)
-      {
-        for (unsigned int j = 0; j < J; j++)
-        {
-          snap_basis[k + g * K].block(g)(j) = U[g](j, k);
-        }
-        snap_basis[k].compress(VectorOperation::insert);
-      }
-  }
-
-/**
- *
- */
-template <int dim, int n_fe_degree>
-  void ROMStatic<dim, n_fe_degree>::compute_LUPOD_basis_monolithic (
-    std::vector<PETScWrappers::MPI::BlockVector> &_snapshots)
-  {
-    unsigned int J = n_dofs * n_groups;
-    unsigned int K = _snapshots.size();
-
-    cout << "   LUPOD ---- MONOLITHIC " << std::endl;
-    //cout << " J " << J << "  K " << K << " SIZE " << _snapshots[0].size() << std::endl;
-    // Create the matrix with the snapshot to apply the SVD
-    FullMatrix<double> S(J, K);
-    // Copy to Full Matrix
-    for (unsigned int k = 0; k < K; k++)
-      for (unsigned int j = 0; j < J; j++)
-        S(j, k) = _snapshots[k][j];
-
-    //cout << "S.print_formatted " << std::endl;
-    //S.print_formatted(std::cout, 18, true, 0, "0.0");
-
-    //
-    // --------------------------------------------------------------------
-    // LUPOD Technology
-    // Inputs:
-    // S - Snapshot matrix (J x K)
-    // epsilon_N - threshold for selection of collocation points
-    // epsilon_M - threshold for retention of modes in POD
-    FullMatrix<double> S_mod(S);
-
-    snaps.reserve(K);
-    points.reserve(K);
-
-    cout << "   epsilon_N  " << std::scientific << epsilon_N << std::endl;
-    cout << "   epsilon_M  " << std::scientific << epsilon_M << std::endl;
-    unsigned int j_max = 0, k_max = 0, it = 0;
-    double pivot, max_val, error = 1e6;
-    while (error > epsilon_N)
-    {
-      // Step 1.1: Find the index of the largest absolute value in S_mod
-      max_val = 0.0;
-      for (unsigned int j = 0; j < J; j++)
-        for (unsigned int k = 0; k < K; k++)
-          if (std::abs(S_mod(j, k)) > max_val)
-          {
-            max_val = std::abs(S_mod(j, k));
-            j_max = j;
-            k_max = k;
-          }
-
-      std::vector<double> temp_col(J);
-      // Step 1.2: Perform Gaussian elimination to set the j_index-th row to zero
-      pivot = S_mod(j_max, k_max);
-      for (unsigned int j = 0; j < J; j++)
-        S_mod(j, k_max) /= pivot;
-
-      // Update other columns
-      // in FullMatrix<double> could be done with add_row
-      for (unsigned int k = 0; k < K; ++k)
-        if (k != k_max)
-        {
-          for (unsigned int j = 0; j < J; ++j)
-            temp_col[j] = S_mod(j, k) - S_mod(j_max, k) * S_mod(j, k_max);
-
-          for (unsigned int j = 0; j < J; ++j)
-            S_mod(j, k) = temp_col[j];
-        }
-
-      // Store the indices
-      points.push_back(j_max);
-      snaps.push_back(k_max);
-
-      // Remove the selected snapshot
-      for (unsigned int j = 0; j < J; ++j)
-        S_mod(j, k_max) = 0;
-
-      //cout << "j_max: " << j_max << "  k_max: " << k_max << std::endl;
-
-      //cout << "S_mod " << std::endl;
-      //S_mod.print_formatted(std::cout, 7, true, 0, "0.0");
-      // Step 3: Check for convergence based on the Frobenius norm
-      error = S_mod.frobenius_norm() / S.frobenius_norm();
-
-      //cout << "error: " << std::scientific << error << std::fixed << std::endl;
-      AssertRelease(it <= J, "Something went wrong in LUPOD");
-      it++;
-    }
-
-    unsigned int N = snaps.size();  // Number of collocation points
-
-    // Step 4: Perform SVD on the reduced snapshot matrix
-    LAPACKFullMatrix<double> S_reduced(points.size(), snaps.size());
-    for (unsigned int j = 0; j < N; j++)
-      for (unsigned int k = 0; k < N; k++)
-        S_reduced(j, k) = S(points[j], snaps[k]);
-
-    //S_reduced.print_formatted(std::cout, 14, true, 0, "0.0", 1.0, 1e-15);
-    LAPACKFullMatrix<double> vt;
-    S_reduced.compute_svd();
-    // Retrieve values from SVD
-    LAPACKFullMatrix<double> U_reduced = S_reduced.get_svd_u();
-    vt = S_reduced.get_svd_vt();
-    Vector<double> Sigma(N);
-    LAPACKFullMatrix<double> Sigma_mat_inv(N, N);
-    for (unsigned int i = 0; i < N; i++)
-    {
-      Sigma(i) = S_reduced.singular_value(i);
-      cout << "   Singular value " << i << ": " << std::scientific << Sigma(i)
-           << std::fixed
-           << std::endl;
-      Sigma_mat_inv(i, i) = 1 / Sigma(i);
-    }
-
-    cout << "   LUPOD Points:  " << std::flush;
-    print_vector(points);
-
-    // Determine the number of modes to retain based on epsilon_M
-    double total_energy = Sigma.l2_norm();
-    unsigned int M = 0;
-    for (unsigned int m = 0; m < N; ++m)
-    {
-      double leftout_energy = 0.0;
-      for (unsigned int m2 = m + 1; m2 < N; ++m2)
-        leftout_energy += Sigma(m2) * Sigma(m2);
-      leftout_energy = sqrt(leftout_energy);
-
-      if (leftout_energy / total_energy <= epsilon_M)
-      {
-        M = m + 1;
-        break;
-      }
-    }
-
-    // Perform QR decomposition using LAPACK
-    LAPACKFullMatrix<double> Q, R, aux(N, N), R_inv;
-    FullMatrix<double> P(N, N);
-    qr(U_reduced, Q, R);
-
-    // P = V*inv(Sigma_mat)*inv(R);
-    R.invert();
-
-    vt.Tmmult(aux, Sigma_mat_inv); // We get V transposed by get_svd_vt();
-    aux.mmult(P, R);
-
-    FullMatrix<double> S2(J, M);
-    FullMatrix<double> U_full(J, M);
-
-    // S2= S(:, snaps)
-    for (unsigned int j = 0; j < J; j++)
-      for (unsigned int k = 0; k < M; k++)
-        S2(j, k) = S(j, snaps[k]);
-
-    // U_full = S(:, snaps)*P;
-    S2.mmult(U_full, P);
-
-    //    cout << "U_full: " << std::endl;
-    //    U_full.print_formatted(std::cout, 6, true);
-    //    cout << "U_reduced " << std::endl;
-    //    U_reduced.print_formatted(std::cout, 6, true);
-
-    // ---------------------------------------
-    // Copy snap_basis_red
-    dim_rom = M;
-    snap_basis_red.resize(M, Vector<double>(N));
-    for (unsigned int j = 0; j < M; ++j)
-    {
-      snap_basis_red[j].reinit(N);
-      for (unsigned int i = 0; i < N; ++i)
-      {
-        snap_basis_red[j](i) = U_reduced(i, j);
-      }
-    }
-
-    // Copy snap_basis
-    snap_basis.resize(dim_rom);
-    for (unsigned int dr = 0; dr < dim_rom; dr++)
-      snap_basis[dr].reinit(local_dofs_vector, comm);
-    for (unsigned int j = 0; j < dim_rom; j++)
-    {
-      for (unsigned int i = 0; i < J; i++)
-      {
-        snap_basis[j](i) = U_full(i, j);
-      }
-      snap_basis[j].compress(VectorOperation::insert);
-    }
-  }
-
-/**
- *
- */
-template <int dim, int n_fe_degree>
-  void ROMStatic<dim, n_fe_degree>::compute_LUPOD_basis_group_wise (
-    std::vector<PETScWrappers::MPI::BlockVector> &_snapshots)
-  {
-    unsigned int J = n_dofs * n_groups;
-    unsigned int K = _snapshots.size();
-
-    cout << "   LUPOD ---- GROUP WISE " << std::endl;
-    //cout << " J " << J << "  K " << K << " SIZE " << _snapshots[0].size() << std::endl;
-    // Create the matrix with the snapshot to apply the SVD
-    FullMatrix<double> S(J, K);
-    // Copy to Full Matrix
-    for (unsigned int k = 0; k < K; k++)
-      for (unsigned int j = 0; j < J; j++)
-        S(j, k) = _snapshots[k][j];
-
-    //cout << "S.print_formatted " << std::endl;
-    //S.print_formatted(std::cout, 18, true, 0, "0.0");
-
-    //
-    // --------------------------------------------------------------------
-    // LUPOD Technology
-    // Inputs:
-    // S - Snapshot matrix (J x K)
-    // epsilon_N - threshold for selection of collocation points
-    // epsilon_M - threshold for retention of modes in POD
-    FullMatrix<double> S_mod(S);
-
-    snaps.reserve(K);
-    points.reserve(K);
-
-    cout << "   epsilon_N  " << std::scientific << epsilon_N << std::endl;
-    cout << "   epsilon_M  " << std::scientific << epsilon_M << std::endl;
-    unsigned int j_max = 0, k_max = 0, it = 0;
-    double pivot, max_val, error = 1e6;
-    while (error > epsilon_N)
-    {
-      // Step 1.1: Find the index of the largest absolute value in S_mod
-      max_val = 0.0;
-      for (unsigned int j = 0; j < J; j++)
-        for (unsigned int k = 0; k < K; k++)
-          if (std::abs(S_mod(j, k)) > max_val)
-          {
-            max_val = std::abs(S_mod(j, k));
-            j_max = j;
-            k_max = k;
-          }
-
-      std::vector<double> temp_col(J);
-      // Step 1.2: Perform Gaussian elimination to set the j_index-th row to zero
-      pivot = S_mod(j_max, k_max);
-      for (unsigned int j = 0; j < J; j++)
-        S_mod(j, k_max) /= pivot;
-
-      // Update other columns
-      // in FullMatrix<double> could be done with add_row
-      for (unsigned int k = 0; k < K; ++k)
-        if (k != k_max)
-        {
-          for (unsigned int j = 0; j < J; ++j)
-            temp_col[j] = S_mod(j, k) - S_mod(j_max, k) * S_mod(j, k_max);
-
-          for (unsigned int j = 0; j < J; ++j)
-            S_mod(j, k) = temp_col[j];
-        }
-
-      // Store the indices
-      points.push_back(j_max);
-      snaps.push_back(k_max);
-
-      // Remove the selected snapshot
-      for (unsigned int j = 0; j < J; ++j)
-        S_mod(j, k_max) = 0;
-
-      //std::cout << "j_max: " << j_max << "  k_max: " << k_max << std::endl;
-
-      //std::cout << "S_mod " << std::endl;
-      //S_mod.print_formatted(std::cout, 7, true, 0, "0.0");
-      // Step 3: Check for convergence based on the Frobenius norm
-      error = S_mod.frobenius_norm() / S.frobenius_norm();
-
-      //std::cout << "error: " << std::scientific << error << std::fixed << std::endl;
-      AssertRelease(it <= J, "Something went wrong in LUPOD");
-      it++;
-    }
-
-    unsigned int N = snaps.size();  // Number of collocation points
-
-    // Step 4: Perform SVD on the reduced snapshot matrix
-    LAPACKFullMatrix<double> S_reduced(points.size(), snaps.size());
-    for (unsigned int j = 0; j < N; j++)
-      for (unsigned int k = 0; k < N; k++)
-        S_reduced(j, k) = S(points[j], snaps[k]);
-
-    //S_reduced.print_formatted(std::cout, 14, true, 0, "0.0", 1.0, 1e-15);
-    LAPACKFullMatrix<double> vt;
-    S_reduced.compute_svd();
-
-    // Retrieve values from SVD
-    LAPACKFullMatrix<double> U_reduced = S_reduced.get_svd_u();
-    vt = S_reduced.get_svd_vt();
-    Vector<double> Sigma(N);
-    LAPACKFullMatrix<double> Sigma_mat_inv(N, N);
-    for (unsigned int i = 0; i < N; i++)
-    {
-      Sigma(i) = S_reduced.singular_value(i);
-      cout << "   Singular value " << i << ": " << std::scientific << Sigma(i)
-           << std::fixed
-           << std::endl;
-      Sigma_mat_inv(i, i) = 1 / Sigma(i);
-    }
-
-    cout << "   LUPOD Points:  " << std::flush;
-    print_vector(points);
-
-    // Determine the number of modes to retain based on epsilon_M
-    double total_energy = Sigma.l2_norm();
-    unsigned int M = 0;
-    for (unsigned int m = 0; m < N; ++m)
-    {
-      double leftout_energy = 0.0;
-      for (unsigned int m2 = m + 1; m2 < N; ++m2)
-        leftout_energy += Sigma(m2) * Sigma(m2);
-      leftout_energy = sqrt(leftout_energy);
-
-      if (leftout_energy / total_energy <= epsilon_M)
-      {
-        M = m + 1;
-        break;
-      }
-    }
-
-    // Perform QR decomposition using LAPACK
-    LAPACKFullMatrix<double> Q, R, aux(N, N), R_inv;
-    FullMatrix<double> P(N, N);
-    qr(U_reduced, Q, R);
-
-    // P = V*inv(Sigma_mat)*inv(R);
-    R.invert();
-
-    vt.Tmmult(aux, Sigma_mat_inv); // We get V transposed by get_svd_vt();
-    aux.mmult(P, R);
-
-    FullMatrix<double> S2(J, M);
-    FullMatrix<double> U_full(J, M);
-
-    // S2= S(:, snaps)
-    for (unsigned int j = 0; j < J; j++)
-      for (unsigned int k = 0; k < M; k++)
-        S2(j, k) = S(j, snaps[k]);
-
-    // U_full = S(:, snaps)*P;
-    S2.mmult(U_full, P);
-
-    //    std::cout << "U_full: " << std::endl;
-    //    U_full.print_formatted(std::cout, 6, true);
-    //    std::cout << "U_reduced " << std::endl;
-    //    U_reduced.print_formatted(std::cout, 6, true);
-
-    // ---------------------------------------
-    // Copy snap_basis_red
-    dim_rom = M;
-    snap_basis_red.resize(M, Vector<double>(N));
-    for (unsigned int j = 0; j < M; ++j)
-    {
-      snap_basis_red[j].reinit(N);
-      for (unsigned int i = 0; i < N; ++i)
-      {
-        snap_basis_red[j](i) = U_reduced(i, j);
-      }
-    }
-
-    // Copy snap_basis
-    snap_basis.resize(dim_rom);
-    for (unsigned int dr = 0; dr < dim_rom; dr++)
-      snap_basis[dr].reinit(local_dofs_vector, comm);
-    for (unsigned int j = 0; j < dim_rom; j++)
-    {
-      for (unsigned int i = 0; i < J; i++)
-      {
-        snap_basis[j](i) = U_full(i, j);
-      }
-      snap_basis[j].compress(VectorOperation::insert);
-    }
-  }
-
-/*
- * @brief Perform QR decomposition using LAPACK
- * @input A
- * @output Q and R
- */
-template <int dim, int n_fe_degree>
-  void ROMStatic<dim, n_fe_degree>::qr (
-    const LAPACKFullMatrix<double> &A,
-    LAPACKFullMatrix<double> &Q,
-    LAPACKFullMatrix<double> &R)
-  {
-    const int m = A.m();
-    const int n = A.n();
-
-    int info;
-    std::vector<double> tau(n); // Householder reflectors
-    int lwork = -1;
-    double query_work;
-
-    // Manually extract matrix data into column-major order
-    std::vector<double> A_data(A.begin(), A.end());
-
-    // Query optimal workspace size
-    dgeqrf_(&m, &n, A_data.data(), &n, tau.data(), &query_work, &lwork, &info);
-    lwork = static_cast<int>(query_work);
-    std::vector<double> work(lwork);
-
-    // Compute QR decomposition
-    dgeqrf_(&m, &n, A_data.data(), &n, tau.data(), work.data(), &lwork, &info);
-    if (info != 0)
-    {
-      std::cerr << "QR factorization failed with error code: " << info << std::endl;
-      exit(-1);
-    }
-
-    // Extract R (upper triangular part)
-    R.reinit(m, n);
-    for (int i = 0; i < m; ++i)
-      for (int j = 0; j < n; ++j)
-        R(i, j) = (j >= i and abs(A_data[i + j * n]) > 1e-15) ? A_data[i + j * n] : 0.0; // Store R in upper part
-
-      // Compute Q explicitly
-    dorgqr_(&m, &n, &n, A_data.data(), &n, tau.data(), work.data(), &lwork, &info);
-    if (info != 0)
-    {
-      std::cerr << "Q computation failed with error code: " << info << std::endl;
-      exit(-1);
-    }
-
-    // Store Q in a deal.II matrix
-    Q.reinit(m, n);
-    for (int i = 0; i < m; ++i)
-      for (int j = 0; j < n; ++j)
-        Q(i, j) = A_data[i + j * n];
-  }
-
-/*
  * @brief Update XS.
  */
 template <int dim, int n_fe_degree>
@@ -1075,14 +490,14 @@ template <int dim, int n_fe_degree>
 
     MatrixFreeType matrixfree_type = full_allocated;
     // Allocate and assemble block matrices
-    T.reinit(static_problem.materials, boundary_conditions, albedo_factors,
-      matrixfree_type);
+    T.reinit(static_problem.materials, static_problem.boundary_conditions,
+      static_problem.albedo_factors, matrixfree_type);
     F.reinit(static_problem.materials, matrixfree_type);
 
     MatCreateSeqDense(PETSC_COMM_SELF, dim_rom, dim_rom, NULL, &romT);
     MatCreateSeqDense(PETSC_COMM_SELF, dim_rom, dim_rom, NULL, &romF);
 
-    if (LUPOD_flag)
+    if (LUPOD_type == "LUPOD" or LUPOD_type == "LUPOD_ext")
     {
       //std::cout << "LUPOD TRUE" << std::endl;
       //assemble_matrices();
@@ -1108,7 +523,7 @@ template <int dim, int n_fe_degree>
         }
       }
     }
-    else
+    else if (LUPOD_type == "POD")
     {
       //std::cout << "LUPOD FALSE" << std::endl;
 
@@ -1194,17 +609,27 @@ template <int dim, int n_fe_degree>
 
     if (rom_group_wise == "Monolithic")
     {
-      if (LUPOD_flag)
-        compute_LUPOD_basis_monolithic(snapshots);
-      else
-        compute_POD_basis_monolithic(snapshots);
+      if (LUPOD_type == "LUPOD")
+        compute_LUPOD_basis_monolithic(snapshots, epsilon_M, epsilon_N,
+          snaps, points, dim_rom, snap_basis, snap_basis_red);
+      else if (LUPOD_type == "LUPOD_ext")
+        compute_LUPODext_basis_monolithic(snapshots, epsilon_M, n_LUPOD_points,
+          snaps, points, dim_rom, snap_basis, snap_basis_red);
+      else if (LUPOD_type == "POD")
+        compute_POD_basis_monolithic(snapshots, epsilon_M,
+          snaps, dim_rom, snap_basis);
     }
     else if (rom_group_wise == "Group_Wise")
     {
-      if (LUPOD_flag)
-        compute_LUPOD_basis_group_wise(snapshots);
-      else
-        compute_POD_basis_group_wise(snapshots);
+      if (LUPOD_type == "LUPOD")
+        compute_LUPOD_basis_group_wise(snapshots, epsilon_M, epsilon_N,
+          snaps, points, dim_rom, snap_basis, snap_basis_red);
+      else if (LUPOD_type == "LUPOD_ext")
+        compute_LUPODext_basis_group_wise(snapshots, epsilon_M, n_LUPOD_points,
+          snaps, points, dim_rom, snap_basis, snap_basis_red);
+      else if (LUPOD_type == "POD")
+        compute_POD_basis_group_wise(snapshots, epsilon_M,
+          snaps, dim_rom, snap_basis);
     }
     else
       AssertRelease(false, "rom_group_wise must be Monolithic or Group_Wise");
@@ -1214,7 +639,7 @@ template <int dim, int n_fe_degree>
          << std::endl;
     //    -------------------------------------------------------------------------    //
     // Create Tests
-    const unsigned int n_test = 10;
+    const unsigned int n_test = 50;
     std::vector<Vector<double> > xs_test;
     std::mt19937 gen(seed); // Random number generator for uniform distribution [0.0,1.0]
     get_pertubation_random_XS(n_test, gen, xs_test);
@@ -1306,6 +731,43 @@ template <int dim, int n_fe_degree>
     cout << "   Max  RMS Phi = " << rms_phi.linfty_norm() << " %." << std::endl;
     cout << std::fixed << std::endl;
     cout << "   Finished in " << timer.cpu_time() << " s." << std::endl;
+
+    // WRITE OUTPUT
+    // Create and erase the content of output file
+    std::ofstream out(out_file.c_str(), std::ios::out);
+    // Print the eigenvalues in the outFile
+    print_logo(out);
+    out << "\n";
+    out << " ----- ROM STATIC PROBLEM -----" << "\n";
+    out << "\n";
+    out << "Problem File: " << static_problem.input_file << "\n";
+    out << "ROM_Type_Snapshots: " << type_snapshots << "\n";
+    out << "Type_Perturbation: " << type_perturbation << "\n";
+    out << "XS_Perturbation_Fraction: " << perturbation_frac << "\n";
+    out << "ROM_Group_Wise: " << rom_group_wise << "\n";
+
+    //
+    out << "N_Snapshots: " << n_snap << "\n";
+    out << "ROM_DIM: " << dim_rom << "\n";
+    out << "LUPOD_type: " << LUPOD_type << "\n";
+    out << "N_LUPOD_Points: " << n_LUPOD_points << "\n";
+    out << std::scientific;
+    out << "Epsilon_M: " << epsilon_M << "\n";
+    out << "Epsilon_N: " << epsilon_N << "\n";
+    out << "\n";
+    //
+    out << "N_test: " << n_test << "\n";
+    out << "Mean Delta Keff (pcm): " << delta_keff.mean_value()  << std::endl;
+    out << "Max  Delta Keff (pcm): " << delta_keff.linfty_norm() << std::endl;
+    out << "Mean RMS Phi (%): " << rms_phi.mean_value() << std::endl;
+    out << "Max  RMS Phi (%): " << rms_phi.linfty_norm()  << std::endl;
+
+    // Times
+    out << "CPU Time Snapshots (s):: " << time_get_snap << "\n";
+    out << "CPU Time FOM (s): " << time_fom << "\n";
+    out << "CPU Time ROM (s): " << time_rom << "\n";
+
+    out << "\n";
   }
 
 template class ROMStatic<1, 1> ;

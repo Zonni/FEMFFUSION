@@ -49,7 +49,7 @@
 #include "matrix_operators/matrix_operators_petsc_time.h"
 #include "matrix_operators/matrix_operators_small_time_mat.h"
 #include "static_diffusion.h"
-#include "preconditioner.h"
+#include "eps_solvers/preconditioner.h"
 #include "utils.h"
 
 using namespace dealii;

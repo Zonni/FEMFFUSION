@@ -292,14 +292,18 @@ void prm_declare_entries (ParameterHandler &prm)
   prm.declare_entry("ROM_Group_Wise", "Monolithic",
     Patterns::Selection("Group_Wise | Monolithic"),
     "Type of Snapshots used in ROM calculation");
+
   // LUPOD
-  prm.declare_entry("LUPOD_Flag", "false", Patterns::Bool(),
-    "Activate LUPOD technique to optimize ROM");
+  prm.declare_entry("LUPOD_Type", "POD",
+    Patterns::Selection("POD | LUPOD | LUPOD_ext"),
+    "Activate LUPOD or LUPOD_ext techniques to optimize ROM");
   prm.declare_entry("Epsilon_N", "0.0", Patterns::Double(0, 1.0),
     "Epsilon_M of LUPOD technique");
   prm.declare_entry("Epsilon_M", "0.0", Patterns::Double(0, 1.0),
     "Epsilon_M of LUPOD technique");
-
+  prm.declare_entry("N_LUPOD_Points", "0",
+      Patterns::Integer(),
+      "Number of LUPOD points retained in the cross products");
 }
 
 /**

@@ -51,7 +51,6 @@
 #include "../matrix_operators/matrix_operators_petsc.h"
 #include "../static_diffusion.h"
 
-
 using namespace dealii;
 
 /**
@@ -96,20 +95,6 @@ template <int dim, int n_fe_degree>
 
     void assemble_ROM_matrices ();
 
-    void compute_POD_basis_group_wise (
-      std::vector<PETScWrappers::MPI::BlockVector> &_snapshots);
-    void compute_POD_basis_monolithic (
-      std::vector<PETScWrappers::MPI::BlockVector> &_snapshots);
-    void compute_LUPOD_basis_group_wise (
-      std::vector<PETScWrappers::MPI::BlockVector> &_snapshots);
-    void compute_LUPOD_basis_monolithic (
-      std::vector<PETScWrappers::MPI::BlockVector> &_snapshots);
-
-    void qr (
-      const LAPACKFullMatrix<double> &A,
-      LAPACKFullMatrix<double> &Q,
-      LAPACKFullMatrix<double> &R);
-
     // Solver
     double solve_eigenvalue (PETScWrappers::MPI::BlockVector &phi);
 
@@ -137,11 +122,6 @@ template <int dim, int n_fe_degree>
     std::vector<IndexSet> local_dofs_vector;
 
     DoFHandler<dim> &dof_handler;
-
-    AffineConstraints<double> &constraints;
-    const std::vector<unsigned int> &boundary_conditions;
-    std::vector<double> albedo_factors;
-
     unsigned int n_assemblies;
 
     Perturbation<dim> &perturbation;
@@ -198,7 +178,8 @@ template <int dim, int n_fe_degree>
     //unsigned int n_matsvecs;
 
     // LUPOD data
-    bool LUPOD_flag;
+    std::string LUPOD_type;
+    unsigned n_LUPOD_points;
     double epsilon_N;
     double epsilon_M;
     std::vector<unsigned int> snaps;   // Store selected snapshot indices

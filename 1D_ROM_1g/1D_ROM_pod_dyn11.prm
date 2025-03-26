@@ -73,7 +73,7 @@ set Cut_Time                = 0.1  0.5
 set ROM_Type_Snapshots      = time_dyn
 # Number of snapshots for the ROM method
 set N_Snapshots             = 11
-set LUPOD_Flag              = false
+set LUPOD_Type             = LUPOD
 
 
 

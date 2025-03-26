@@ -28,7 +28,7 @@ set Boundary_Conditions = 2 2
 #
 # OUT OPTIONS
 # Filename where will be written the output
-set Output_Filename     = test/1D_hom_ROM_static/1D_hom_ROM_mono.out
+set Output_Filename     = test/1D_hom_ROM_static/1D_hom_LUPODext_groupwise.out
 
 # True/false - Make a .vtk file with the output
 set Output_Flag         = false
@@ -56,4 +56,8 @@ set ROM_Type_Snapshots       = IHS_XS
 set N_Snapshots              = 3
 set Type_Perturbation        = Random_XS
 set XS_Perturbation_Fraction = 0.20
-set ROM_Group_Wise           = Monolithic
+set ROM_Group_Wise           = Group_Wise
+
+# LUPOD
+set LUPOD_Type               = LUPOD_ext
+set N_LUPOD_Points           =  13

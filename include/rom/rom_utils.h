@@ -38,6 +38,7 @@
 #include <deal.II/lac/petsc_matrix_base.h>
 #include <deal.II/lac/petsc_solver.h>
 #include <deal.II/lac/slepc_solver.h>
+#include <deal.II/lac/qr.h>
 
 #include <fstream>
 #include <iostream>
@@ -47,5 +48,132 @@
 #include <petscis.h>
 
 using namespace dealii;
+
+/**
+ *
+ */
+void compute_qr (
+  const LAPACKFullMatrix<double> &A,
+  LAPACKFullMatrix<double> &Q,
+  LAPACKFullMatrix<double> &R);
+
+/**
+ * @brief Perform gaussian elimination of row j_index
+ * on matrix A using as a pivot (j_index, k_index)
+ */
+void gaussian_elimination (
+  LAPACKFullMatrix<double> &S_mod,
+  unsigned int j_index,
+  unsigned int k_index);
+
+/**
+ * @brief Find the position of the max (in absolute value)
+ * of matrix A.
+ */
+void find_max_index (
+  const LAPACKFullMatrix<double> &A,
+  unsigned int &j_index,
+  unsigned int &k_index);
+
+/**
+ *
+ */
+void LUPOD (
+  const LAPACKFullMatrix<double> &S,
+  const double epsilon_M,
+  const double epsilon_N,
+  std::vector<unsigned int> &snaps,
+  std::vector<unsigned int> &points,
+  LAPACKFullMatrix<double> &U_full,
+  LAPACKFullMatrix<double> &U_red);
+
+/**
+ *
+ */
+void LUPOD_extended (
+  const LAPACKFullMatrix<double> &S,
+  const double epsilon_M,
+  const unsigned N_points,
+  std::vector<unsigned int> &snaps,
+  std::vector<unsigned int> &points,
+  LAPACKFullMatrix<double> &U_full,
+  LAPACKFullMatrix<double> &U_red);
+
+/**
+ * @brief Just a test of LUPOD_extended
+ */
+void test_LUPOD_extended ();
+
+/**
+ *
+ */
+void compute_POD_basis_monolithic (
+  std::vector<PETScWrappers::MPI::BlockVector> &snapshots,
+  const double epsilon_M,
+  std::vector<unsigned int> &snaps,
+  unsigned int &dim_rom,
+  std::vector<PETScWrappers::MPI::BlockVector> &snap_basis);
+
+/**
+ *
+ */
+void compute_POD_basis_group_wise (
+  std::vector<PETScWrappers::MPI::BlockVector> &snapshots,
+  const double epsilon_M,
+  std::vector<unsigned int> &snaps,
+  unsigned int &dim_rom,
+  std::vector<PETScWrappers::MPI::BlockVector> &snap_basis);
+
+/**
+ *
+ */
+void compute_LUPOD_basis_monolithic (
+  std::vector<PETScWrappers::MPI::BlockVector> &snapshots,
+  const double epsilon_M,
+  const double epsilon_N,
+  std::vector<unsigned int> &snaps,
+  std::vector<unsigned int> &points,
+  unsigned int &dim_rom,
+  std::vector<PETScWrappers::MPI::BlockVector> &snap_basis,
+  std::vector<Vector<double> > &snap_basis_red);
+
+/**
+ *
+ */
+void compute_LUPOD_basis_group_wise (
+  std::vector<PETScWrappers::MPI::BlockVector> &snapshots,
+  const double epsilon_M,
+  const double epsilon_N,
+  std::vector<unsigned int> &snaps,
+  std::vector<unsigned int> &points,
+  unsigned int &dim_rom,
+  std::vector<PETScWrappers::MPI::BlockVector> &snap_basis,
+  std::vector<Vector<double> > &snap_basis_red);
+
+/**
+ *
+ */
+void compute_LUPODext_basis_monolithic (
+  std::vector<PETScWrappers::MPI::BlockVector> &snapshots,
+  const double epsilon_M,
+  const unsigned int n_points,
+  std::vector<unsigned int> &snaps,
+  std::vector<unsigned int> &points,
+  unsigned int &dim_rom,
+  std::vector<PETScWrappers::MPI::BlockVector> &snap_basis,
+  std::vector<Vector<double> > &snap_basis_red);
+
+/**
+ *
+ */
+void compute_LUPODext_basis_group_wise (
+  std::vector<PETScWrappers::MPI::BlockVector> &snapshots,
+  const double epsilon_M,
+  const unsigned int n_points,
+  std::vector<unsigned int> &snaps,
+  std::vector<unsigned int> &points,
+  unsigned int &dim_rom,
+  std::vector<PETScWrappers::MPI::BlockVector> &snap_basis,
+  std::vector<Vector<double> > &snap_basis_red);
 
 #endif /* ROM_UTILS_H_ */

@@ -70,8 +70,8 @@ set Cut_Time                = 0.1  1.0
 # ROM Parameters
 set ROM_Type_Snapshots  = ramp_time_mat12
 # Number of snapshots for the ROM method
-set N_Snapshots         = 10
-set LUPOD_Flag          = true
+set N_Snapshots            = 10
+set LUPOD_Type             = LUPOD
 
 
 

@@ -23,9 +23,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "../include/preconditioner.h"
-#include "../include/eps_solvers/pc_multilevel.h"
-#include "../include/matrix_operators/matrix_operators_petsc_time.h"
+#include "../../include/eps_solvers/preconditioner.h"
+#include "../../include/eps_solvers/pc_multilevel.h"
+#include "../../include/matrix_operators/matrix_operators_petsc_time.h"
 
 using namespace dealii;
 

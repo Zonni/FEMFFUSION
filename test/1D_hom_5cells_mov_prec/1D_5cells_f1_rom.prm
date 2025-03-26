@@ -78,7 +78,7 @@ set Output_Filename     = test/1D_hom_5cells_mov_prec/1D_5cells_f1_rom.out
 set ROM_Transient         = true
 set N_Snapshots           = 5
 set ROM_Type_Snapshots    = static_time
-set LUPOD_Flag            = false
+set LUPOD_Type            = POD
 set Epsilon_M             = 1e-10
 set Epsilon_N             = 1e-10
 

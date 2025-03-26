@@ -18,6 +18,7 @@
 #include "../include/noise/noise_full_spn.h"
 
 #include "../include/rom/rom_kinetics.h"
+#include "../include/rom/rom_utils.h"
 
 
 using namespace dealii;
@@ -34,12 +35,14 @@ int run_tests ()
   // ---------------------- TEST ROM ----------------------- //
   //
   //
-
-
+  // Test
+  test_LUPOD_extended ();
   // input_file = "test/1D_hom_5cells_mov_prec/1D_5cells_f1_rom.prm";
   run_test_rom_LUPOD_1();
   // input_file = "test/1D_hom_5cells_mov_prec/1D_5cells_f1_rom.prm";
   run_test_rom_LUPOD_2();
+
+
 
   //input_file = "test/3D_Langenbuch/3D_Langenbuch_rom_rods.prm";
   //run_test_static_rom(input_file, 3);
@@ -1691,108 +1694,108 @@ void run_tests_utils ()
   std::cout << " Passed!" << std::endl;
 }
 
-/**
- * @brief run_test_static_rom
- */
-void run_test_static_rom (
-  const std::string &input_file,
-  unsigned int n_tests)
-{
-  std::cout << "Testing ROM Static.. " << input_file << " " << std::flush;
-
-  ParameterHandler prm;
-  prm_declare_entries(prm);
-  AssertRelease(fexists(input_file),
-    "ERROR!: Input File .prm Does NOT exist\n Use -f input_file.rm  option");
-  prm.parse_input(input_file);
-
-  int dim = prm.get_integer("Dimension");
-  AssertRelease(dim == 3,
-    "This test is only implemented for problems of dimension 3.");
-
-  int fe_degree = prm.get_integer("FE_Degree");
-  AssertRelease(fe_degree == 1,
-    "This test is only implemented for problems of FE Degree 1.");
-
-  std::string transport = prm.get("Transport_Appr");
-  lower_case(transport);
-  AssertRelease(transport == "diffusion",
-    "This test is only implemented for diffusion.");
-
-  std::string type_per = prm.get("Type_Perturbation");
-  AssertRelease(type_per == "Rods",
-    "This test is implemented for Bars Transient");
-
-  bool rom = prm.get_bool("ROM_Transient");
-  AssertRelease(rom, "This test is implemented for ROM Computation");
-
-  double rom_eig;
-  std::vector<double> static_eig(n_tests);
-  std::vector<double> rom_eigs(n_tests);
-
-  StaticDiffusion<3, 1> static_prob(prm, input_file, false, true);
-  ROMKinetics<3, 1> rom_prob(prm, static_prob, false, true, false);
-
-  const double time_step = rom_prob.t_end / n_tests;
-
-  rom_prob.snapshots.resize(1);
-  rom_prob.snapshots[0].resize(n_tests);
-  for (unsigned int nt = 0; nt < n_tests; nt++)
-  {
-    static_prob.perturbation.move_bars(nt * time_step);
-
-    // Compute eigenvalues with static_problem
-    static_prob.assemble_system_lambda();
-    static_prob.solve_eps();
-    static_eig[nt] = static_prob.eigenvalues[0];
-    static_prob.phi[0].compress(VectorOperation::insert);
-    rom_prob.snapshots[0][nt] = static_prob.phi[0];
-  }
-
-  for (unsigned int nt = 0; nt < n_tests; nt++)
-  {
-    LAPACKFullMatrix<double> romT(n_tests);
-    LAPACKFullMatrix<double> romTM(n_tests);
-    LAPACKFullMatrix<double> romM(n_tests);
-
-    static_prob.perturbation.move_bars(nt * time_step);
-
-    // Compute eigenvalues with ROM method
-    rom_prob.compute_pod_basis_LUPOD_monolithic(rom_prob.snapshots[0]);
-
-    // We use the matrices of the static problem because F in ROM is multiplied by (1-beta)
-    static_prob.assemble_system_lambda();
-
-    for (unsigned int b1 = 0; b1 < n_tests; b1++)
-      for (unsigned int b2 = 0; b2 < n_tests; b2++)
-      {
-        romT(b1, b2) = static_prob.T.vmult_dot(rom_prob.snap_basis[b1],
-          rom_prob.snap_basis[b2]);
-        romM(b1, b2) = static_prob.F.vmult_dot(rom_prob.snap_basis[b1],
-          rom_prob.snap_basis[b2]);
-      }
-
-    static_prob.T.clear();
-    static_prob.F.clear();
-
-    romT.invert();
-    romT.mmult(romTM, romM);
-    romTM.compute_eigenvalues(true);
-    for (unsigned int e = 0; e < n_tests; e++)
-      rom_eigs[e] = romTM.eigenvalue(e).real();
-    rom_eig = *std::max_element(rom_eigs.begin(), rom_eigs.end());
-
-    AssertRelease(std::abs(rom_eig - static_eig[nt]) < 1e-5,
-      "  Error solving test " + input_file + '\n'
-      + "  Calculated ROM "
-      + num_to_str(rom_eig)
-      + " and calculated Static "
-      + num_to_str(static_eig[nt])
-      + '.');
-  }
-
-  std::cout << " Passed!" << std::endl;
-}
+///**
+// * @brief run_test_static_rom
+// */
+//void run_test_static_rom (
+//  const std::string &input_file,
+//  unsigned int n_tests)
+//{
+//  std::cout << "Testing ROM Static.. " << input_file << " " << std::flush;
+//
+//  ParameterHandler prm;
+//  prm_declare_entries(prm);
+//  AssertRelease(fexists(input_file),
+//    "ERROR!: Input File .prm Does NOT exist\n Use -f input_file.rm  option");
+//  prm.parse_input(input_file);
+//
+//  int dim = prm.get_integer("Dimension");
+//  AssertRelease(dim == 3,
+//    "This test is only implemented for problems of dimension 3.");
+//
+//  int fe_degree = prm.get_integer("FE_Degree");
+//  AssertRelease(fe_degree == 1,
+//    "This test is only implemented for problems of FE Degree 1.");
+//
+//  std::string transport = prm.get("Transport_Appr");
+//  lower_case(transport);
+//  AssertRelease(transport == "diffusion",
+//    "This test is only implemented for diffusion.");
+//
+//  std::string type_per = prm.get("Type_Perturbation");
+//  AssertRelease(type_per == "Rods",
+//    "This test is implemented for Bars Transient");
+//
+//  bool rom = prm.get_bool("ROM_Transient");
+//  AssertRelease(rom, "This test is implemented for ROM Computation");
+//
+//  double rom_eig;
+//  std::vector<double> static_eig(n_tests);
+//  std::vector<double> rom_eigs(n_tests);
+//
+//  StaticDiffusion<3, 1> static_prob(prm, input_file, false, true);
+//  ROMKinetics<3, 1> rom_prob(prm, static_prob, false, true, false);
+//
+//  const double time_step = rom_prob.t_end / n_tests;
+//
+//  rom_prob.snapshots.resize(1);
+//  rom_prob.snapshots[0].resize(n_tests);
+//  for (unsigned int nt = 0; nt < n_tests; nt++)
+//  {
+//    static_prob.perturbation.move_bars(nt * time_step);
+//
+//    // Compute eigenvalues with static_problem
+//    static_prob.assemble_system_lambda();
+//    static_prob.solve_eps();
+//    static_eig[nt] = static_prob.eigenvalues[0];
+//    static_prob.phi[0].compress(VectorOperation::insert);
+//    rom_prob.snapshots[0][nt] = static_prob.phi[0];
+//  }
+//
+//  for (unsigned int nt = 0; nt < n_tests; nt++)
+//  {
+//    LAPACKFullMatrix<double> romT(n_tests);
+//    LAPACKFullMatrix<double> romTM(n_tests);
+//    LAPACKFullMatrix<double> romM(n_tests);
+//
+//    static_prob.perturbation.move_bars(nt * time_step);
+//
+//    // Compute eigenvalues with ROM method
+//    rom_prob.compute_pod_basis_LUPOD_monolithic(rom_prob.snapshots[0]);
+//
+//    // We use the matrices of the static problem because F in ROM is multiplied by (1-beta)
+//    static_prob.assemble_system_lambda();
+//
+//    for (unsigned int b1 = 0; b1 < n_tests; b1++)
+//      for (unsigned int b2 = 0; b2 < n_tests; b2++)
+//      {
+//        romT(b1, b2) = static_prob.T.vmult_dot(rom_prob.snap_basis[b1],
+//          rom_prob.snap_basis[b2]);
+//        romM(b1, b2) = static_prob.F.vmult_dot(rom_prob.snap_basis[b1],
+//          rom_prob.snap_basis[b2]);
+//      }
+//
+//    static_prob.T.clear();
+//    static_prob.F.clear();
+//
+//    romT.invert();
+//    romT.mmult(romTM, romM);
+//    romTM.compute_eigenvalues(true);
+//    for (unsigned int e = 0; e < n_tests; e++)
+//      rom_eigs[e] = romTM.eigenvalue(e).real();
+//    rom_eig = *std::max_element(rom_eigs.begin(), rom_eigs.end());
+//
+//    AssertRelease(std::abs(rom_eig - static_eig[nt]) < 1e-5,
+//      "  Error solving test " + input_file + '\n'
+//      + "  Calculated ROM "
+//      + num_to_str(rom_eig)
+//      + " and calculated Static "
+//      + num_to_str(static_eig[nt])
+//      + '.');
+//  }
+//
+//  std::cout << " Passed!" << std::endl;
+//}
 
 /**
  * @brief run_test_rom_LUPOD

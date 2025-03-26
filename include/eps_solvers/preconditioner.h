@@ -26,9 +26,9 @@
 #include <petscviewertypes.h>
 #include <petscdrawtypes.h>
 
-#include "matrix_operators/matrix_operators_base.h"
-#include "time_computation.h"
-#include "eps_solvers/pc_multilevel.h"
+#include "../matrix_operators/matrix_operators_base.h"
+#include "../time_computation.h"
+#include "pc_multilevel.h"
 
 #ifndef PRECONDITIONER_H_
 #define PRECONDITIONER_H_

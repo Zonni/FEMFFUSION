@@ -50,7 +50,6 @@
 #include "../matrix_operators/matrix_operators_petsc.h"
 #include "../static_diffusion.h"
 
-
 /**
  *
  */
@@ -125,19 +124,6 @@ template <int dim, int n_fe_degree>
 
     void assemble_matrices ();
     void assemble_ROM_matrices ();
-
-    void compute_pod_basis_group_wise (
-      std::vector<PETScWrappers::MPI::BlockVector> &_snapshots);
-    void compute_pod_basis_monolithic (
-      std::vector<PETScWrappers::MPI::BlockVector> &_snapshots);
-    void compute_pod_basis_LUPOD_group_wise (
-      std::vector<PETScWrappers::MPI::BlockVector> &_snapshots);
-    void compute_pod_basis_LUPOD_monolithic (
-      std::vector<PETScWrappers::MPI::BlockVector> &_snapshots);
-
-    void qr (const LAPACKFullMatrix<double> &A,
-      LAPACKFullMatrix<double> &Q,
-      LAPACKFullMatrix<double> &R);
 
     void print_matrices ();
 
