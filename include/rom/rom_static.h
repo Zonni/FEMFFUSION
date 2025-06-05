@@ -49,6 +49,7 @@
 
 #include "../utils.h"
 #include "../matrix_operators/matrix_operators_petsc.h"
+#include "../matrix_operators/matrix_operators_lupod.h"
 #include "../static_diffusion.h"
 
 using namespace dealii;
@@ -92,6 +93,8 @@ template <int dim, int n_fe_degree>
       const unsigned int n_test,
       std::mt19937 &gen,
       std::vector<Vector<double> > &xs_sample);
+
+    void prepare_ROM ();
 
     void assemble_ROM_matrices ();
 
@@ -155,9 +158,6 @@ template <int dim, int n_fe_degree>
     std::vector<double> cpu_time;
 
     std::string type_perturbation;
-
-    //MatrixFreeType matrixfree_type;
-
     std::vector<unsigned int> &assem_per_dim;
 
     // Perturbation
@@ -169,22 +169,29 @@ template <int dim, int n_fe_degree>
     std::string type_snapshots;
     std::string rom_group_wise;
     unsigned int n_snap;
+    unsigned int n_test;
     unsigned int dim_rom;
     std::vector<PETScWrappers::MPI::BlockVector> snapshots;
     std::vector<PETScWrappers::MPI::BlockVector> snap_basis;
 
     // ROM Matrices
+    MatrixFreeType matrixfree_type;
     Mat romT, romF;
     //unsigned int n_matsvecs;
 
     // LUPOD data
+    TransportMatrixReduced<dim, n_fe_degree> Tred;
+    FisionMatrixReduced<dim, n_fe_degree> Fred;
     std::string LUPOD_type;
     unsigned n_LUPOD_points;
     double epsilon_N;
     double epsilon_M;
     std::vector<unsigned int> snaps;   // Store selected snapshot indices
     std::vector<unsigned int> points;  // Store collocation point indices
-    std::vector<Vector<double> > snap_basis_red;
+    std::vector<std::vector<unsigned int> > points_per_block;
+
+    std::vector<BlockVector<double> > snap_basis_red;
+    std::vector<BlockVector<double> > snap_basis_full;
 
     private:
   };

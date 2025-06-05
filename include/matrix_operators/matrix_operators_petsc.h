@@ -106,7 +106,7 @@ template <int dim, int n_fe_degree>
     const DoFHandler<dim> &dof_handler;
     const AffineConstraints<double> &constraints;
 
-    private:
+    protected:
     /**
      *
      */
@@ -187,7 +187,7 @@ template <int dim, int n_fe_degree>
     const DoFHandler<dim> &dof_handler;
     const AffineConstraints<double> &constraints;
 
-    private:
+    protected:
 
     /**
      *
@@ -257,7 +257,7 @@ template <int dim, int n_fe_degree>
     const DoFHandler<dim> &dof_handler;
     const AffineConstraints<double> &constraints;
 
-    private:
+    protected:
     /**
      *
      */
@@ -329,7 +329,7 @@ template <int dim, int n_fe_degree>
 
     dealii::MatrixFree<dim, double> matfree_data;
 
-    private:
+    protected:
 
     /**
      * @brief
@@ -375,7 +375,7 @@ template <int dim, int n_fe_degree>
 
     dealii::MatrixFree<dim, double> matfree_data;
 
-    private:
+    protected:
 
     /**
      * @brief
@@ -425,7 +425,7 @@ template <int dim, int n_fe_degree>
 
     dealii::MatrixFree<dim, double> matfree_data;
 
-    private:
+    protected:
 
     /**
      * @brief
@@ -475,7 +475,7 @@ template <int dim, int n_fe_degree>
 
     dealii::MatrixFree<dim, double> matfree_data;
 
-    private:
+    protected:
 
     /**
      * @brief
@@ -525,7 +525,7 @@ template <int dim, int n_fe_degree>
 
     dealii::MatrixFree<dim, double> matfree_data;
 
-    private:
+    protected:
 
     /**
      * @brief
@@ -569,7 +569,7 @@ public:
 
 	dealii::MatrixFree<dim, double> matfree_data;
 
-private:
+protected:
 
 	/**
 	 * @brief

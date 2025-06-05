@@ -912,11 +912,10 @@ template <int dim, int n_fe_degree>
       DynamicSparsityPattern dsp(this->locally_relevant_dofs);
 
       DoFTools::make_sparsity_pattern(dof_handler, dsp, constraints, true);
-      this->local_dofs_per_process =
-                                     dof_handler.n_locally_owned_dofs_per_processor();
 
       SparsityTools::distribute_sparsity_pattern(dsp,
-        this->local_dofs_per_process, this->comm,
+        this->locally_owned_dofs,
+        this->comm,
         this->locally_relevant_dofs);
       this->sp.copy_from(dsp);
 
@@ -1105,18 +1104,17 @@ template <int dim, int n_fe_degree>
       DynamicSparsityPattern dsp(this->locally_relevant_dofs);
 
       DoFTools::make_sparsity_pattern(dof_handler, dsp, constraints, true);
-      this->local_dofs_per_process = dof_handler.n_locally_owned_dofs_per_processor();
 
       SparsityTools::distribute_sparsity_pattern(dsp,
-        this->local_dofs_per_process, this->comm,
+        this->locally_owned_dofs,
+        this->comm,
         this->locally_relevant_dofs);
       this->sp.copy_from(dsp);
 
       for (unsigned int g1 = 0; g1 < n_groups; g1++)
         for (unsigned int g2 = 0; g2 < n_groups; g2++)
         {
-          this->matrix_blocks[g1][g2] =
-                                        new PETScWrappers::MPI::SparseMatrix;
+          this->matrix_blocks[g1][g2] = new PETScWrappers::MPI::SparseMatrix;
           this->matrix_blocks[g1][g2]->reinit(this->locally_owned_dofs,
             this->locally_owned_dofs, this->sp, this->comm);
         }

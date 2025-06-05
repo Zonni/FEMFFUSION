@@ -31,7 +31,6 @@
 #include "../../include/matrix_operators/matrix_operators_petsc.h"
 #include "../../include/matrix_operators/matrix_operators_base.h"
 
-
 using namespace dealii;
 
 /**
@@ -171,7 +170,7 @@ template <int dim, int n_fe_degree>
     DoFTools::make_sparsity_pattern(dof_handler, dsp, constraints, true);
 
     SparsityTools::distribute_sparsity_pattern(dsp,
-      dof_handler.n_locally_owned_dofs_per_processor(),
+      this->locally_owned_dofs,
       this->comm,
       this->locally_relevant_dofs);
     this->sp.copy_from(dsp);
@@ -344,17 +343,17 @@ template <int dim, int n_fe_degree>
         //
         for (unsigned int i = 0; i < dofs_per_cell; ++i)
           for (unsigned int j = 0; j < dofs_per_cell; ++j)
-            for (unsigned int q_p = 0; q_p < n_q_points; ++q_p)
+            for (unsigned int qp = 0; qp < n_q_points; ++qp)
             {
-              val = fe_values.shape_value(i, q_p)
-                    * fe_values.shape_value(j, q_p)
-                    * fe_values.JxW(q_p);
+              val = fe_values.shape_value(i, qp)
+                    * fe_values.shape_value(j, qp)
+                    * fe_values.JxW(qp);
 
               cell_val(i, j) += val;
 
-              grad = fe_values.shape_grad(i, q_p)
-                     * fe_values.shape_grad(j, q_p)
-                     * fe_values.JxW(q_p);
+              grad = fe_values.shape_grad(i, qp)
+                     * fe_values.shape_grad(j, qp)
+                     * fe_values.JxW(qp);
 
               cell_grad(i, j) += grad;
             }
@@ -384,13 +383,13 @@ template <int dim, int n_fe_degree>
                     break;
                 }
 
-                for (unsigned int q_p = 0; q_p < n_face_q_points; ++q_p)
+                for (unsigned int qp = 0; qp < n_face_q_points; ++qp)
                   for (unsigned int i = 0; i < dofs_per_cell; ++i)
                     for (unsigned int j = 0; j < dofs_per_cell; ++j)
                     {
-                      val = fe_face_values.shape_value(i, q_p)
-                            * fe_face_values.shape_value(j, q_p)
-                            * fe_face_values.JxW(q_p);
+                      val = fe_face_values.shape_value(i, qp)
+                            * fe_face_values.shape_value(j, qp)
+                            * fe_face_values.JxW(qp);
                       bound[g](i, j) += factor * val;
                     }
               }
@@ -469,17 +468,17 @@ template <int dim, int n_fe_degree>
         //
         for (unsigned int i = 0; i < dofs_per_cell; ++i)
           for (unsigned int j = 0; j < dofs_per_cell; ++j)
-            for (unsigned int q_p = 0; q_p < n_q_points; ++q_p)
+            for (unsigned int qp = 0; qp < n_q_points; ++qp)
             {
-              val = fe_values.shape_value(i, q_p)
-                    * fe_values.shape_value(j, q_p)
-                    * fe_values.JxW(q_p);
+              val = fe_values.shape_value(i, qp)
+                    * fe_values.shape_value(j, qp)
+                    * fe_values.JxW(qp);
 
               cell_val(i, j) += val;
 
-              grad = fe_values.shape_grad(i, q_p)
-                     * fe_values.shape_grad(j, q_p)
-                     * fe_values.JxW(q_p);
+              grad = fe_values.shape_grad(i, qp)
+                     * fe_values.shape_grad(j, qp)
+                     * fe_values.JxW(qp);
 
               cell_grad(i, j) += grad;
             }
@@ -507,13 +506,13 @@ template <int dim, int n_fe_degree>
                     break;
                 }
 
-                for (unsigned int q_p = 0; q_p < n_face_q_points; ++q_p)
+                for (unsigned int qp = 0; qp < n_face_q_points; ++qp)
                   for (unsigned int i = 0; i < dofs_per_cell; ++i)
                     for (unsigned int j = 0; j < dofs_per_cell; ++j)
                     {
-                      val = fe_face_values.shape_value(i, q_p)
-                            * fe_face_values.shape_value(j, q_p)
-                            * fe_face_values.JxW(q_p);
+                      val = fe_face_values.shape_value(i, qp)
+                            * fe_face_values.shape_value(j, qp)
+                            * fe_face_values.JxW(qp);
                       bound[g](i, j) += factor * val;
                     }
               }
@@ -522,6 +521,20 @@ template <int dim, int n_fe_degree>
 
         // Distribute in the Sparse matrix
         cell->get_dof_indices(local_dof_indices);
+
+//        std::cout << "Cell " << cell << std::endl;
+//        std::cout << " cell_grad "  << std::endl;
+//        cell_grad.print_formatted(std::cout);
+//        std::cout << " cell_val "  << std::endl;
+//        cell_val.print_formatted(std::cout);
+//        std::cout << " bound[0] "  << std::endl;
+//        bound[0].print_formatted(std::cout);
+//        std::cout << " bound[1] "  << std::endl;
+//        bound[1].print_formatted(std::cout);
+//        std::cout << " local_dof_indices "  << std::endl;
+//        print_vector(local_dof_indices);
+
+
         for (unsigned int gi = 0; gi < materials.get_n_groups(); ++gi)
           for (unsigned int gj = 0; gj < materials.get_n_groups(); ++gj)
           {
@@ -680,7 +693,7 @@ template <int dim, int n_fe_degree>
 
     if (this->matrixfree_type == full_matrixfree)
     {
-      reinit_full_matrixfree(materials, boundary_conditions,        albedo_factors);
+      reinit_full_matrixfree(materials, boundary_conditions, albedo_factors);
     }
     else if (this->matrixfree_type == full_allocated)
     {
@@ -858,17 +871,17 @@ template <int dim, int n_fe_degree>
         //
         for (unsigned int i = 0; i < dofs_per_cell; ++i)
           for (unsigned int j = 0; j < dofs_per_cell; ++j)
-            for (unsigned int q_p = 0; q_p < n_q_points; ++q_p)
+            for (unsigned int qp = 0; qp < n_q_points; ++qp)
             {
-              val = fe_values.shape_value(i, q_p)
-                    * fe_values.shape_value(j, q_p)
-                    * fe_values.JxW(q_p);
+              val = fe_values.shape_value(i, qp)
+                    * fe_values.shape_value(j, qp)
+                    * fe_values.JxW(qp);
 
               cell_val(i, j) += val;
 
-              grad = fe_values.shape_grad(i, q_p)
-                     * fe_values.shape_grad(j, q_p)
-                     * fe_values.JxW(q_p);
+              grad = fe_values.shape_grad(i, qp)
+                     * fe_values.shape_grad(j, qp)
+                     * fe_values.JxW(qp);
 
               cell_grad(i, j) += grad;
             }
@@ -897,13 +910,13 @@ template <int dim, int n_fe_degree>
                     break;
                 }
 
-                for (unsigned int q_p = 0; q_p < n_face_q_points; ++q_p)
+                for (unsigned int qp = 0; qp < n_face_q_points; ++qp)
                   for (unsigned int i = 0; i < dofs_per_cell; ++i)
                     for (unsigned int j = 0; j < dofs_per_cell; ++j)
                     {
-                      val = fe_face_values.shape_value(i, q_p)
-                            * fe_face_values.shape_value(j, q_p)
-                            * fe_face_values.JxW(q_p);
+                      val = fe_face_values.shape_value(i, qp)
+                            * fe_face_values.shape_value(j, qp)
+                            * fe_face_values.JxW(qp);
                       bound[g](i, j) += factor * val;
                     }
               }
@@ -1015,11 +1028,11 @@ template <int dim, int n_fe_degree>
 
     if (this->matrixfree_type == non_diagonal)
     {
-      reinit_non_diagonal(materials,  boundary_conditions,        albedo_factors);
+      reinit_non_diagonal(materials, boundary_conditions, albedo_factors);
     }
     else if (this->matrixfree_type == full_matrixfree)
     {
-      reinit_full_matrixfree(materials,  boundary_conditions,
+      reinit_full_matrixfree(materials, boundary_conditions,
         albedo_factors);
     }
     else if (this->matrixfree_type == full_allocated)
@@ -1279,17 +1292,17 @@ template <int dim, int n_fe_degree>
         //
         for (unsigned int i = 0; i < dofs_per_cell; ++i)
           for (unsigned int j = 0; j < dofs_per_cell; ++j)
-            for (unsigned int q_p = 0; q_p < n_q_points; ++q_p)
+            for (unsigned int qp = 0; qp < n_q_points; ++qp)
             {
-              val = fe_values.shape_value(i, q_p)
-                    * fe_values.shape_value(j, q_p)
-                    * fe_values.JxW(q_p);
+              val = fe_values.shape_value(i, qp)
+                    * fe_values.shape_value(j, qp)
+                    * fe_values.JxW(qp);
 
               cell_val(i, j) += val;
 
-              grad = fe_values.shape_grad(i, q_p)
-                     * fe_values.shape_grad(j, q_p)
-                     * fe_values.JxW(q_p);
+              grad = fe_values.shape_grad(i, qp)
+                     * fe_values.shape_grad(j, qp)
+                     * fe_values.JxW(qp);
 
               cell_grad(i, j) += grad;
             }
@@ -1319,13 +1332,13 @@ template <int dim, int n_fe_degree>
                     break;
                 }
 
-                for (unsigned int q_p = 0; q_p < n_face_q_points; ++q_p)
+                for (unsigned int qp = 0; qp < n_face_q_points; ++qp)
                   for (unsigned int i = 0; i < dofs_per_cell; ++i)
                     for (unsigned int j = 0; j < dofs_per_cell; ++j)
                     {
-                      val = fe_face_values.shape_value(i, q_p)
-                            * fe_face_values.shape_value(j, q_p)
-                            * fe_face_values.JxW(q_p);
+                      val = fe_face_values.shape_value(i, qp)
+                            * fe_face_values.shape_value(j, qp)
+                            * fe_face_values.JxW(qp);
                       bound[g](i, j) += factor * val;
                     }
               }
@@ -1406,17 +1419,17 @@ template <int dim, int n_fe_degree>
         //
         for (unsigned int i = 0; i < dofs_per_cell; ++i)
           for (unsigned int j = 0; j < dofs_per_cell; ++j)
-            for (unsigned int q_p = 0; q_p < n_q_points; ++q_p)
+            for (unsigned int qp = 0; qp < n_q_points; ++qp)
             {
-              val = fe_values.shape_value(i, q_p)
-                    * fe_values.shape_value(j, q_p)
-                    * fe_values.JxW(q_p);
+              val = fe_values.shape_value(i, qp)
+                    * fe_values.shape_value(j, qp)
+                    * fe_values.JxW(qp);
 
               cell_val(i, j) += val;
 
-              grad = fe_values.shape_grad(i, q_p)
-                     * fe_values.shape_grad(j, q_p)
-                     * fe_values.JxW(q_p);
+              grad = fe_values.shape_grad(i, qp)
+                     * fe_values.shape_grad(j, qp)
+                     * fe_values.JxW(qp);
 
               cell_grad(i, j) += grad;
             }
@@ -1445,13 +1458,13 @@ template <int dim, int n_fe_degree>
                     break;
                 }
 
-                for (unsigned int q_p = 0; q_p < n_face_q_points; ++q_p)
+                for (unsigned int qp = 0; qp < n_face_q_points; ++qp)
                   for (unsigned int i = 0; i < dofs_per_cell; ++i)
                     for (unsigned int j = 0; j < dofs_per_cell; ++j)
                     {
-                      val = fe_face_values.shape_value(i, q_p)
-                            * fe_face_values.shape_value(j, q_p)
-                            * fe_face_values.JxW(q_p);
+                      val = fe_face_values.shape_value(i, qp)
+                            * fe_face_values.shape_value(j, qp)
+                            * fe_face_values.JxW(qp);
                       bound[g](i, j) += factor * val;
                     }
               }
@@ -1617,10 +1630,9 @@ template <int dim, int n_fe_degree>
       DynamicSparsityPattern dsp(this->locally_relevant_dofs);
 
       DoFTools::make_sparsity_pattern(dof_handler, dsp, constraints, true);
-      this->local_dofs_per_process = dof_handler.n_locally_owned_dofs_per_processor();
 
       SparsityTools::distribute_sparsity_pattern(dsp,
-        this->local_dofs_per_process,
+        this->locally_owned_dofs,
         this->comm,
         this->locally_relevant_dofs);
       this->sp.copy_from(dsp);
@@ -1638,6 +1650,42 @@ template <int dim, int n_fe_degree>
     else
       AssertRelease(false, "Invalid matrixfree_type: " + this->matrixfree_type);
   }
+
+///**
+// *
+// */
+//template <int dim, int n_fe_degree>
+//  void FisionMatrix<dim, n_fe_degree>::reinit (
+//    const FisionMatrix<dim, n_fe_degree> &mat,
+//    const std::vector<unsigned int> &points)
+//  {
+//
+//    PetscInt row;
+//    PetscInt ncols;
+//    const PetscInt *cols;
+//    const PetscScalar *vals;
+//    for (unsigned int r = 0; r < this->n_blocks; r++)
+//      for (unsigned int c = 0; c < this->n_blocks; c++)
+//      {
+//        for (unsigned int p = 0; p < points.size(); p++)
+//        {
+//          row = static_cast<PetscInt>(points[p]);
+//          MatGetRow(*(mat.matrix_blocks[r][c]), row, &ncols, &cols, &vals);
+//          //int[] rows_array = new rows_arrayrows;
+//          MatSetValues(*this->matrix_blocks[r][c], 1, rows_array, ncols, cols, vals,
+//            INSERT_VALUES);
+//          MatAssemblyBegin(*this->matrix_blocks[r][c], MAT_FLUSH_ASSEMBLY);
+//          MatAssemblyEnd(*this->matrix_blocks[r][c], MAT_FLUSH_ASSEMBLY);
+//          MatRestoreRow(*(mat.matrix_blocks[r][c]), row, &ncols, &cols, &vals);
+//        }
+//
+//        MatAssemblyBegin(*this->matrix_blocks[r][c], MAT_FINAL_ASSEMBLY);
+//        MatAssemblyEnd(*this->matrix_blocks[r][c], MAT_FINAL_ASSEMBLY);
+//      }
+////    for (PetscInt j = 0; j < ncols; j++)
+////      dst += src[cols[j]] * vals[j];
+//
+//  }
 
 /**
  *
@@ -1675,11 +1723,11 @@ template <int dim, int n_fe_degree>
         cell->get_dof_indices(local_dof_indices);
         for (unsigned int i = 0; i < dofs_per_cell; ++i)
           for (unsigned int j = 0; j < dofs_per_cell; ++j)
-            for (unsigned int q_p = 0; q_p < n_q_points; ++q_p)
+            for (unsigned int qp = 0; qp < n_q_points; ++qp)
             {
-              val = fe_values.shape_value(i, q_p)
-                    * fe_values.shape_value(j, q_p)
-                    * fe_values.JxW(q_p);
+              val = fe_values.shape_value(i, qp)
+                    * fe_values.shape_value(j, qp)
+                    * fe_values.JxW(qp);
 
               cell_val(i, j) += val;
             }
@@ -1823,10 +1871,9 @@ template <int dim, int n_fe_degree>
       DynamicSparsityPattern dsp(this->locally_relevant_dofs);
 
       DoFTools::make_sparsity_pattern(dof_handler, dsp, constraints, true);
-      this->local_dofs_per_process = dof_handler.n_locally_owned_dofs_per_processor();
 
       SparsityTools::distribute_sparsity_pattern(dsp,
-        this->local_dofs_per_process,
+        this->locally_owned_dofs,
         this->comm,
         this->locally_relevant_dofs);
       this->sp.copy_from(dsp);
@@ -1881,11 +1928,11 @@ template <int dim, int n_fe_degree>
         cell->get_dof_indices(local_dof_indices);
         for (unsigned int i = 0; i < dofs_per_cell; ++i)
           for (unsigned int j = 0; j < dofs_per_cell; ++j)
-            for (unsigned int q_p = 0; q_p < n_q_points; ++q_p)
+            for (unsigned int qp = 0; qp < n_q_points; ++qp)
             {
-              val = fe_values.shape_value(i, q_p)
-                    * fe_values.shape_value(j, q_p)
-                    * fe_values.JxW(q_p);
+              val = fe_values.shape_value(i, qp)
+                    * fe_values.shape_value(j, qp)
+                    * fe_values.JxW(qp);
 
               cell_val(i, j) += val;
             }
@@ -2028,10 +2075,9 @@ template <int dim, int n_fe_degree>
       DynamicSparsityPattern dsp(this->locally_relevant_dofs);
 
       DoFTools::make_sparsity_pattern(dof_handler, dsp, constraints, true);
-      this->local_dofs_per_process = dof_handler.n_locally_owned_dofs_per_processor();
 
       SparsityTools::distribute_sparsity_pattern(dsp,
-        this->local_dofs_per_process,
+        this->locally_owned_dofs,
         this->comm,
         this->locally_relevant_dofs);
       this->sp.copy_from(dsp);
@@ -2086,11 +2132,11 @@ template <int dim, int n_fe_degree>
         cell->get_dof_indices(local_dof_indices);
         for (unsigned int i = 0; i < dofs_per_cell; ++i)
           for (unsigned int j = 0; j < dofs_per_cell; ++j)
-            for (unsigned int q_p = 0; q_p < n_q_points; ++q_p)
+            for (unsigned int qp = 0; qp < n_q_points; ++qp)
             {
-              val = fe_values.shape_value(i, q_p)
-                    * fe_values.shape_value(j, q_p)
-                    * fe_values.JxW(q_p);
+              val = fe_values.shape_value(i, qp)
+                    * fe_values.shape_value(j, qp)
+                    * fe_values.JxW(qp);
 
               cell_val(i, j) += val;
             }
@@ -2232,10 +2278,9 @@ template <int dim, int n_fe_degree>
       DynamicSparsityPattern dsp(this->locally_relevant_dofs);
 
       DoFTools::make_sparsity_pattern(dof_handler, dsp, constraints, true);
-      this->local_dofs_per_process = dof_handler.n_locally_owned_dofs_per_processor();
 
       SparsityTools::distribute_sparsity_pattern(dsp,
-        this->local_dofs_per_process,
+        this->locally_owned_dofs,
         this->comm,
         this->locally_relevant_dofs);
       this->sp.copy_from(dsp);
@@ -2299,11 +2344,11 @@ template <int dim, int n_fe_degree>
         cell->get_dof_indices(local_dof_indices);
         for (unsigned int i = 0; i < dofs_per_cell; ++i)
           for (unsigned int j = 0; j < dofs_per_cell; ++j)
-            for (unsigned int q_p = 0; q_p < n_q_points; ++q_p)
+            for (unsigned int qp = 0; qp < n_q_points; ++qp)
             {
-              val = fe_values.shape_value(i, q_p)
-                    * fe_values.shape_value(j, q_p)
-                    * fe_values.JxW(q_p);
+              val = fe_values.shape_value(i, qp)
+                    * fe_values.shape_value(j, qp)
+                    * fe_values.JxW(qp);
 
               cell_val(i, j) += val;
             }
@@ -2439,10 +2484,8 @@ template <int dim, int n_fe_degree>
       DynamicSparsityPattern dsp(this->locally_relevant_dofs);
 
       DoFTools::make_sparsity_pattern(dof_handler, dsp, constraints, true);
-      this->local_dofs_per_process = dof_handler.n_locally_owned_dofs_per_processor();
-
       SparsityTools::distribute_sparsity_pattern(dsp,
-        this->local_dofs_per_process,
+        this->locally_owned_dofs,
         this->comm,
         this->locally_relevant_dofs);
       this->sp.copy_from(dsp);
@@ -2509,11 +2552,11 @@ template <int dim, int n_fe_degree>
         cell->get_dof_indices(local_dof_indices);
         for (unsigned int i = 0; i < dofs_per_cell; ++i)
           for (unsigned int j = 0; j < dofs_per_cell; ++j)
-            for (unsigned int q_p = 0; q_p < n_q_points; ++q_p)
+            for (unsigned int qp = 0; qp < n_q_points; ++qp)
             {
-              val = fe_values.shape_value(i, q_p)
-                    * fe_values.shape_value(j, q_p)
-                    * fe_values.JxW(q_p);
+              val = fe_values.shape_value(i, qp)
+                    * fe_values.shape_value(j, qp)
+                    * fe_values.JxW(qp);
 
               cell_val(i, j) += val;
             }
@@ -2657,11 +2700,10 @@ template <int dim, int n_fe_degree>
       DynamicSparsityPattern dsp(this->locally_relevant_dofs);
 
       DoFTools::make_sparsity_pattern(dof_handler, dsp, constraints, true);
-      this->local_dofs_per_process =
-                                     dof_handler.n_locally_owned_dofs_per_processor();
 
       SparsityTools::distribute_sparsity_pattern(dsp,
-        this->local_dofs_per_process, this->comm,
+        this->locally_owned_dofs,
+        this->comm,
         this->locally_relevant_dofs);
       this->sp.copy_from(dsp);
 
@@ -2716,11 +2758,11 @@ template <int dim, int n_fe_degree>
         cell->get_dof_indices(local_dof_indices);
         for (unsigned int i = 0; i < dofs_per_cell; ++i)
           for (unsigned int j = 0; j < dofs_per_cell; ++j)
-            for (unsigned int q_p = 0; q_p < n_q_points; ++q_p)
+            for (unsigned int qp = 0; qp < n_q_points; ++qp)
             {
-              val = fe_values.shape_value(i, q_p)
-                    * fe_values.shape_value(j, q_p)
-                    * fe_values.JxW(q_p);
+              val = fe_values.shape_value(i, qp)
+                    * fe_values.shape_value(j, qp)
+                    * fe_values.JxW(qp);
 
               cell_val(i, j) += val;
             }

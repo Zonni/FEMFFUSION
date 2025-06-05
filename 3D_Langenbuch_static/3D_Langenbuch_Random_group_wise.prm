@@ -47,7 +47,7 @@ set XSECS_Filename      = 3D_Langenbuch_static/3D_Langenbuch_static.xsec
 
 
 # Filename where will be written the output
-set Output_Filename     = 3D_Langenbuch_static/3D_Langenbuch_mono.out
+set Output_Filename     = 3D_Langenbuch_static/3D_Langenbuch_Random_groupwise.out
 
 
 # True/false - Activate ROM Calculation
@@ -57,9 +57,9 @@ set N_Snapshots              = 20
 set Type_Perturbation        = Random_XS
 set XS_Perturbation_Fraction = 0.20
 set ROM_Group_Wise           = Group_Wise
-set LUPOD_Type               = LUPOD
-set Epsilon_M                = 0.0
-set Epsilon_N                = 0.0
+set LUPOD_Type               = Random
+#set N_LUPOD_Points         = 4309
+set N_LUPOD_Points           = 1540
 
 
 

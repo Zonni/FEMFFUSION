@@ -53,12 +53,12 @@ set Output_Filename     = 3D_Langenbuch_static/3D_Langenbuch_LUPODext_groupwise.
 # True/false - Activate ROM Calculation
 set ROM_Static               = true
 set ROM_Type_Snapshots       = IHS_XS
-set N_Snapshots              = 25
+set N_Snapshots              = 20
 set Type_Perturbation        = Random_XS
 set XS_Perturbation_Fraction = 0.20
 set ROM_Group_Wise           = Group_Wise
 set LUPOD_Type               = LUPOD_ext
-set N_LUPOD_Points           = 250
+set N_LUPOD_Points           = 4309
 
 
 

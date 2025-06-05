@@ -63,10 +63,9 @@ bool petscBool_to_bool (PetscBool flag)
   else
     return false;
 }
-
-//
-// is_similar(double num1, double num2, double tol)
-//
+/**
+ * @brief Check if two numbers are similar whitin a tolerance
+ */
 bool is_similar (const double num1,
   const double num2,
   const double tol)
@@ -92,6 +91,24 @@ void AssertRelease (bool condition,
     std::cerr << "----------------------------------------------------"
               << std::endl;
     exit(1);
+  }
+}
+
+/**
+ * @brief Find a value in a std::vector<unsigned int>  and return its index.
+ */
+unsigned int find_index (
+  const std::vector<unsigned int> &vec,
+  unsigned int value)
+{
+  auto it = std::find(vec.begin(), vec.end(), value);
+  if (it != vec.end())
+  {
+    return static_cast<unsigned int>(std::distance(vec.begin(), it));
+  }
+  else
+  {
+    return -1; // Value not found
   }
 }
 
@@ -1899,6 +1916,35 @@ void parse_materials (std::string xsec_file,
 }
 
 /**
+ *
+ */
+unsigned int binarySearch (const std::vector<unsigned int> &vec,
+  unsigned int target)
+{
+  int left = 0;
+  int right = vec.size() - 1;
+
+  while (left <= right)
+  {
+    int mid = left + (right - left) / 2;
+
+    if (vec[mid] == target)
+    {
+      return mid;  // Found the target
+    }
+    else if (vec[mid] < target)
+    {
+      left = mid + 1;
+    }
+    else
+    {
+      right = mid - 1;
+    }
+  }
+
+  return -1;  // Target not found
+}
+/**
  * This function does a binary search and returns the index i such that
  *  x is between wl[i] and wl[i+1], except that i is restricted to the
  *   range from 0 to n-2 inclusive
@@ -2761,7 +2807,8 @@ void copy_to_Vector (LinearAlgebra::distributed::Vector<double> &dst,
 /*
  *
  */
-void copy_to_BlockVector (BlockVector<double> &dst,
+void copy_to_BlockVector (
+  BlockVector<double> &dst,
   Vec src)
 {
   // Assert Dimensions
@@ -2786,22 +2833,27 @@ void copy_to_BlockVector (BlockVector<double> &dst,
 void copy_to_Vector (PETScWrappers::MPI::Vector &dst,
   const LinearAlgebra::distributed::Vector<double> &src)
 {
-  unsigned int i = 0;
+// Assert Dimensions
+  int s;
+  VecGetSize(dst, &s);
+  AssertDimension(src.size(), (unsigned int) s);
+
   IndexSet index_set(src.locally_owned_elements());
+  int i = 0;
   for (IndexSet::ElementIterator it = index_set.begin();
       it != index_set.end(); it++, i++)
   {
-    dst[*it] = src.local_element(i);
+    dst[i] = src[*it];
   }
-
   dst.compress(VectorOperation::insert);
-  index_set.clear();
 }
+
 /**
  * @brief Copy a Petsc Vec to std::vector<PETScWrappers::MPI::BlockVector>
  * Be careful this function involves copy a vector.
  */
-void copy_to_stdBlockVector (std::vector<PETScWrappers::MPI::BlockVector> &dst,
+void copy_to_stdBlockVector (
+  std::vector<PETScWrappers::MPI::BlockVector> &dst,
   Vec src)
 {
   const double *aray_vec;
@@ -2837,7 +2889,8 @@ void copy_to_stdBlockVector (std::vector<PETScWrappers::MPI::BlockVector> &dst,
  * @brief Copy a Petsc Vec to ETScWrappers::MPI::BlockVector.
  * Be careful this function involves copy a vector.
  */
-void copy_to_BlockVector (PETScWrappers::MPI::BlockVector &dst,
+void copy_to_BlockVector (
+  PETScWrappers::MPI::BlockVector &dst,
   Vec src)
 
 {

@@ -47,13 +47,13 @@ set XSECS_Filename      = 3D_Langenbuch_static/3D_Langenbuch_static.xsec
 
 
 # Filename where will be written the output
-set Output_Filename     = 3D_Langenbuch_static/3D_Langenbuch_LUPOD25_mono.out
+set Output_Filename     = 3D_Langenbuch_static/3D_Langenbuch_LUPOD_mono.out
 
 
 # True/false - Activate ROM Calculation
 set ROM_Static               = true
 set ROM_Type_Snapshots       = IHS_XS
-set N_Snapshots              = 25
+set N_Snapshots              = 20
 set Type_Perturbation        = Random_XS
 set XS_Perturbation_Fraction = 0.20
 set ROM_Group_Wise           = Monolithic

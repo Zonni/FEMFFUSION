@@ -199,7 +199,7 @@ template <int dim, int n_fe_degree>
     time_intervals_snapshots.push_back(t_end);
 
     // LUPOD
-    LUPOD_flag = prm.get_bool("LUPOD_Flag");
+    LUPOD_flag = prm.get_bool("LUPOD_Flag"); //TODO
     get_bool_from_options("-LUPOD", LUPOD_flag);
     epsilon_N = prm.get_double("Epsilon_N");
     get_double_from_options("-epsilon_N", epsilon_N);
@@ -1803,8 +1803,9 @@ template <int dim, int n_fe_degree>
       {
         if (LUPOD_flag)
         {
-          compute_LUPOD_basis_monolithic(snapshots[rom], epsilon_M, epsilon_N,
-            snaps, points, dim_rom, snap_basis, snap_basis_red);
+          // TODO
+          //compute_LUPOD_basis_monolithic(snapshots[rom], epsilon_M, epsilon_N,
+          //  snaps, points, dim_rom, snap_basis, snap_basis_red);
 
         }
         else
@@ -1813,12 +1814,12 @@ template <int dim, int n_fe_degree>
       }
       else if (rom_group_wise == "Group_Wise")
       {
-        if (LUPOD_flag)
-          compute_LUPOD_basis_group_wise(snapshots[rom], epsilon_M, epsilon_N,
-            snaps, points, dim_rom, snap_basis, snap_basis_red);
-        else
+//        if (LUPOD_flag)
+//          compute_LUPOD_basis_group_wise(snapshots[rom], epsilon_M, epsilon_N,
+//            snaps, points, dim_rom, snap_basis, snap_basis_red);
+//        else
           compute_POD_basis_group_wise(snapshots[rom], epsilon_M,
-            snaps, dim_rom, snap_basis);
+             dim_rom, snap_basis);
       }
       else
         AssertRelease(false, "rom_group_wise must be Monolithic or Group_Wise");

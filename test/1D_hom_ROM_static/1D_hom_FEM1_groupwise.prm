@@ -5,7 +5,7 @@
 set Dimension            = 1
 
 # Number of eigenvalues
-set N_Eigenvalues        = 4
+set N_Eigenvalues        = 1
 
 
 # REACTOR DEFINITION
@@ -28,7 +28,7 @@ set Boundary_Conditions = 2 2
 #
 # OUT OPTIONS
 # Filename where will be written the output
-set Output_Filename     = test/1D_hom_ROM_static/1D_hom_POD_groupwise.out
+set Output_Filename     = test/1D_hom_ROM_static/1D_hom_FEM1_groupwise.out
 
 # True/false - Make a .vtk file with the output
 set Output_Flag         = false
@@ -57,5 +57,6 @@ set N_Snapshots              = 3
 set Type_Perturbation        = Random_XS
 set XS_Perturbation_Fraction = 0.20
 set ROM_Group_Wise           = Group_Wise
-set LUPOD_Type               = POD
 
+# LUPOD
+set LUPOD_Type               = FEM1

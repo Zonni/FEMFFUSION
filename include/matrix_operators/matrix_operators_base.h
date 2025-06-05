@@ -380,8 +380,6 @@ template <int dim, int n_fe_degree>
     std::string type_scheme;
     std::string type_approximation;
 
-    protected:
-
     // Matrices Structures
     std::vector<std::vector<PETScWrappers::MPI::SparseMatrix*> > matrix_blocks;
     SparsityPattern sp;
@@ -632,10 +630,12 @@ template <int dim, int n_fe_degree>
       ParallelVector &dst,
       const ParallelVector &src) const;
 
+    protected:
+
     MPI_Comm comm;
     IndexSet locally_owned_dofs;
     IndexSet locally_relevant_dofs;
-    std::vector<types::global_dof_index> local_dofs_per_process;
+    //std::vector<types::global_dof_index> local_dofs_per_process;
 
     // Members
     MatrixFreeType matrixfree_type;
