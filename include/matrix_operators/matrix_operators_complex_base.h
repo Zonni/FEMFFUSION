@@ -16,7 +16,7 @@
 
 #include <deal.II/fe/fe_q.h>
 #include <deal.II/fe/fe_values.h>
-#include <deal.II/fe/fe_base.h>
+#include <deal.II/fe/fe_data.h>
 
 #include <deal.II/numerics/vector_tools.h>
 #include <deal.II/numerics/matrix_tools.h>
@@ -459,7 +459,6 @@ template <int dim, int n_fe_degree>
 
     IndexSet locally_owned_dofs;
     IndexSet locally_relevant_dofs;
-    //std::vector<types::global_dof_index> local_dofs_per_process;
 
     MatrixFreeType matrixfree_type;
 
@@ -688,7 +687,6 @@ template <int dim, int n_fe_degree>
     MPI_Comm comm;
     IndexSet locally_owned_dofs;
     IndexSet locally_relevant_dofs;
-    std::vector<types::global_dof_index> local_dofs_per_process;
 
     // Members
     MatrixFreeType matrixfree_type;

@@ -1,5 +1,5 @@
 /**
- * @file   matrix_operators.h
+ * @file   matrix_operators_free.h
  * @brief  Class to handle block matrices.
  */
 
@@ -244,7 +244,7 @@ template <int dim, int n_fe_degree, typename number>
     /**
      *
      */
-    void clear ();
+     void clear () override;
 
     /**
      * @brief
@@ -351,14 +351,14 @@ template <int dim, int n_fe_degree, typename number>
     /**
      *
      */
-    void compute_diagonal ();
+    void compute_diagonal () override;
 
     ParallelVector inverse_diagonal;
 
     private:
 
-    virtual void apply_add (ParallelVector &dst,
-      const ParallelVector &src) const;
+     void apply_add (ParallelVector &dst,
+      const ParallelVector &src) const override;
 
     /**
      * @brief

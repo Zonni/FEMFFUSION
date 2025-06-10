@@ -19,7 +19,6 @@
 #include "../include/matrix_operators/matrix_operators_petsc.h"
 #include "../include/eps_solvers/eps_solver.h"
 
-
 #include <petscsys.h>
 
 #include <map>
@@ -960,7 +959,7 @@ template <int dim, int n_fe_degree>
   {
 
     // Make reactor critical
-  //	materials.make_critical(eigenvalues[0]);
+    //	materials.make_critical(eigenvalues[0]);
 
     std::vector<double> norm = std::vector<double>(n_eigenvalues);
 
@@ -1199,7 +1198,7 @@ template <int dim, int n_fe_degree>
 template <int dim, int n_fe_degree>
   void StaticDiffusion<dim, n_fe_degree>::output_results () const
   {
-    DataOut<dim, DoFHandler<dim> > data_out;
+    DataOut<dim> data_out;
     data_out.attach_dof_handler(dof_handler);
     std::string filename_vtk = out_file + ".vtk";
 
@@ -1214,10 +1213,6 @@ template <int dim, int n_fe_degree>
     {
       std::filesystem::create_directory(folderPath);
       cout << "Folder created: " << folderPath << std::endl;
-    }
-    else
-    {
-      cout << "Folder already exists: " << folderPath << std::endl;
     }
 
     std::vector<Vector<double> > power_per_cell(n_eigenvalues,

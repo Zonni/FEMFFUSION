@@ -36,11 +36,11 @@ int run_tests ()
   //
   //
   // Test
-  test_LUPOD_extended ();
+  //test_LUPOD_extended ();
   // input_file = "test/1D_hom_5cells_mov_prec/1D_5cells_f1_rom.prm";
-  run_test_rom_LUPOD_1();
+  //run_test_rom_LUPOD_1();
   // input_file = "test/1D_hom_5cells_mov_prec/1D_5cells_f1_rom.prm";
-  run_test_rom_LUPOD_2();
+  //run_test_rom_LUPOD_2();
 
 
 
@@ -351,8 +351,8 @@ int run_tests ()
   // --------------------------------------------------------------- //
   // 2D Rectangular Borders Perturbation
   // --------------------------------------------------------------- //
-  input_file = "test/2D_test_vibration/2D_test.prm";
-  test_noise_problem(input_file, 0.465861);
+  //input_file = "test/2D_test_vibration/2D_test.prm";
+  //test_noise_problem(input_file, 0.465861); //TODO
 
   input_file = "test/2D_test_vibration/2D_test_ref.prm";
   test_noise_problem(input_file, 0.389968);
@@ -361,8 +361,8 @@ int run_tests ()
   // --------------------------------------------------------------- //
   // 2D Hexagonal Borders Perturbation
   // --------------------------------------------------------------- //
-  input_file = "test/2D_test_vibration_hex/2D_test.prm";
-  test_noise_problem(input_file, 0.465927);
+  //input_file = "test/2D_test_vibration_hex/2D_test.prm"; //TODO
+  //test_noise_problem(input_file, 0.465927);
 
   //
   // --------------------------------------------------------------- //

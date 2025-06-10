@@ -974,7 +974,7 @@ template <int dim, int n_fe_degree>
   void StaticSDPN<dim, n_fe_degree>::output_results () const
   {
 
-    DataOut<dim, DoFHandler<dim> > data_out;
+    DataOut<dim > data_out;
     data_out.attach_dof_handler(dof_handler);
     std::string filename_vtk = out_file + ".vtk";
 

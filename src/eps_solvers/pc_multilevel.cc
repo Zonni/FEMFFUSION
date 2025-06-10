@@ -923,7 +923,7 @@ template <int dim, int n_fe_degree>
 
     ndofs_coarse = L.block(0, 0).m();
 
-    dof_handler_coarse.initialize(tria, fe_coarse);
+    dof_handler_coarse.reinit(tria);
     dof_handler_coarse.distribute_dofs(fe_coarse);
 
     transfer_mat_restrict.reinit(fe_coarse.dofs_per_cell, fe.dofs_per_cell);
@@ -971,11 +971,11 @@ template <int dim, int n_fe_degree>
 
     PETScWrappers::MPI::BlockVector in_coarse;
     PETScWrappers::MPI::BlockVector out_coarse;
-    in_coarse.reinit(n_blocks, MPI_COMM_WORLD, ndofs_coarse, ndofs_coarse);
-    out_coarse.reinit(n_blocks, MPI_COMM_WORLD, ndofs_coarse, ndofs_coarse);
+    in_coarse.reinit(n_blocks, PETSC_COMM_WORLD, ndofs_coarse, ndofs_coarse);
+    out_coarse.reinit(n_blocks, PETSC_COMM_WORLD, ndofs_coarse, ndofs_coarse);
 
     Vec incoarse_vec, outcoarse_vec;
-    VecCreateSeq(MPI_COMM_WORLD, ndofs_coarse * n_blocks, &incoarse_vec);
+    VecCreateSeq(PETSC_COMM_WORLD, ndofs_coarse * n_blocks, &incoarse_vec);
     VecDuplicate(incoarse_vec, &outcoarse_vec);
 
     // Restrict the solution
@@ -1007,12 +1007,12 @@ template <int dim, int n_fe_degree>
 
     PETScWrappers::MPI::Vector in_coarse;
     PETScWrappers::MPI::Vector out_coarse;
-    in_coarse.reinit(MPI_COMM_WORLD, ndofs_coarse, ndofs_coarse);
-    out_coarse.reinit(MPI_COMM_WORLD, ndofs_coarse, ndofs_coarse);
-    out.reinit(MPI_COMM_WORLD, dof_handler.n_dofs(), dof_handler.n_dofs());
+    in_coarse.reinit(PETSC_COMM_WORLD, ndofs_coarse, ndofs_coarse);
+    out_coarse.reinit(PETSC_COMM_WORLD, ndofs_coarse, ndofs_coarse);
+    out.reinit(PETSC_COMM_WORLD, dof_handler.n_dofs(), dof_handler.n_dofs());
 
     Vec incoarse_vec, outcoarse_vec;
-    VecCreateSeq(MPI_COMM_WORLD, ndofs_coarse, &incoarse_vec);
+    VecCreateSeq(PETSC_COMM_WORLD, ndofs_coarse, &incoarse_vec);
     VecDuplicate(incoarse_vec, &outcoarse_vec);
 
     // Restrict the solution
@@ -1459,8 +1459,7 @@ template <int dim, int n_fe_degree>
   void PC_MLFE_Time<dim, n_fe_degree>::pc_setup ()
   {
     PETScWrappers::MPI::BlockVector diagonal_inverse;
-    diagonal_inverse.reinit(n_blocks_coarse, comm, n_dofs_coarse,
-      n_dofs_coarse_local);
+    diagonal_inverse.reinit(n_blocks_coarse, comm, n_dofs_coarse, n_dofs_coarse_local);
 
     if (transport_coarse == "diffusion")
     {
@@ -2150,7 +2149,7 @@ template <int dim, int n_fe_degree>
       PCFactorSetShiftType(pc_blocks[i], MAT_SHIFT_NONZERO);
       PCFactorSetMatOrderingType(pc_blocks[i], MATORDERINGRCM);
       KSPSetInitialGuessNonzero(ksp_blocks[i], PETSC_TRUE);
-      (ksp_blocks[i]);
+      //(ksp_blocks[i]);
       KSPSetNormType(ksp_blocks[i], KSP_NORM_UNPRECONDITIONED);
       KSPSetUp(ksp_blocks[i]);
 

@@ -17,11 +17,14 @@
 *.npz
 
 
-# Eclipse generated files and folders #
+# Eclipse and cache files and folders #
 #####################################
 .cproject
 .project
 .settings
+compile_commands.json
+.clang-format
+.cache/*
 
 # CMake generated files and folders #
 #####################################

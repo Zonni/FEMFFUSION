@@ -8,7 +8,7 @@ from math import sqrt, pi
 from vtk import vtkUnstructuredGridReader
 from vtk.util import numpy_support as VN
 import matplotlib as mpl
-import pyvista as pv
+#import pyvista as pv
 
 numbers = []
 for i in range(10):
@@ -1303,17 +1303,20 @@ def  parse_vtk_over_line(file, scalar_name, point_a, point_b, resolution=1000) :
     >>> print(y)
     [14.1851   12.3342    0.970584]
    """
-    mesh = pv.read(file)
-    line = pv.Line(point_a, point_b, resolution=resolution)
-    line = line.sample(mesh)
+    print('Not working as pyvista is not installed TODO')
+    return
+    # mesh = pv.read(file)
+    # line = pv.Line(point_a, point_b, resolution=resolution)
+    # line = line.sample(mesh)
     
-    # Get x
-    xa, ya, za = point_a
-    xb, yb, zb = point_b
-    distance = np.sqrt((xb - xa)**2 +  (yb - ya)**2 + (zb - zb)**2)
-    x = np.linspace(0, distance, resolution+1)
+    # # Get x
+    # xa, ya, za = point_a
+    # xb, yb, zb = point_b
+    # distance = np.sqrt((xb - xa)**2 +  (yb - ya)**2 + (zb - zb)**2)
+    # x = np.linspace(0, distance, resolution+1)
     
-    return x, np.array(line.get_array(scalar_name))
+    # return x, np.array(line.get_array(scalar_name))
+
 
 
 if __name__ == "__main__":

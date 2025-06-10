@@ -516,7 +516,7 @@ template <int dim, int n_fe_degree>
   {
 
     // Plot Magnitude and Phase of the noise
-    DataOut<dim, DoFHandler<dim> > data_out;
+    DataOut<dim> data_out;
     data_out.attach_dof_handler(dof_handler_block);
     std::string filename_vtk = out_file + ".vtk";
 

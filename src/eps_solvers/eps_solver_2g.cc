@@ -156,7 +156,7 @@ template <int dim, int n_fe_degree>
     for (unsigned int eig = 0; eig < n_eigenvalues; ++eig)
     {
       ierr = EPSGetEigenpair(eps, eig, &eigenvalues[eig], &imaginary_part,
-        phi[eig].block(0), PETSC_NULL);
+        phi[eig].block(0), PETSC_NULLPTR);
       AssertRelease(ierr == 0, "Error solving getting the eigenpairs.");
       AssertRelease(std::abs(imaginary_part) < 1e-4,
         "There is an imaginary part in eig " + num_to_str(eig));
@@ -306,8 +306,8 @@ template <int dim, int n_fe_degree>
     // Get the Eigenvalues and eigenVectors
     for (unsigned int eig = 0; eig < n_eigenvalues; ++eig)
     {
-      EPSGetEigenpair(eps_adjoint, eig, &eigenvalues[eig], PETSC_NULL,
-        phi_adj[eig].block(0), PETSC_NULL);
+      EPSGetEigenpair(eps_adjoint, eig, &eigenvalues[eig], PETSC_NULLPTR,
+        phi_adj[eig].block(0), PETSC_NULLPTR);
 
       compute_phi_1_adj(eigenvalues[eig], phi_adj[eig].block(0),
         phi_adj[eig].block(1));

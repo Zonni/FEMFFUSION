@@ -58,58 +58,6 @@ amp_g2_cor = amp_g2_cor.reshape(1, n_nodes)[0]
 pha_g1_cor = pha_g1_cor.reshape(1, n_nodes)[0]
 pha_g2_cor = pha_g2_cor.reshape(1, n_nodes)[0]
        
-#%% ===========================================================================
-# GET DATA FROM FEMFFUSION AND POSTPROCESS IT 
-
-time_fem = parse_file(file_fem_static, begin='Time vector', n_max_lines=1)
-time_fem = time_fem[:-1]
-n_steps = len(time_fem)
-steps = range(0, n_steps)
-
-noise_g1_fem = np.zeros([n_steps, n_nodes])
-noise_g2_fem = np.zeros([n_steps, n_nodes])
-for st in steps:
-    noise_g1_fem[st] = parse_file(file_fem_noise,
-                              'Noise of group 1 time step ' + str(st) ,
-                              n_max_lines=nx)
-    noise_g2_fem[st] = parse_file(file_fem_noise,
-                              'Noise of group 2 time step ' + str(st),
-                              n_max_lines=nx)
-
-# Transpose and normalize
-noise_g1_fem = np.transpose(noise_g1_fem)
-noise_g2_fem = np.transpose(noise_g2_fem) 
-
-freq = np.fft.rfftfreq(n_steps, d=time_fem[1])
-fft_g1 = np.fft.rfft(noise_g1_fem) * 2.0/ n_steps 
-fft_g2 = np.fft.rfft(noise_g2_fem) * 2.0/ n_steps
-
-
-# We cut at looking_freq Hz
-cut_freq = int (looking_freq * n_steps * time_fem[1])
-assert(freq[cut_freq] == looking_freq)
-noise_g1 = np.zeros([n_nodes], dtype='cfloat')
-noise_g2 = np.zeros([n_nodes], dtype='cfloat')
-for node in range(n_nodes):
-    noise_g1[node] = fft_g1[node][cut_freq]
-    noise_g2[node] = fft_g2[node][cut_freq]
-
-amp_g1_fem = np.abs(noise_g1)
-amp_g2_fem = np.abs(noise_g2)
-# FEMFUSSION PERTURBATION is a SINE not a cosine
-# This way we convert it
-pha_g1_fem = np.angle(noise_g1, deg=True) + 90
-pha_g2_fem = np.angle(noise_g2, deg=True) + 90
-
-
-#%% ===========================================================================
-
-np.savetxt(folder + 'FEMFFUSION_STATIC_FLX_G1.txt', static_flux_g1_fem.reshape(nx, nx))
-np.savetxt(folder + 'FEMFFUSION_STATIC_FLX_G2.txt', static_flux_g2_fem.reshape(nx, nx))
-np.savetxt(folder + 'FEMFFUSION_CASE2_NOISE_PHASE_G1.txt', pha_g1_fem.reshape(nx, nx))
-np.savetxt(folder + 'FEMFFUSION_CASE2_NOISE_PHASE_G2.txt', pha_g2_fem.reshape(nx, nx))
-np.savetxt(folder + 'FEMFFUSION_CASE2_NOISE_AMP_G2.txt', amp_g1_fem.reshape(nx, nx))
-np.savetxt(folder + 'FEMFFUSION_CASE2_NOISE_AMP_G1.txt', amp_g2_fem.reshape(nx, nx))
 
 #%% ===========================================================================
 # Normalize 

@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Fri Dec 18 13:03:14 2020
-
-@author: zonni
+@author: Antoni Vidal
 """
 import sys
 sys.path.insert(1, '../postprocess/')
@@ -65,6 +63,7 @@ static_g1_line= []
 static_g2_line= []
 
 for i in range(n_files):
+    print('Extracting data from ', files[i])
     # Get From VTK
     [x, y, z] = parse_vtk_grid(files[i])
     stati_g1 = parse_vtk_file(files[i], "Static_Flux_g1")
@@ -213,7 +212,7 @@ for i in range(n_files):
 ax1.grid(True)
 ax1.legend(loc='best')
 ax1.set_xlabel("x (cm)")
-ax1.set_ylabel("Static Flux g1")
+ax1.set_ylabel("Static Flux g1 (A.U.)")
 fig1.savefig(folder + problem + "_static_g1.pdf", format='pdf')
 
 
@@ -226,7 +225,7 @@ for i in range(n_files):
 ax1.grid(True)
 ax1.legend(loc='best')
 ax1.set_xlabel("x (cm)")
-ax1.set_ylabel("Static Flux g2")
+ax1.set_ylabel("Static Flux g2 (A.U.)")
 fig1.savefig(folder + problem + "_static_g2.pdf", format='pdf')
 
 # Print noise_g1
@@ -237,7 +236,7 @@ for i in range(n_files):
 ax1.grid(True)
 ax1.legend(loc='best')
 ax1.set_xlabel("x (cm)")
-ax1.set_ylabel("Relative Noise Magnitude (\%)")
+ax1.set_ylabel("Relative Noise Magnitude (%)")
 fig1.savefig(folder + problem + "_noise_line_amp_g1.pdf", format='pdf')
 
 # Print noise_g2
@@ -248,7 +247,7 @@ for i in range(n_files):
 ax1.grid(True)
 ax1.legend(loc='best')
 ax1.set_xlabel("x (cm)")
-ax1.set_ylabel("Relative Noise Magnitude (\%)")
+ax1.set_ylabel("Relative Noise Magnitude (%)")
 fig1.savefig(folder + problem + "_noise_line_pha_g1.pdf", format='pdf')
 
 

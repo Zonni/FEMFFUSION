@@ -5,7 +5,8 @@ Created on Fri Dec 18 13:03:14 2020
 
 @author: zonni
 """
-
+import sys
+sys.path.insert(1, '../postprocess/')
 from utils import parse_vtk_file, parse_vtk_grid
 import matplotlib.pyplot as plt
 #import matplotlib.colors
@@ -14,7 +15,7 @@ from utils import remove_repeated_point, remove_repeated_data_point
 import numpy as np
 
 plt.close('all')
-
+(\%)
 params = {'backend': 'pdf',
 #          'font.family': 'serif',
           'font.size': 14,
@@ -34,19 +35,19 @@ params = {'backend': 'pdf',
 rcParams.update(params)
 
 problem = '2D_UOX_FA_vtk'
-folder   = '../2D_UOX_FA/exercise_2/'
-
+# folder   = 'exercise_2/'
+folder   = 'exercise_3/'
 file_1 = folder + '2D_UOX_FA_diff.out.vtk'
 file_2 = folder + '2D_UOX_FA_sp3.out.vtk'
-file_3 = folder + '2D_UOX_FA_fsp3_fe1.out.vtk'
+file_3 = folder + '2D_UOX_FA_sp5.out.vtk'
 
 #files = [file_1, file_2, file_3]
 #labels = ['Diffusion', 'SP3', 'FSP3']
 #style = ['*-', '.--', '+']
 
-files = [file_1, file_2]
-labels = ['Diffusion', 'SP3']
-style = ['*-', '.--']
+files = [file_1, file_2, file_3]
+labels = ['Diffusion', 'SP3', 'SP5']
+style = ['*-', '.--', '+']
 
 n_files = len(files)
 
@@ -69,6 +70,7 @@ static_g2_line= []
 
 for i in range(n_files):
     # Get From VTK
+    print('Postprocessing file ', files[i] )
     [x, y, z] = parse_vtk_grid(files[i])
     stati_g1 = parse_vtk_file(files[i], "Static_Flux_g1")
     stati_g2 = parse_vtk_file(files[i], "Static_Flux_g2")
@@ -119,8 +121,8 @@ for i in range(n_files):
 ## FEMFFUSION TIME DOMAIN
 #from utils import parse_file
 #import numpy as np
-#
-#file_out = folder + 'timedomain/2D_test_ref.out'  
+#teponer r a la cadena evita que Python interprete las s
+#file_out = folder + 'timedomain/2D_test_ref.out'  311s
 #static_file = folder + 'timedomain/2D_test_ref.out.vtk'  
 #steps_fem = range(0, 300)
 #files =[]
@@ -197,7 +199,7 @@ for i in range(n_files):
 #noise_g2_line_ftd = []
 #phase_g1_line_ftd = []
 #phase_g2_line_ftd = []
-#
+#teponer r a la cadena evita que Python interprete las s
 #for p in range(len(y)):
 #    if (y[p] == mid_y):
 #        x_line_ftd.append(x[p])
@@ -243,7 +245,7 @@ for i in range(n_files):
 ax1.grid(True)
 ax1.legend(loc='best')
 ax1.set_xlabel("Diagonal length (cm)")
-ax1.set_ylabel("Relative Noise Magnitude (\%)")
+ax1.set_ylabel(r"Relative Noise Magnitude (\%)")
 fig1.savefig(folder + problem + "_noise_line_amp_g1.pdf", format='pdf')
 
 # Print noise_g2
@@ -255,7 +257,7 @@ for i in range(n_files):
 ax1.grid(True)
 ax1.legend(loc='best')
 ax1.set_xlabel("Diagonal length (cm)")
-ax1.set_ylabel("Relative Noise Magnitude (\%)")
+ax1.set_ylabel(r"Relative Noise Magnitude (\%)")
 fig1.savefig(folder + problem + "_noise_line_pha_g1.pdf", format='pdf')
 
 

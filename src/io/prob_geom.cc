@@ -7,6 +7,7 @@
 #include <deal.II/base/types.h>
 #include <deal.II/base/parameter_handler.h>
 #include <deal.II/base/timer.h>
+#include <deal.II/base/point.h>
 
 #include <deal.II/grid/tria.h>
 #include <deal.II/grid/tria_accessor.templates.h>
@@ -29,7 +30,6 @@
 #include "../../include/io/prob_geom.h"
 
 using namespace dealii;
-
 /**
  * Overload of the function merge_triangulation to deal with
  * a vector of triangulations (not just two).
@@ -344,7 +344,7 @@ template <int dim>
     static const FE_DGQ<dim> fe(1);
     dof_handler.distribute_dofs(fe);
 
-    DataOut<dim, DoFHandler<dim> > data_out;
+    DataOut<dim> data_out;
     data_out.attach_dof_handler(dof_handler);
 
     Vector<double> mat_id_cells(tria.n_active_cells());
@@ -775,8 +775,8 @@ template <int dim>
     assert(dim == 2 or dim == 3);
     unsigned int counter;
     const unsigned int nothing = static_cast<unsigned int>(-1);
-    const double n_planes = geom.core.n_planes;
-    assert(dim == 3 or n_planes == 1);
+
+    assert(dim == 3 or geom.core.n_planes == 1);
 
     std::vector<double> z_lengths = geom.core.length;
     const types::material_id inner_mat = 0;

@@ -54,7 +54,7 @@ set XSECS_Filename      = 1D_UOX_FA/1D_UOX_FA_ex2.xsec
 set DS_Filename         = 1D_UOX_FA/1D_UOX_FA_ex2.dxs
 
 # Filename where it is stored some dynamic data
-set DYN_Filename        = 1D_UOX_FA/1D_UOX_FA.dyn
+set DYN_Filename        = 1D_UOX_FA/1D_UOX_FA.dyn.prm
 
 
 #

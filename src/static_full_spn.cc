@@ -1072,7 +1072,7 @@ template <int dim, int n_fe_degree>
     for (unsigned int eig = 0; eig < n_eigenvalues; ++eig)
     {
       EPSGetEigenpair(eps, eig, &eigenvalues[eig], NULL,
-        phi_sol[eig], PETSC_NULL);
+        phi_sol[eig], PETSC_NULLPTR);
 
       separate_vectors(dof_handler, dof_handler_system, phi_sol[eig], phi_sep[eig]);
     }
@@ -1155,7 +1155,7 @@ template <int dim, int n_fe_degree>
     for (unsigned int eig = 0; eig < n_eigenvalues; ++eig)
     {
       EPSGetEigenpair(eps, eig, &eigenvalues[eig], NULL,
-        phi_sol[eig], PETSC_NULL);
+        phi_sol[eig], PETSC_NULLPTR);
 
       separate_vectors(dof_handler, dof_handler_system, phi_sol[eig], phi_sep[eig]);
     }
@@ -1416,7 +1416,7 @@ template <int dim, int n_fe_degree>
   void
   StaticFullSPN<dim, n_fe_degree>::output_results () const
   {
-    DataOut<dim, DoFHandler<dim> > data_out;
+    DataOut<dim> data_out;
     data_out.attach_dof_handler(dof_handler);
     std::string filename_vtk = out_file + ".vtk";
 

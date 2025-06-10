@@ -317,7 +317,7 @@ template <int dim, int n_fe_degree, typename number>
     const std::pair<unsigned int, unsigned int> &face_range) const
   {
 
-    VectorizedArray<double> albedo_factor;
+    VectorizedArray<double> albedo_factor = 0;
     // Only first two template parameters always required
     // <dimension, n_fe_degree, quad_degree, n_components, number_type>
     FEFaceEvaluation<dim, n_fe_degree, n_fe_degree + 1, 1, number> face_eval(
@@ -919,7 +919,7 @@ template <int dim, int n_fe_degree, typename number>
     const ParallelVector &src,
     const std::pair<unsigned int, unsigned int> &face_range) const
   {
-    VectorizedArray<double> albedo_factor;
+    VectorizedArray<double> albedo_factor = 0;
     // Only first two template parameters always required
     // <dimension, n_fe_degree, quad_degree, n_components, number_type>
     FEFaceEvaluation<dim, n_fe_degree, n_fe_degree + 1, 1, number> face_eval(

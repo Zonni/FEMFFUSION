@@ -978,7 +978,7 @@ template <int dim, int n_fe_degree>
     {
       eigenvectors[eig].reinit(MPI_COMM_SELF, dim_mat, dim_mat);
       EPSGetEigenpair(eps, eig, &eigs[eig], NULL,
-        eigenvectors[eig], PETSC_NULL);
+        eigenvectors[eig], PETSC_NULLPTR);
     }
 
     // Form the projected eigenvectors
@@ -1084,7 +1084,7 @@ template <int dim, int n_fe_degree>
     {
       eigenvectors[eig].reinit(MPI_COMM_SELF, dim_mat, dim_mat);
       EPSGetEigenpair(eps, eig, &eigs[eig], NULL,
-        eigenvectors[eig], PETSC_NULL);
+        eigenvectors[eig], PETSC_NULLPTR);
     }
 
     // Form the projected eigenvectors

@@ -333,8 +333,8 @@ template <int dim, int n_fe_degree>
     // Get the Eigenvalues and eigenVectors
     for (unsigned int eig = 0; eig < n_eigenvalues; ++eig)
     {
-      ierr = EPSGetEigenpair(eps, eig, &eigenvalues[eig], PETSC_NULL,
-        inter_, PETSC_NULL);
+      ierr = EPSGetEigenpair(eps, eig, &eigenvalues[eig], PETSC_NULLPTR,
+        inter_, PETSC_NULLPTR);
       AssertRelease(ierr == 0, "Error solving getting the problems.");
 
       copy_to_BlockVector(phi[eig], inter_);
@@ -421,8 +421,8 @@ template <int dim, int n_fe_degree>
     // Get the Eigenvalues and eigenVectors
     for (unsigned int eig = 0; eig < n_eigenvalues; ++eig)
     {
-      ierr = EPSGetEigenpair(eps, eig, &eigenvalues[eig], PETSC_NULL,
-        inter_, PETSC_NULL);
+      ierr = EPSGetEigenpair(eps, eig, &eigenvalues[eig], PETSC_NULLPTR,
+        inter_, PETSC_NULLPTR);
       AssertRelease(ierr == 0, "Error solving getting the problems.");
 
       copy_to_BlockVector(phi[eig], inter_);

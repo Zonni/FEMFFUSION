@@ -39,26 +39,26 @@ using namespace dealii;
  */
 template <int dim, int n_fe_degree>
   SolverNewton<dim, n_fe_degree>::SolverNewton (
-                                                TransportMatrixBase<dim, n_fe_degree> &L,
-                                                FisionMatrixBase<dim, n_fe_degree> &M,
-                                                unsigned int _n_eigenvalues,
-                                                std::vector<
-                                                    PETScWrappers::MPI::BlockVector> &_phi_initial,
-                                                Timer &_timer,
-                                                bool show_eps_convergence)
-      :
-        L(L),
-        M(M),
-        comm(MPI_COMM_WORLD),
-        cout(std::cout,
-            show_eps_convergence and (Utilities::MPI::this_mpi_process(comm) == 0)),
-        n_eigenvalues(_n_eigenvalues),
-        n_blocks(L.n_blocks_cols()),
-        n_size_per_block(L.m() / L.n_blocks_cols()),
-        n_size_per_block_local(L.locally_owned_dofs.n_elements()),
-        n_size(L.m()),
-        n_size_local(n_size_per_block_local * n_blocks),
-        epstimer(_timer)
+    TransportMatrixBase<dim, n_fe_degree> &L,
+    FisionMatrixBase<dim, n_fe_degree> &M,
+    unsigned int _n_eigenvalues,
+    std::vector<
+        PETScWrappers::MPI::BlockVector> &_phi_initial,
+    Timer &_timer,
+    bool show_eps_convergence)
+  :
+      L(L),
+      M(M),
+      comm(MPI_COMM_WORLD),
+      cout(std::cout,
+        show_eps_convergence and (Utilities::MPI::this_mpi_process(comm) == 0)),
+      n_eigenvalues(_n_eigenvalues),
+      n_blocks(L.n_blocks_cols()),
+      n_size_per_block(L.m() / L.n_blocks_cols()),
+      n_size_per_block_local(L.locally_owned_dofs.n_elements()),
+      n_size(L.m()),
+      n_size_local(n_size_per_block_local * n_blocks),
+      epstimer(_timer)
   {
 
     lambda = 0;
@@ -82,7 +82,7 @@ template <int dim, int n_fe_degree>
     for (unsigned eig = 0; eig < n_eigenvalues; ++eig)
     {
       phi_init[eig].reinit(n_blocks, comm, n_size_per_block,
-          n_size_per_block_local);
+        n_size_per_block_local);
       phi_init[eig] = _phi_initial[eig];
       for (unsigned nb = 0; nb < n_blocks; ++nb)
         _phi_initial[eig].block(nb).clear();
@@ -143,15 +143,15 @@ template <int dim, int n_fe_degree>
 
 template <int dim, int n_fe_degree>
   void SolverNewton<dim, n_fe_degree>::solve (std::vector<double> &eigenvalues,
-                                              std::vector<PETScWrappers::MPI::BlockVector> &phi_sol)
+    std::vector<PETScWrappers::MPI::BlockVector> &phi_sol)
   {
 
     Timer time;
     time.start();
 
     cout << "      Dimension of Newton: " << n_eigenvalues << std::endl
-    << "      Type of initialization: "
-    << init_type << std::endl;
+         << "      Type of initialization: "
+         << init_type << std::endl;
     cout << "      Type of preconditioner: " << precond_type << std::endl;
 
     // Definition of variables
@@ -169,14 +169,14 @@ template <int dim, int n_fe_degree>
       phi_sol.resize(n_eigenvalues);
       for (unsigned int eig = 0; eig < n_eigenvalues; ++eig)
         phi_sol[eig].reinit(n_blocks, comm, n_size_per_block,
-            n_size_per_block_local);
+          n_size_per_block_local);
     }
 
     // Create auxiliary vector
     std::vector<PETScWrappers::MPI::BlockVector> phi_aux(n_eigenvalues);
     for (unsigned int eig = 0; eig < n_eigenvalues; ++eig)
       phi_aux[eig].reinit(n_blocks, comm, n_size_per_block,
-          n_size_per_block_local);
+        n_size_per_block_local);
 
     // Create the numbering
     indx = new PetscInt[n_size];
@@ -209,23 +209,23 @@ template <int dim, int n_fe_degree>
     // Setup the preconditioner
     setup_preconditioner();
     cout << "    Time to build " << precond_type << " pc: "
-    << time.cpu_time()
-    << " s." << std::endl;
+         << time.cpu_time()
+         << " s." << std::endl;
 
     // Setup the shell matrices
     MatCreateShell(comm, n_size_local, n_size_local, n_size, n_size, this,
-        &shell_mat_L);
+      &shell_mat_L);
     MatShellSetOperation(shell_mat_L, MATOP_MULT,
-        (void (*) ()) PCApply_L<dim, n_fe_degree>);
-        ;
+      (void (*) ()) PCApply_L<dim, n_fe_degree>);
+    ;
     MatCreateShell(comm, m_size_local, m_size_local, m_size, m_size, this,
-        &shell_mat);
+      &shell_mat);
     MatShellSetOperation(shell_mat, MATOP_MULT,
-        (void (*) ()) MatMult_FullA<dim, n_fe_degree>);
-        ;
+      (void (*) ()) MatMult_FullA<dim, n_fe_degree>);
+    ;
     cout << "    Setup shell matrices "
-    << time.cpu_time()
-    << " s." << std::endl;
+         << time.cpu_time()
+         << " s." << std::endl;
 
     /*
      * Start the Newton algorithm
@@ -246,10 +246,10 @@ template <int dim, int n_fe_degree>
       its++;
       // Output
       cout << "         Iteration " << its << " -> eig 1: " << eigenvalues[0]
-      << "  Norm global:"
-      << norm << " time: " << time.cpu_time()
-      << " s"
-      << std::endl;
+           << "  Norm global:"
+           << norm << " time: " << time.cpu_time()
+           << " s"
+           << std::endl;
 
       vec_res.push_back(norm);
       vec_time.push_back(time.cpu_time());
@@ -275,8 +275,8 @@ template <int dim, int n_fe_degree>
     verb_by_it << "N. applications of preconditioner of block: " << n_app_pc
                << std::endl;
     verb_by_it << "Mean time_pc / n. applications: "
-    << time_pc.cpu_time() / n_app_pc
-    << std::endl;
+               << time_pc.cpu_time() / n_app_pc
+               << std::endl;
 
     for (unsigned int eig = 0; eig < n_eigenvalues; ++eig)
       for (unsigned int g = 0; g < n_blocks; ++g)
@@ -314,13 +314,13 @@ template <int dim, int n_fe_degree>
 
 template <int dim, int n_fe_degree>
   void SolverNewton<dim, n_fe_degree>::solve_adjoint (
-                                                      std::vector<double> &eigenvalues_adj,
-                                                      std::vector<
-                                                          PETScWrappers::MPI::BlockVector> &_phi_init,
-                                                      std::vector<
-                                                          PETScWrappers::MPI::BlockVector> &phi_directo,
-                                                      std::vector<
-                                                          PETScWrappers::MPI::BlockVector> &phi_adj)
+    std::vector<double> &eigenvalues_adj,
+    std::vector<
+        PETScWrappers::MPI::BlockVector> &_phi_init,
+    std::vector<
+        PETScWrappers::MPI::BlockVector> &phi_directo,
+    std::vector<
+        PETScWrappers::MPI::BlockVector> &phi_adj)
   {
 
     Timer time;
@@ -343,14 +343,14 @@ template <int dim, int n_fe_degree>
       phi_adj.resize(n_eigenvalues);
       for (unsigned int k = 0; k < n_eigenvalues; k++)
         phi_adj[k].reinit(n_blocks, comm, n_size_per_block,
-            n_size_per_block_local);
+          n_size_per_block_local);
     }
 
     // Create auxiliary vectors
     std::vector<PETScWrappers::MPI::BlockVector> phi_aux(n_eigenvalues);
     for (unsigned int eig = 0; eig < n_eigenvalues; ++eig)
       phi_aux[eig].reinit(n_blocks, comm, n_size_per_block,
-          n_size_per_block_local);
+        n_size_per_block_local);
 
     // Create the numbering
     indx = new PetscInt[n_size];
@@ -403,15 +403,15 @@ template <int dim, int n_fe_degree>
 
     // Setup the shell matrices
     MatCreateShell(comm, n_size_local, n_size_local, n_size, n_size, this,
-        &shell_mat_L);
+      &shell_mat_L);
     MatShellSetOperation(shell_mat_L, MATOP_MULT,
-        (void (*) ()) PCApply_L<dim, n_fe_degree>);
-        ;
+      (void (*) ()) PCApply_L<dim, n_fe_degree>);
+    ;
     MatCreateShell(comm, m_size_local, m_size_local, m_size, m_size, this,
-        &shell_mat);
+      &shell_mat);
     MatShellSetOperation(shell_mat, MATOP_MULT,
-        (void (*) ()) MatMult_FullA<dim, n_fe_degree>);
-        ;
+      (void (*) ()) MatMult_FullA<dim, n_fe_degree>);
+    ;
 //
 
     /*
@@ -434,10 +434,10 @@ template <int dim, int n_fe_degree>
       its++;
       // Output
       cout << "         Iteration " << its << " -> eig 1: "
-      << eigenvalues_adj[0]
-      << "  Norm global:" << norm << " time: "
-      << time.cpu_time()
-      << " s" << std::endl;
+           << eigenvalues_adj[0]
+           << "  Norm global:" << norm << " time: "
+           << time.cpu_time()
+           << " s" << std::endl;
 
       res.push_back(norm);
       tiempos.push_back(time.cpu_time());
@@ -463,8 +463,8 @@ template <int dim, int n_fe_degree>
     verb_by_it << "N. applications of preconditioner of block: " << n_app_pc
                << std::endl;
     verb_by_it << "Mean time_pc / n. applications: "
-    << time_pc.cpu_time() / n_app_pc
-    << std::endl;
+               << time_pc.cpu_time() / n_app_pc
+               << std::endl;
 
     // DO the biorthogonalization process
     gram_schmidt_bior(phi_directo, phi_adj);
@@ -568,10 +568,10 @@ template <int dim, int n_fe_degree>
         PCSetType(pc_blocks[nb], PCSHELL);
         if (precond_type == "chebyshev")
           PCShellSetApply(pc_blocks[nb],
-              PCApply_blockL_Chebyshev<dim, n_fe_degree>);
+            PCApply_blockL_Chebyshev<dim, n_fe_degree>);
         else if (precond_type == "multilevel_chfe")
           PCShellSetApply(pc_blocks[nb],
-              PCApply_blockL_MLCHFE<dim, n_fe_degree>);
+            PCApply_blockL_MLCHFE<dim, n_fe_degree>);
         PCShellSetContext(pc_blocks[nb], this);
         KSPSetFromOptions(ksp_blocks[nb]);
         KSPSetUp(ksp_blocks[nb]);
@@ -587,8 +587,8 @@ template <int dim, int n_fe_degree>
 
 template <int dim, int n_fe_degree>
   void SolverNewton<dim, n_fe_degree>::gram_schmidt_mod (
-                                                         std::vector<
-                                                             PETScWrappers::MPI::BlockVector> &phi1_ort)
+    std::vector<
+        PETScWrappers::MPI::BlockVector> &phi1_ort)
   {
 
     double r, s;
@@ -641,8 +641,8 @@ template <int dim, int n_fe_degree>
  */
 template <int dim, int n_fe_degree>
   void SolverNewton<dim, n_fe_degree>::apply_pc_gs (
-                                                    PETScWrappers::MPI::BlockVector &in,
-                                                    PETScWrappers::MPI::BlockVector &out)
+    PETScWrappers::MPI::BlockVector &in,
+    PETScWrappers::MPI::BlockVector &out)
   {
 
     PETScWrappers::MPI::Vector inter1, vecacc;
@@ -679,8 +679,8 @@ template <int dim, int n_fe_degree>
  */
 template <int dim, int n_fe_degree>
   void SolverNewton<dim, n_fe_degree>::apply_pc_gs_adj (
-                                                        PETScWrappers::MPI::BlockVector &in,
-                                                        PETScWrappers::MPI::BlockVector &out)
+    PETScWrappers::MPI::BlockVector &in,
+    PETScWrappers::MPI::BlockVector &out)
   {
     PETScWrappers::MPI::Vector inter1, vecacc;
     inter1.reinit(comm, n_size_per_block, n_size_per_block_local);
@@ -689,7 +689,7 @@ template <int dim, int n_fe_degree>
     // Compute x1
     op_ng = 0;
     KSPSolve(ksp_blocks[n_blocks - 1], in.block(n_blocks - 1),
-        out.block(n_blocks - 1));
+      out.block(n_blocks - 1));
     // Compute x2..xn_blocks
     for (int ng = n_blocks - 2; ng > -1; ng--)
     {
@@ -714,8 +714,8 @@ template <int dim, int n_fe_degree>
  */
 template <int dim, int n_fe_degree>
   PetscErrorCode SolverNewton<dim, n_fe_degree>::apply_pc_chebyshev (
-                                                                     PETScWrappers::MPI::BlockVector &in,
-                                                                     PETScWrappers::MPI::BlockVector &out)
+    PETScWrappers::MPI::BlockVector &in,
+    PETScWrappers::MPI::BlockVector &out)
   {
     PETScWrappers::MPI::Vector inter1, vecacc;
     inter1.reinit(comm, n_size_per_block, n_size_per_block_local);
@@ -747,8 +747,8 @@ template <int dim, int n_fe_degree>
  */
 template <int dim, int n_fe_degree>
   PetscErrorCode SolverNewton<dim, n_fe_degree>::apply_pc_multilevel (
-                                                                      PETScWrappers::MPI::BlockVector &in,
-                                                                      PETScWrappers::MPI::BlockVector &out)
+    PETScWrappers::MPI::BlockVector &in,
+    PETScWrappers::MPI::BlockVector &out)
   {
     PETScWrappers::MPI::Vector inter1, vecacc, resin, resout;
     inter1.reinit(comm, n_size_per_block, n_size_per_block_local);
@@ -786,11 +786,11 @@ template <int dim, int n_fe_degree>
 
 template <int dim, int n_fe_degree>
   void SolverNewton<dim, n_fe_degree>::rayleigh_ritz_gen (
-                                                          std::vector<
-                                                              PETScWrappers::MPI::BlockVector> &Z,
-                                                          std::vector<
-                                                              PETScWrappers::MPI::BlockVector> &V,
-                                                          std::vector<double> &eigs)
+    std::vector<
+        PETScWrappers::MPI::BlockVector> &Z,
+    std::vector<
+        PETScWrappers::MPI::BlockVector> &V,
+    std::vector<double> &eigs)
   {
 
     unsigned int dim_mat = Z.size();
@@ -801,9 +801,9 @@ template <int dim, int n_fe_degree>
 
     double val1, val2;
     PETScWrappers::MPI::BlockVector interL(n_blocks, comm, n_size_per_block,
-        n_size_per_block_local);
+      n_size_per_block_local);
     PETScWrappers::MPI::BlockVector interM(n_blocks, comm, n_size_per_block,
-        n_size_per_block_local);
+      n_size_per_block_local);
 
     // Assemble the MatrixL=Z'LZ and MatrixM=Z'MZ
     for (PetscInt j = 0; j < static_cast<PetscInt>(dim_mat); ++j)
@@ -858,8 +858,7 @@ template <int dim, int n_fe_degree>
     for (unsigned int eig = 0; eig < n_eigenvalues; ++eig)
     {
       eigenvectors[eig].reinit(MPI_COMM_SELF, dim_mat, dim_mat);
-      EPSGetEigenpair(eps, eig, &eigs[eig], NULL, eigenvectors[eig],
-      PETSC_NULL);
+      EPSGetEigenpair(eps, eig, &eigs[eig], NULL, eigenvectors[eig], PETSC_NULLPTR);
     }
 
     // Form the projected eigenvectors
@@ -963,10 +962,10 @@ template <int dim, int n_fe_degree>
  */
 template <int dim, int n_fe_degree>
   void SolverNewton<dim, n_fe_degree>::validate (
-                                                 std::vector<
-                                                     PETScWrappers::MPI::BlockVector> &Z,
-                                                 std::vector<double> eig,
-                                                 double &norm)
+    std::vector<
+        PETScWrappers::MPI::BlockVector> &Z,
+    std::vector<double> eig,
+    double &norm)
   {
 
     PETScWrappers::MPI::BlockVector inter(Z[0]);
@@ -1001,12 +1000,12 @@ template <int dim, int n_fe_degree>
 
 template <int dim, int n_fe_degree>
   void SolverNewton<dim, n_fe_degree>::correction_newton_shell (
-                                                                std::vector<
-                                                                    PETScWrappers::MPI::BlockVector> &Z,
-                                                                const std::vector<double> &eigenvalues,
-                                                                std::vector<
-                                                                    PETScWrappers::MPI::BlockVector> &V,
-                                                                unsigned int n_iter)
+    std::vector<
+        PETScWrappers::MPI::BlockVector> &Z,
+    const std::vector<double> &eigenvalues,
+    std::vector<
+        PETScWrappers::MPI::BlockVector> &V,
+    unsigned int n_iter)
   {
 
 //    Timer time_it;
@@ -1033,9 +1032,9 @@ template <int dim, int n_fe_degree>
     VecSetFromOptions(vpetsc);
 
     double tol[8] =
-      { tol_eps * 1e+5, tol_eps * 1e+3, tol_eps, tol_eps * 1e-2,
-        tol_eps * 1e-2,
-        tol_eps * 1e-2, tol_eps * 1e-2 };
+                      { tol_eps * 1e+5, tol_eps * 1e+3, tol_eps, tol_eps * 1e-2,
+                        tol_eps * 1e-2,
+                        tol_eps * 1e-2, tol_eps * 1e-2 };
 
     if (hybrid == true)
       for (unsigned int i = 0; i < 8; i++)
@@ -1049,9 +1048,9 @@ template <int dim, int n_fe_degree>
     for (unsigned int i = 0; i < n_eigenvalues; i++)
     {
       LZ_mat[i].reinit(n_blocks, comm, n_size_per_block,
-          n_size_per_block_local);
+        n_size_per_block_local);
       Z_mat[i].reinit(n_blocks, comm, n_size_per_block,
-          n_size_per_block_local);
+        n_size_per_block_local);
       Z_mat[i] = Z[i];
     }
 
@@ -1066,13 +1065,13 @@ template <int dim, int n_fe_degree>
     // Assembly the matrices W and PLZ
     PETScWrappers::MPI::Vector auxvec(comm, n_size, n_size_local);
     PETScWrappers::MPI::BlockVector auxvec_block(n_blocks, comm,
-        n_size_per_block, n_size_per_block_local);
+      n_size_per_block, n_size_per_block_local);
     PETScWrappers::MPI::Vector auxLZ(comm, n_size, n_size_local);
     Mat W;
     MatCreateSeqDense(MPI_COMM_SELF, n_eigenvalues, n_eigenvalues, NULL, &W);
     MatCreateDense(MPI_COMM_WORLD, n_size_local, n_eigenvalues, n_size,
-        n_eigenvalues,
-        NULL, &PLZ_mat);
+      n_eigenvalues,
+      NULL, &PLZ_mat);
 
     for (PetscInt j = 0; j < static_cast<PetscInt>(n_eigenvalues); ++j)
     {
@@ -1208,14 +1207,14 @@ template <int dim, int n_fe_degree>
  */
 template <int dim, int n_fe_degree>
   void SolverNewton<dim, n_fe_degree>::gram_schmidt_bior (
-                                                          std::vector<
-                                                              PETScWrappers::MPI::BlockVector> &phi,
-                                                          std::vector<
-                                                              PETScWrappers::MPI::BlockVector> &phiadj)
+    std::vector<
+        PETScWrappers::MPI::BlockVector> &phi,
+    std::vector<
+        PETScWrappers::MPI::BlockVector> &phiadj)
   {
     PetscScalar dot;
     PETScWrappers::MPI::BlockVector invec(n_blocks, comm, n_size_per_block,
-        n_size_per_block_local);
+      n_size_per_block_local);
 
     // Gram-Schmidt modified
 
@@ -1247,12 +1246,12 @@ template <int dim, int n_fe_degree>
         if (i == j)
         {
           Assert(abs(dot-1.0)<1e-9,
-              ExcMessage("Error in gram-schmidt biorthogonalized."));
+            ExcMessage("Error in gram-schmidt biorthogonalized."));
         }
         else
         {
           Assert(abs(dot)<1e-9,
-              ExcMessage("Error in gram-schmidt biorthogonalized."));
+            ExcMessage("Error in gram-schmidt biorthogonalized."));
         }
       }
     }
@@ -1266,8 +1265,8 @@ template <int dim, int n_fe_degree>
 
 template <int dim, int n_fe_degree>
   void MatMult_FullA (Mat shellmat,
-                      Vec src,
-                      Vec dst)
+    Vec src,
+    Vec dst)
   {
 
     Vec inter_zeta;
@@ -1324,10 +1323,10 @@ template <int dim, int n_fe_degree>
     // Create auxiliary block vectors
     PETScWrappers::MPI::BlockVector src_zeta_block;
     src_zeta_block.reinit(obj->n_blocks, obj->comm, obj->n_size_per_block,
-        obj->n_size_per_block_local);
+      obj->n_size_per_block_local);
     PETScWrappers::MPI::BlockVector dst_zeta_block;
     dst_zeta_block.reinit(obj->n_blocks, obj->comm, obj->n_size_per_block,
-        obj->n_size_per_block_local);
+      obj->n_size_per_block_local);
 
     // Multiplications - BLOCK (1,1)
     copy_to_BlockVector(src_zeta_block, src_zeta);
@@ -1352,7 +1351,7 @@ template <int dim, int n_fe_degree>
       for (IndexSet::ElementIterator it = index_set.begin();
           it != index_set.end(); it++)
         VecSetValue(dst_zeta, *it,
-            -(obj->LZ_mat[j][*it]) * src_lambda_array[j], ADD_VALUES);
+          -(obj->LZ_mat[j][*it]) * src_lambda_array[j], ADD_VALUES);
       index_set.clear();
     }
     VecRestoreArray(src_lambda, &src_lambda_array);
@@ -1410,8 +1409,8 @@ template <int dim, int n_fe_degree>
 
 template <int dim, int n_fe_degree>
   PetscErrorCode PCApply_FullA (PC pc,
-                                Vec r,
-                                Vec u)
+    Vec r,
+    Vec u)
   {
 
     void *shell;
@@ -1432,7 +1431,7 @@ template <int dim, int n_fe_degree>
     Vec r2;
     VecCreateSeq(MPI_COMM_SELF, pcobj->n_eigenvalues, &r2);
     PETScWrappers::MPI::Vector r1(pcobj->comm, pcobj->n_size,
-        pcobj->n_size_local);
+      pcobj->n_size_local);
     VecDuplicate(r2, &u2);
 //
 //
@@ -1480,7 +1479,7 @@ template <int dim, int n_fe_degree>
     VecScale(v, -1.0);
     PETScWrappers::MPI::BlockVector v_block;
     v_block.reinit(pcobj->n_blocks, pcobj->comm, pcobj->n_size_per_block,
-        pcobj->n_size_per_block_local);
+      pcobj->n_size_per_block_local);
     copy_to_BlockVector(v_block, v);
 
     // Compute s=Z'v
@@ -1569,8 +1568,8 @@ template <int dim, int n_fe_degree>
 
 template <int dim, int n_fe_degree>
   void PCApply_L (Mat shellmat,
-                  Vec r,
-                  Vec u)
+    Vec r,
+    Vec u)
   {
 
     //  std::cout<<"Applying the preconditioner..."<<std::endl;
@@ -1584,9 +1583,9 @@ template <int dim, int n_fe_degree>
     // Create Vectors
     PETScWrappers::MPI::BlockVector rblock, ublock;
     rblock.reinit(pcobj->n_blocks, pcobj->comm, pcobj->n_size_per_block,
-        pcobj->n_size_per_block_local);
+      pcobj->n_size_per_block_local);
     ublock.reinit(pcobj->n_blocks, pcobj->comm, pcobj->n_size_per_block,
-        pcobj->n_size_per_block_local);
+      pcobj->n_size_per_block_local);
 
     copy_to_BlockVector(rblock, r);
 
@@ -1608,8 +1607,8 @@ template <int dim, int n_fe_degree>
 
 template <int dim, int n_fe_degree>
   PetscErrorCode PCApply_blockL_Chebyshev (PC pc,
-                                           Vec r,
-                                           Vec u)
+    Vec r,
+    Vec u)
   {
 
     void *shell;
@@ -1622,9 +1621,9 @@ template <int dim, int n_fe_degree>
     // Create Vectors
     PETScWrappers::MPI::Vector rdealii, udealii;
     rdealii.reinit(pcobj->comm, pcobj->n_size_per_block,
-        pcobj->n_size_per_block_local);
+      pcobj->n_size_per_block_local);
     udealii.reinit(pcobj->comm, pcobj->n_size_per_block,
-        pcobj->n_size_per_block_local);
+      pcobj->n_size_per_block_local);
 
     VecCopy(r, rdealii);
     // Apply the preconditioner
@@ -1643,8 +1642,8 @@ template <int dim, int n_fe_degree>
 
 template <int dim, int n_fe_degree>
   PetscErrorCode PCApply_blockL_MLCHFE (PC pc,
-                                        Vec r,
-                                        Vec u)
+    Vec r,
+    Vec u)
   {
 
     void *shell;
@@ -1657,13 +1656,13 @@ template <int dim, int n_fe_degree>
     // Create Vectors
     PETScWrappers::MPI::Vector rdealii, udealii, resin, resout;
     rdealii.reinit(pcobj->comm, pcobj->n_size_per_block,
-        pcobj->n_size_per_block_local);
+      pcobj->n_size_per_block_local);
     udealii.reinit(pcobj->comm, pcobj->n_size_per_block,
-        pcobj->n_size_per_block_local);
+      pcobj->n_size_per_block_local);
     resin.reinit(pcobj->comm, pcobj->n_size_per_block,
-        pcobj->n_size_per_block_local);
+      pcobj->n_size_per_block_local);
     resout.reinit(pcobj->comm, pcobj->n_size_per_block,
-        pcobj->n_size_per_block_local);
+      pcobj->n_size_per_block_local);
 
     VecCopy(r, rdealii);
 

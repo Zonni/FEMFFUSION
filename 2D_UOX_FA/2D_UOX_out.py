@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Fri Dec 18 13:03:14 2020
-
-@author: zonni
+@author: Antoni Vidal
 """
 import sys
 sys.path.insert(1, '../postprocess/')
@@ -230,7 +228,7 @@ for i in range(n_files_txt):
 ax1.grid(True)
 ax1.legend(loc='best')
 ax1.set_xlabel("Diagonal length (cm)")
-ax1.set_ylabel("Relative Noise Magnitude (\%)")
+ax1.set_ylabel(r"Relative Noise Magnitude (\%)")
 fig1.savefig(folder + problem + "_noise_line_amp_g1.pdf", format='pdf')
 
 # Print noise_g2
@@ -243,7 +241,7 @@ for i in range(n_files_txt):
 ax1.grid(True)
 ax1.legend(loc='best')
 ax1.set_xlabel("Diagonal length (cm)")
-ax1.set_ylabel("Relative Noise Magnitude (\%)")
+ax1.set_ylabel(r"Relative Noise Magnitude (\%)")
 fig1.savefig(folder + problem + "_noise_line_amp_g2.pdf", format='pdf')
 
 

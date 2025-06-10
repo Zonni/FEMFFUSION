@@ -8,6 +8,7 @@
 #include <deal.II/dofs/dof_handler.h>
 #include <deal.II/dofs/dof_iterator_selector.h>
 
+
 #include <deal.II/fe/fe_q.h>
 #include <deal.II/fe/fe_dgq.h>
 
@@ -15,11 +16,13 @@
 #include <deal.II/lac/affine_constraints.h>
 #include <deal.II/lac/vector.h>
 #include <deal.II/lac/dynamic_sparsity_pattern.h>
+#include <deal.II/lac/sparsity_tools.h>
 #include <deal.II/lac/petsc_sparse_matrix.h>
 #include <deal.II/lac/petsc_vector.h>
 #include <deal.II/lac/block_vector_base.h>
 #include <deal.II/lac/la_parallel_block_vector.h>
 #include <deal.II/lac/la_parallel_vector.h>
+
 
 #include <algorithm>
 #include <vector>
@@ -89,7 +92,8 @@ template <int dim, int n_fe_degree>
       DoFTools::make_sparsity_pattern(dof_handler, dsp, constraints, true);
 
       SparsityTools::distribute_sparsity_pattern(dsp,
-        dof_handler.n_locally_owned_dofs_per_processor(), comm,
+        this->locally_owned_dofs,
+        comm,
         locally_relevant_dofs);
       sp.copy_from(dsp);
 
@@ -97,8 +101,7 @@ template <int dim, int n_fe_degree>
         for (unsigned np = 0; np < n_prec_groups; np++)
         {
           matrix_csr[ng][np] = new PETScWrappers::MPI::SparseMatrix;
-          matrix_csr[ng][np]->reinit(locally_owned_dofs,
-            locally_owned_dofs, sp, comm);
+          matrix_csr[ng][np]->reinit(locally_owned_dofs, locally_owned_dofs, sp, comm);
         }
       assemble_full_matrices(materials);
     }
@@ -203,7 +206,8 @@ template <int dim, int n_fe_degree>
     additional_data.tasks_parallel_scheme =
         dealii::MatrixFree<dim, double>::AdditionalData::none;
     additional_data.mapping_update_flags = (update_values | update_JxW_values);
-    matfree_data.reinit(dof_handler, constraints, QGauss<1>(n_fe_degree + 1),
+    MappingQ1<dim> mapping;
+    matfree_data.reinit(mapping, dof_handler, constraints, QGauss<1>(n_fe_degree + 1),
       additional_data);
 
     for (unsigned ng = 0; ng < n_energy_groups; ng++)
@@ -483,8 +487,4 @@ template class SmallDelayedFissionMatrices<3, 2> ;
 template class SmallDelayedFissionMatrices<3, 3> ;
 template class SmallDelayedFissionMatrices<3, 4> ;
 template class SmallDelayedFissionMatrices<3, 5> ;
-
-
-
-
 

@@ -781,8 +781,11 @@ template <int dim, int n_fe_degree>
 
       constraints.distribute_local_to_global(cell_matrix_B, local_dof_indices, B);
     }
+    // Compress the vectors
     B.compress(VectorOperation::add);
-    // Get system rhs
+    phi_crit.compress(VectorOperation::insert);
+
+    // Get system_rhs
     B.vmult(system_rhs, phi_crit);
 
     ////////////////////////////////////////
@@ -1491,7 +1494,7 @@ template <int dim, int n_fe_degree>
   {
 
     // Plot Magnitude and Phase of the noise
-    DataOut<dim, DoFHandler<dim> > data_out;
+    DataOut<dim> data_out;
     data_out.attach_dof_handler(dof_handler_block);
     std::string filename_vtk = out_file + ".vtk";
 

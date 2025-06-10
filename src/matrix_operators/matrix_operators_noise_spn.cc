@@ -9,6 +9,8 @@
 #include <deal.II/dofs/dof_handler.h>
 #include <deal.II/dofs/dof_iterator_selector.h>
 
+#include <deal.II/grid/grid_tools.h>
+
 #include <deal.II/fe/fe_q.h>
 #include <deal.II/fe/fe_dgq.h>
 
@@ -137,7 +139,7 @@ template <int dim, int n_fe_degree>
       DoFTools::make_sparsity_pattern(dof_handler, dsp, constraints, true);
 
       SparsityTools::distribute_sparsity_pattern(dsp,
-        Utilities::MPI::all_gather(this->comm, this->dof_handler.n_locally_owned_dofs()),
+        this->locally_owned_dofs,
         this->comm,
         this->locally_relevant_dofs);
       this->sp.copy_from(dsp);
@@ -277,7 +279,10 @@ template <int dim, int n_fe_degree>
         dealii::MatrixFree<dim, double>::AdditionalData::none;
     additional_data.mapping_update_flags = (update_values
                                             | update_JxW_values);
-    matfree_data.reinit(dof_handler,
+    MappingQ1<dim> mapping;
+    matfree_data.reinit(
+      mapping,
+      dof_handler,
       constraints,
       QGauss<1>(n_fe_degree + 1),
       additional_data);
@@ -1003,9 +1008,12 @@ template <int dim, int n_fe_degree>
       typename dealii::MatrixFree<dim, double>::AdditionalData additional_data;
       additional_data.tasks_parallel_scheme =
           dealii::MatrixFree<dim, double>::AdditionalData::none;
-      additional_data.mapping_update_flags = (update_values
-                                              | update_JxW_values);
-      matfree_data.reinit(dof_handler,
+      additional_data.mapping_update_flags = (update_values | update_JxW_values);
+
+      MappingQ1<dim> mapping;
+      matfree_data.reinit(
+        mapping,
+        dof_handler,
         constraints,
         QGauss<1>(n_fe_degree + 1),
         additional_data);
@@ -1049,12 +1057,9 @@ template <int dim, int n_fe_degree>
       DynamicSparsityPattern dsp(this->locally_relevant_dofs);
 
       DoFTools::make_sparsity_pattern(dof_handler, dsp, constraints, true);
-      this->local_dofs_per_process =
-                                     Utilities::MPI::all_gather(this->comm,
-                                       this->dof_handler.n_locally_owned_dofs());
 
       SparsityTools::distribute_sparsity_pattern(dsp,
-        this->local_dofs_per_process,
+        this->locally_owned_dofs,
         this->comm,
         this->locally_relevant_dofs);
       this->sp.copy_from(dsp);

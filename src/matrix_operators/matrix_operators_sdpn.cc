@@ -17,6 +17,7 @@
 #include <deal.II/lac/dynamic_sparsity_pattern.h>
 #include <deal.II/lac/petsc_sparse_matrix.h>
 #include <deal.II/lac/petsc_vector.h>
+#include <deal.II/lac/sparsity_tools.h>
 
 #include <typeinfo>
 #include <string>
@@ -380,7 +381,7 @@ template <int dim, int n_fe_degree>
       DoFTools::make_sparsity_pattern(dof_handler, dsp, constraints, true);
 
       SparsityTools::distribute_sparsity_pattern(dsp,
-        this->dof_handler.n_locally_owned_dofs_per_processor(),
+        this->locally_owned_dofs,
         this->comm, this->locally_relevant_dofs);
       this->sp.copy_from(dsp);
 
@@ -455,7 +456,8 @@ template <int dim, int n_fe_degree>
     additional_data.mapping_update_flags = (update_values | update_JxW_values);
     // FIME Esto Rompe zero flux SP3
     additional_data.mapping_update_flags_boundary_faces = (update_JxW_values);
-    matfree_data.reinit(dof_handler, constraints, QGauss<1>(n_fe_degree + 1),
+    MappingQ1<dim> mapping;
+    matfree_data.reinit(mapping, dof_handler, constraints, QGauss<1>(n_fe_degree + 1),
       additional_data);
 
     this->mass_mf_blocks.resize(this->n_blocks,
@@ -495,7 +497,7 @@ template <int dim, int n_fe_degree>
     DoFTools::make_sparsity_pattern(dof_handler, dsp, constraints, true);
 
     SparsityTools::distribute_sparsity_pattern(dsp,
-      this->dof_handler.n_locally_owned_dofs_per_processor(),
+      this->locally_owned_dofs,
       this->comm,
       this->locally_relevant_dofs);
     this->sp.copy_from(dsp);
@@ -579,7 +581,8 @@ template <int dim, int n_fe_degree>
                                                              | update_JxW_values
                                                              | update_quadrature_points);
 
-    matfree_data.reinit(dof_handler, constraints, QGauss<1>(n_fe_degree + 1),
+    MappingQ1<dim> mapping;
+    matfree_data.reinit(mapping, dof_handler, constraints, QGauss<1>(n_fe_degree + 1),
       additional_data);
 
     this->mass_mf_blocks.resize(this->n_blocks,
@@ -1047,7 +1050,8 @@ template <int dim, int n_fe_degree>
           dealii::MatrixFree<dim, double>::AdditionalData::partition_partition;
       additional_data.mapping_update_flags = (update_values
                                               | update_JxW_values);
-      matfree_data.reinit(dof_handler, constraints,
+      MappingQ1<dim> mapping;
+      matfree_data.reinit(mapping, dof_handler, constraints,
         QGauss<1>(n_fe_degree + 1), additional_data);
 
       for (unsigned int gi = 0; gi < n_groups; gi++)
@@ -1078,7 +1082,7 @@ template <int dim, int n_fe_degree>
       DoFTools::make_sparsity_pattern(dof_handler, dsp, constraints, true);
 
       SparsityTools::distribute_sparsity_pattern(dsp,
-        this->dof_handler.n_locally_owned_dofs_per_processor(),
+        this->locally_owned_dofs,
         this->comm, this->locally_relevant_dofs);
       this->sp.copy_from(dsp);
 

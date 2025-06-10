@@ -1,58 +1,139 @@
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-@author: Antoni Vidal """
+@author: Antoni Vidal
+"""
 
-from utils import  parse_file, parse_file_complex, compare_distributions
+import sys
+sys.path.insert(1, '../postprocess/')
+from utils import  parse_file, parse_file_complex
 #from utils import   parse_vtk_file, parse_vtk_grid, parse_file
 import numpy as np
 import matplotlib.pyplot as plt
 #import scipy.io as sio
 plt.close('all')
+
+params = {'backend': 'pdf',
+#          'font.family': 'serif',
+          'font.size': 14,
+          'axes.labelsize': 12,
+          'legend.fontsize': 12,
+          'xtick.labelsize': 13,
+          'ytick.labelsize': 13,
+          'text.usetex': True,
+          'lines.linewidth': 2,
+          'lines.markersize': 5,
+          'lines.markeredgewidth': 1,
+          'legend.numpoints': 1, 
+          'axes.formatter.useoffset': False,
+          'figure.autolayout': True,
+          }
+
 #%% ===========================================================================
 problem = '2D_UOX_FA'
-case = '2'
-if problem == '2D_UOX_FA':
-   
-    # FEMFFUSION-FD
-    folder = '../2D_UOX_FA/'
-    file_fem_out = folder + '2D_UOX_FA_ex' + case + '.out'
-    file_fd_sta_g1 = folder + 'FEMFFUSION_CASE' + case + '_STATIC_FLX_G1.txt'
-    file_fd_sta_g2 = folder + 'FEMFFUSION_CASE' + case + '_STATIC_FLX_G2.txt'
-    file_fd_amp_g1 = folder + 'FEMFFUSION_CASE' + case + '_NOISE_AMP_G1.txt'
-    file_fd_amp_g2 = folder + 'FEMFFUSION_CASE' + case + '_NOISE_AMP_G2.txt'
-    file_fd_pha_g1 = folder + 'FEMFFUSION_CASE' + case + '_NOISE_PHASE_G1.txt'
-    file_fd_pha_g2 = folder + 'FEMFFUSION_CASE' + case + '_NOISE_PHASE_G2.txt'
+
+# FEMFFUSION-FD
+case = '3'
+folder = 'exercise_3/'
+
+# code= 'FEMFFUSIONFD_DIFF'
+# file_fem_out = folder + '2D_UOX_FA_diff.out'
+# code= 'FEMFFUSIONFD_SP1'
+# file_fem_out = folder + '2D_UOX_FA_sp1.out'
+code= 'FEMFFUSIONFD_DIFF'
+file_fem_out = folder + '2D_UOX_FA_ex3_diff.out'
+
+file_fd_sta_g1 = folder + code + '_CASE2_STATIC_FLX_G1.txt'
+file_fd_sta_g2 = folder + code + '_CASE2_STATIC_FLX_G2.txt'
+file_fd_amp_g1 = folder + code + '_CASE2_NOISE_AMP_G1.txt'
+file_fd_amp_g2 = folder + code + '_CASE2_NOISE_AMP_G2.txt'
+file_fd_pha_g1 = folder + code + '_CASE2_NOISE_PHASE_G1.txt'
+file_fd_pha_g2 = folder + code + '_CASE2_NOISE_PHASE_G2.txt'
+
+if case == '2':
+    nx = 138
+    ny = 138
+if case == '3':
+    nx = 174
+    ny = 138
+    x = [0.08, 0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215,
+    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215,
+    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215,
+    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215,
+    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215,
+    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215,
+    0.06430, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02,
+    0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.16570, 0.16570,
+    0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02,
+    0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.06430,
+    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215,
+    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215,
+    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215,
+    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215,
+    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215,
+    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215,
+    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215,
+    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215,
+    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215,
+    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215,
+    0.08];
     
-    if case == '2':
-        nx = 138
-        ny = 138
-    if case == '3':
-        nx = 174
-        ny = 138
-    if case == '4':
-        nx = 210
-        ny = 138
-    if case == '5':
-        nx = 210
-        ny = 138
-    if case == '6':
-        nx = 246
-        ny = 138
+    y = [0.08, 0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215,
+    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215,
+    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215,
+    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215,
+    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215,
+    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215,
+    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215,
+    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215,
+    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215,
+    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215,
+    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215,
+    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215,
+    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215,
+    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215,
+    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215,
+    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215,
+    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215,
+    0.08]
+    assert(len(x)== nx)
+    assert(len(y)== ny)
+    
 
-    n_cells = nx * ny
+if case == '4':
+    nx = 210
+    ny = 138
+if case == '5':
+    nx = 210
+    ny = 138
+if case == '6':
+    nx = 246
+    ny = 138
 
+n_cells = nx * ny
+x = np.cumsum(x)
+x = np.array(x)
+y = np.cumsum(y)
+y = np.array(y)
+X, Y = np.meshgrid(x, y)
+
+print("Postprocessing:  code", code, " case=", case)
 #%% ===========================================================================
-# STATIC FLUX COMPARISON
-#
+# GET DATA FROM FEMFFUSION-FD
+
+# STATIC
 static_flux_g1_fem = parse_file(file_fem_out, 'Group 1 flux', n_max_lines=ny)
 static_flux_g2_fem = parse_file(file_fem_out, 'Group 2 flux', n_max_lines=ny)
-#
-static_flux_g1_fem = np.array(static_flux_g1_fem)
-static_flux_g2_fem = np.array(static_flux_g2_fem)
 
-#%% ===========================================================================
-# GET DATA FROM FEMFFUSION-FREQ
+assert(n_cells == len(static_flux_g1_fem))
+assert(n_cells == len(static_flux_g2_fem))
 
+static_flux_g1_fem = np.array(static_flux_g1_fem).reshape(ny, nx)
+static_flux_g2_fem = np.array(static_flux_g2_fem).reshape(ny, nx)
+
+
+
+#  NOISE
 noise_g1_fem = parse_file_complex(file_fem_out,
                                   begin='Flux Noise Group 1',
                                   n_max_lines=ny)
@@ -65,13 +146,93 @@ assert(n_cells == len(noise_g2_fem))
 
 
 # AMPLITUDE
-amp_g1_fem = np.abs(noise_g1_fem)
-amp_g2_fem = np.abs(noise_g2_fem)
+amp_g1_fem = np.abs(noise_g1_fem).reshape(ny, nx)
+amp_g2_fem = np.abs(noise_g2_fem).reshape(ny, nx)
+
 
 # PHASE
-pha_g1_fem = np.angle(noise_g1_fem, deg=True)
-pha_g2_fem = np.angle(noise_g2_fem, deg=True)
+pha_g1_fem = np.angle(noise_g1_fem, deg=True).reshape(ny, nx)
+pha_g2_fem = np.angle(noise_g2_fem, deg=True).reshape(ny, nx)
 
+
+
+#%% PLOT FEMFFUSSION  RESULTS
+
+# Static Results 
+plt.figure()
+plt.pcolormesh(X, Y, static_flux_g1_fem, shading='auto')
+cbar = plt.colorbar()
+plt.title('Steady State Fast Flux [AU]')
+plt.xlabel('x (cm)')
+plt.ylabel('y (cm)')
+# cbar.set_label('Noise', rotation=90)
+plt.savefig(folder + code +'_sta_g1_fem.pdf')
+
+plt.figure()
+plt.pcolormesh(X, Y, static_flux_g2_fem, shading='auto')
+plt.title('Steady State Thermal Flux [AU]')
+cbar = plt.colorbar()
+# cbar.set_label('Noise', rotation=90)
+plt.xlabel('x (cm)')
+plt.ylabel('y (cm)')
+plt.savefig(folder + code + '_sta_g2_fem.pdf')
+
+# Amplitude Results 
+plt.figure()
+plt.pcolormesh(X, Y, amp_g1_fem, shading='auto')
+cbar = plt.colorbar()
+# cbar.set_label('Noise', rotation=90)
+plt.title('Fast Neutron Noise Amplitude [AU]')
+plt.xlabel('x (cm)')
+plt.ylabel('y (cm)')
+plt.savefig(folder + code +'_amp_g2_fempdf')
+
+plt.figure()
+plt.pcolormesh(X, Y, amp_g2_fem, shading='auto')
+plt.title('Thermal Neutron Noise Amplitude [AU]')
+cbar = plt.colorbar()
+# cbar.set_label('Noise', rotation=90)
+plt.xlabel('x (cm)')
+plt.ylabel('y (cm)')
+plt.savefig(folder + code + '_amp_g2_fem.pdf')
+
+# Relative Amplitude Results 
+plt.figure()
+plt.pcolormesh(X, Y, 100*amp_g1_fem/static_flux_g1_fem, shading='auto')
+cbar = plt.colorbar()
+# cbar.set_label('Noise', rotation=90)
+plt.title(r'Fast Neutron Noise Relative Amplitude [%]')
+plt.xlabel('x (cm)')
+plt.ylabel('y (cm)')
+plt.savefig(folder + code +'_rel_amp_g2_fempdf')
+
+plt.figure()
+plt.pcolormesh(X, Y,  100*amp_g2_fem/static_flux_g2_fem, shading='auto')
+plt.title(r'Thermal Neutron Noise Relative Amplitude [%]')
+cbar = plt.colorbar()
+# cbar.set_label('Noise', rotation=90)
+plt.xlabel('x (cm)')
+plt.ylabel('y (cm)')
+plt.savefig(folder + code + '_rel_amp_g2_fem.pdf')
+
+# Phase Results 
+plt.figure()
+plt.pcolormesh(X, Y, pha_g1_fem, shading='auto')
+cbar = plt.colorbar()
+plt.title('Fast Flux Noise Phase [deg]')
+plt.xlabel('x (cm)')
+plt.ylabel('y (cm)')
+# cbar.set_label('Noise', rotation=90)
+plt.savefig(folder + code +'_pha_g1_fem.pdf')
+
+plt.figure()
+plt.pcolormesh(X, Y, pha_g2_fem, shading='auto')
+plt.title('Thermal Flux Noise Phase [deg]')
+cbar = plt.colorbar()
+# cbar.set_label('Noise', rotation=90)
+plt.xlabel('x (cm)')
+plt.ylabel('y (cm)')
+plt.savefig(folder + code + '_pha_g2_fem.pdf')
 
 
 #%% ===========================================================================
@@ -82,6 +243,115 @@ np.savetxt(file_fd_pha_g1, pha_g1_fem.reshape(ny, nx))
 np.savetxt(file_fd_pha_g2, pha_g2_fem.reshape(ny, nx))
 np.savetxt(file_fd_amp_g1, amp_g1_fem.reshape(ny, nx))
 np.savetxt(file_fd_amp_g2, amp_g2_fem.reshape(ny, nx))
+
+#%% ===========================================================================
+# GET AND COMPARE FEMFFUSION-TD DATA 
+
+# static_flux_g1_td = np.loadtxt(file_td_sta_g1)
+# static_flux_g2_td = np.loadtxt(file_td_sta_g2)
+# amp_g1_td = np.loadtxt(file_td_amp_g1)
+# amp_g2_td = np.loadtxt(file_td_amp_g2)
+# pha_g1_td = np.loadtxt(file_td_pha_g1)
+# pha_g2_td = np.loadtxt(file_td_pha_g2)
+
+# # Reshape 
+# static_flux_g1_td = static_flux_g1_td.reshape(1, n_cells)[0]
+# static_flux_g2_td = static_flux_g2_td.reshape(1, n_cells)[0]
+# amp_g1_td = amp_g1_td.reshape(1, n_cells)[0]
+# amp_g2_td = amp_g2_td.reshape(1, n_cells)[0]
+# pha_g1_td = pha_g1_td.reshape(1, n_cells)[0]
+# pha_g2_td = pha_g2_td.reshape(1, n_cells)[0]
+
+# norm = np.mean(amp_g2_td)
+# amp_g1_td /= norm
+# amp_g2_td /= norm
+
+
+
+
+# ## Normalize Noise Amplitude
+# mean_error1, _, _, _ = compare_distributions(
+#                                                 amp_g1_td,
+#                                                 amp_g1_fem)
+# mean_error2, _, _, _ = compare_distributions(
+#                                                 amp_g2_td,
+#                                                 amp_g2_fem)
+# print('MAGNITUDE FLX G1: ', mean_error1, '%')
+# print('MAGNITUDE FLX G2: ', mean_error2, '%')
+
+
+# mean_error1, _, _, _ = compare_distributions(
+#                                                 pha_g1_td,
+#                                                 pha_g1_fem)
+# mean_error2, _, _, _ = compare_distributions(
+#                                                 pha_g2_td,
+#                                                 pha_g2_fem )
+# print('PHASE FLX G1: ', mean_error1, '%')
+# print('PHASE FLX G2: ', mean_error2, '%')
+
+
+
+# plt.figure()
+# plt.imshow((amp_g2_td.reshape(ny, nx) - amp_g2_fem.reshape(ny, nx))/ amp_g2_td.reshape(ny, nx) *100, origin='lower', vmax= 35.0);
+# plt.title('Thermal Flux Noise Difference')
+# cbar = plt.colorbar()
+# cbar.set_label('%', rotation=0)
+# plt.xlabel('X index')
+# plt.ylabel('Y index')
+# plt.savefig(folder_td + 'Thermal Flux Noise Difference.pdf')
+
+
+
+#
+#plt.figure()
+#plt.imshow((amp_g1_td.reshape(ny, nx) - amp_g1_fem.reshape(ny, nx))/ amp_g1_fem.reshape(ny, nx) *100, origin='lower');
+#cbar = plt.colorbar()
+#plt.title('Fast Flux Noise Difference')
+#plt.xlabel('X index')
+#plt.ylabel('Y index')
+#cbar.set_label('%', rotation=0)
+#plt.savefig(folder_td + 'Fast Flux Noise Difference.pdf')
+#
+#
+
+#
+#plt.figure()
+#plt.plot(amp_g2_fem.reshape(ny, nx).diagonal() / static_flux_g2_fem.reshape(ny, nx).diagonal(),
+#         label='FEMFFUSION-freq');
+#plt.plot(amp_g2_td.reshape(ny, nx).diagonal() / static_flux_g2_td.reshape(ny, nx).diagonal(), 
+#         label='FEMFFUSION-time', linewidth=2);
+#plt.xlabel('Index')
+#plt.ylabel('Relative Thermal Neutron Noise Amplitude (%)')
+#plt.savefig('Relative_Thermal_Neutron_Noise_Amplitude.pdf')
+#plt.legend()
+#plt.grid()
+
+
+
+
+# plt.figure()
+# plt.imshow(amp_g1_td.reshape(ny, nx), origin='lower');
+# cbar = plt.colorbar()
+# plt.title('Fast Flux Noise TD')
+# plt.xlabel('X index')
+# plt.ylabel('Y index')
+# cbar.set_label('Noise', rotation=90)
+# plt.savefig(folder + 'Fast Flux Noise.pdf')
+
+# plt.figure()
+# plt.imshow(amp_g2_td.reshape(ny, nx), origin='lower');
+# plt.title('Thermal Flux Noise TD')
+# cbar = plt.colorbar()
+# cbar.set_label('Noise', rotation=90)
+# plt.xlabel('X index')
+# plt.ylabel('Y index')
+# plt.savefig(folder + 'Thermal Flux Noise.pdf')
+
+
+
+
+
+
 
 #%% PLOT FEMFFUSSION  RESULTS
 
@@ -121,7 +391,8 @@ np.savetxt(file_fd_amp_g2, amp_g2_fem.reshape(ny, nx))
 #amp_g2_td = amp_g2_td.reshape(1, n_cells)[0]
 #pha_g1_td = pha_g1_td.reshape(1, n_cells)[0]
 #pha_g2_td = pha_g2_td.reshape(1, n_cells)[0]
-#
+
+
 #norm = np.mean(amp_g2_td)
 #amp_g1_td /= norm
 #amp_g2_td /= norm
