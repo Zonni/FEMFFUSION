@@ -1,7 +1,0 @@
-
-# Dynamic Data for 2D biblis case
-# --------------------------------
-
-# Frequency of the pertubation and flux  
-set Frequency            = 1.0
-
