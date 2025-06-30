@@ -198,9 +198,9 @@ template <int dim, int n_fe_degree>
 
     time_intervals_snapshots.push_back(t_end);
 
-    // LUPOD
-    LUPOD_flag = prm.get_bool("LUPOD_Flag");
-    get_bool_from_options("-LUPOD", LUPOD_flag);
+    // LUPOD_Type
+    LUPOD_type = prm.get("LUPOD_Type");
+    get_string_from_options("-lupod_type", LUPOD_type);
     epsilon_N = prm.get_double("Epsilon_N");
     get_double_from_options("-epsilon_N", epsilon_N);
     epsilon_M = prm.get_double("Epsilon_M");
@@ -864,49 +864,7 @@ template <int dim, int n_fe_degree>
     PetscScalar *N;
     VecGetArray(coeffs_n, &N);
 
-    if (LUPOD_flag == true)
-    {
-      Vector<double> phi_red(points.size());
-      for (unsigned int i = 0; i < points.size(); i++)
-        phi_red[i] = phi[points[i]];
-
-      // Compute N[0]=(n_1,n_2,...,n_m)
-      for (unsigned int nb = 0; nb < dim_rom; nb++)
-      {
-        N[nb] = snap_basis_red[nb] * phi_red / (snap_basis_red[nb] * snap_basis_red[nb]);
-        // Las bases son ortogonales por que es inecesario en  / (snap_basis_red[nb] * snap_basis_red[nb])
-        //std::cout << " (snap_basis_red[nb] * snap_basis_red[nb]) "<< (snap_basis_red[nb] * snap_basis_red[nb])  << std::endl;
-      }
-
-      // Compute c[0]=(c11,...,cq1,...,c1k,...,cqk)
-      std::vector<std::vector<double>> cjk(dim_rom, std::vector<double>(n_prec));
-      AssertRelease(step_rom == 0, "Not implemented step_rom and LUPOD");
-      unsigned int n_points = points.size();
-      std::vector<Vector<double> > auxxbf(n_prec, Vector<double>(n_points));
-      for (unsigned int k = 0; k < n_prec; k++)
-        auxxbf[k].reinit(n_points);
-
-      for (unsigned int nb = 0; nb < dim_rom; nb++)
-      {
-        for (unsigned int k = 0; k < n_prec; k++)
-        {
-          for (unsigned int i = 0; i < points.size(); i++)
-          {
-            XBF[k].vmult_row(auxxbf[k][i], phi, points[i]);
-          }
-
-          AssertRelease(materials.get_delayed_decay_constant(0, k) > 0.0,
-            "Delayed decay constant must be greater than 0.");
-          cjk[nb][k] = 1.0 / (materials.get_delayed_decay_constant(0, k))
-                       * (snap_basis_red[nb] * auxxbf[k]);
-        }
-      }
-
-      for (unsigned int k = 0; k < n_prec; k++)
-        for (unsigned int nb = 0; nb < dim_rom; nb++)
-          N[(k + 1) * dim_rom + nb] = cjk[nb][k];
-    }
-    else // LUPOD == false
+    if (LUPOD_type == "POD")
     {
       // Compute N[0]=(n_1,n_2,...,n_m)
       for (unsigned int nb = 0; nb < dim_rom; nb++)
@@ -986,9 +944,50 @@ template <int dim, int n_fe_degree>
         for (unsigned int nb = 0; nb < dim_rom; nb++)
           N[(k + 1) * dim_rom + nb] = cjk[nb][k];
     }
+    else
+    {
+      Vector<double> phi_red(points.size());
+      for (unsigned int i = 0; i < points.size(); i++)
+        phi_red[i] = phi[points[i]];
+
+      // Compute N[0]=(n_1,n_2,...,n_m)
+      for (unsigned int nb = 0; nb < dim_rom; nb++)
+      {
+        N[nb] = snap_basis_red[nb] * phi_red / (snap_basis_red[nb] * snap_basis_red[nb]);
+        // Las bases son ortogonales por que es inecesario en  / (snap_basis_red[nb] * snap_basis_red[nb])
+        //std::cout << " (snap_basis_red[nb] * snap_basis_red[nb]) "<< (snap_basis_red[nb] * snap_basis_red[nb])  << std::endl;
+      }
+
+      // Compute c[0]=(c11,...,cq1,...,c1k,...,cqk)
+      std::vector<std::vector<double>> cjk(dim_rom, std::vector<double>(n_prec));
+      AssertRelease(step_rom == 0, "Not implemented step_rom and LUPOD");
+      unsigned int n_points = points.size();
+      std::vector<Vector<double> > auxxbf(n_prec, Vector<double>(n_points));
+      for (unsigned int k = 0; k < n_prec; k++)
+        auxxbf[k].reinit(n_points);
+
+      for (unsigned int nb = 0; nb < dim_rom; nb++)
+      {
+        for (unsigned int k = 0; k < n_prec; k++)
+        {
+          for (unsigned int i = 0; i < points.size(); i++)
+          {
+            XBF[k].vmult_row(auxxbf[k][i], phi, points[i]);
+          }
+
+          AssertRelease(materials.get_delayed_decay_constant(0, k) > 0.0,
+            "Delayed decay constant must be greater than 0.");
+          cjk[nb][k] = 1.0 / (materials.get_delayed_decay_constant(0, k))
+                       * (snap_basis_red[nb] * auxxbf[k]);
+        }
+      }
+
+      for (unsigned int k = 0; k < n_prec; k++)
+        for (unsigned int nb = 0; nb < dim_rom; nb++)
+          N[(k + 1) * dim_rom + nb] = cjk[nb][k];
+    }
 
     VecRestoreArray(coeffs_n, &N);
-
     for (unsigned int k = 0; k < n_prec; k++)
       XBF[k].clear();
   }
@@ -1057,8 +1056,6 @@ template <int dim, int n_fe_degree>
 //    u.clear();
 //  }
 
-
-
 /*
  * @brief Assemble Time System
  */
@@ -1087,8 +1084,66 @@ template <int dim, int n_fe_degree>
 template <int dim, int n_fe_degree>
   void ROMKinetics<dim, n_fe_degree>::assemble_ROM_matrices ()
   {
-    //LUPOD_flag = false;
-    if (LUPOD_flag)
+
+    if (LUPOD_type == "POD")
+    {
+      //std::cout << "LUPOD FALSE" << std::endl;
+      assemble_matrices();
+
+      FullMatrix<double> romV(dim_rom);
+      rominvV = FullMatrix<double>(dim_rom);
+      romL = FullMatrix<double>(dim_rom);
+      romF = FullMatrix<double>(dim_rom);
+      romXBF.resize(n_prec);
+      for (unsigned int p = 0; p < n_prec; p++)
+        romXBF[p] = FullMatrix<double>(dim_rom);
+
+      PETScWrappers::MPI::BlockVector auxv(snap_basis[0]);
+      PETScWrappers::MPI::BlockVector auxl(snap_basis[0]);
+      PETScWrappers::MPI::BlockVector auxf(snap_basis[0]);
+      std::vector<PETScWrappers::MPI::BlockVector> auxxbf(n_prec);
+
+      for (unsigned int b2 = 0; b2 < dim_rom; b2++)
+      {
+        V.vmult(auxv, snap_basis[b2]);
+        n_matsvecs++;
+        L.vmult(auxl, snap_basis[b2]);
+        n_matsvecs++;
+        F.vmult(auxf, snap_basis[b2]);
+        n_matsvecs++;
+
+        for (unsigned int p = 0; p < n_prec; p++)
+        {
+          auxxbf[p].reinit(snap_basis[0]);
+          XBF[p].vmult(auxxbf[p], snap_basis[b2]);
+          n_matsvecs++;
+        }
+
+        for (unsigned int b1 = 0; b1 < dim_rom; b1++)
+        {
+          romV(b1, b2) = auxv * snap_basis[b1];
+          romL(b1, b2) = auxl * snap_basis[b1];
+          romF(b1, b2) = auxf * snap_basis[b1];
+          for (unsigned int p = 0; p < n_prec; p++)
+          {
+            romXBF[p](b1, b2) = auxxbf[p] * snap_basis[b1];
+          }
+        }
+      }
+
+      //std::cout << "romV " << std::endl;
+      //romV.print_formatted(std::cout, 7, true);
+      rominvV.invert(romV);
+      //std::cout << "rominvV " << std::endl;
+      //rominvV.print_formatted(std::cout, 7, true);
+
+      V.clear();
+      L.clear();
+      F.clear();
+      for (unsigned int p = 0; p < n_prec; p++)
+        XBF[p].clear();
+    }
+    else
     {
       //std::cout << "LUPOD TRUE" << std::endl;
       assemble_matrices();
@@ -1155,64 +1210,6 @@ template <int dim, int n_fe_degree>
       for (unsigned int p = 0; p < n_prec; p++)
         XBF[p].clear();
     }
-    else
-    {
-      //std::cout << "LUPOD FALSE" << std::endl;
-      assemble_matrices();
-
-      FullMatrix<double> romV(dim_rom);
-      rominvV = FullMatrix<double>(dim_rom);
-      romL = FullMatrix<double>(dim_rom);
-      romF = FullMatrix<double>(dim_rom);
-      romXBF.resize(n_prec);
-      for (unsigned int p = 0; p < n_prec; p++)
-        romXBF[p] = FullMatrix<double>(dim_rom);
-
-      PETScWrappers::MPI::BlockVector auxv(snap_basis[0]);
-      PETScWrappers::MPI::BlockVector auxl(snap_basis[0]);
-      PETScWrappers::MPI::BlockVector auxf(snap_basis[0]);
-      std::vector<PETScWrappers::MPI::BlockVector> auxxbf(n_prec);
-
-      for (unsigned int b2 = 0; b2 < dim_rom; b2++)
-      {
-        V.vmult(auxv, snap_basis[b2]);
-        n_matsvecs++;
-        L.vmult(auxl, snap_basis[b2]);
-        n_matsvecs++;
-        F.vmult(auxf, snap_basis[b2]);
-        n_matsvecs++;
-
-        for (unsigned int p = 0; p < n_prec; p++)
-        {
-          auxxbf[p].reinit(snap_basis[0]);
-          XBF[p].vmult(auxxbf[p], snap_basis[b2]);
-          n_matsvecs++;
-        }
-
-        for (unsigned int b1 = 0; b1 < dim_rom; b1++)
-        {
-          romV(b1, b2) = auxv * snap_basis[b1];
-          romL(b1, b2) = auxl * snap_basis[b1];
-          romF(b1, b2) = auxf * snap_basis[b1];
-          for (unsigned int p = 0; p < n_prec; p++)
-          {
-            romXBF[p](b1, b2) = auxxbf[p] * snap_basis[b1];
-          }
-        }
-      }
-
-      //std::cout << "romV " << std::endl;
-      //romV.print_formatted(std::cout, 7, true);
-      rominvV.invert(romV);
-      //std::cout << "rominvV " << std::endl;
-      //rominvV.print_formatted(std::cout, 7, true);
-
-      V.clear();
-      L.clear();
-      F.clear();
-      for (unsigned int p = 0; p < n_prec; p++)
-        XBF[p].clear();
-    }
   }
 
 /**
@@ -1254,7 +1251,7 @@ template <int dim, int n_fe_degree>
 
     //   This indicates that we are using pseudo timestepping to
     //   find a steady state solution to the nonlinear problem.
-    TSSetType(ts, TSBDF);    // backward differentiation formula (BDF)
+    TSSetType(ts, TSBDF); // backward differentiation formula (BDF)
     //  TSSetType(ts, TSBEULER);
 
     //   Set the initial time to start at (this is arbitrary for
@@ -1437,9 +1434,8 @@ template <int dim, int n_fe_degree>
       unsigned int mat_id;
 
       // Iterate over every cell
-      typename DoFHandler<dim>::active_cell_iterator cell =
-                                                            dof_handler.begin_active(),
-          endc = dof_handler.end();
+      typename DoFHandler<dim>::active_cell_iterator cell = dof_handler.begin_active();
+      typename DoFHandler<dim>::active_cell_iterator endc = dof_handler.end();
       for (; cell != endc; ++cell)
       {
 
@@ -1552,21 +1548,14 @@ template <int dim, int n_fe_degree>
           for (unsigned int plane = 0; plane < n_planes; plane++)
           {
             if (std::abs(
-                  power_per_assembly[0][n_assemblies_per_plane * plane
-                                        + i])
+                  power_per_assembly[0][n_assemblies_per_plane * plane + i])
                 > 1e-5)
             {
-              sum += power_per_assembly[0][n_assemblies_per_plane
-                                           * plane
-                                           + i]
-                     * volume_per_assembly[n_assemblies_per_plane
-                                           * plane
-                                           + i];
-              volume_per_axial[i] +=
-                                     volume_per_assembly[n_assemblies_per_plane * plane
+              sum += power_per_assembly[0][n_assemblies_per_plane * plane + i]
+                     * volume_per_assembly[n_assemblies_per_plane * plane + i];
+              volume_per_axial[i] += volume_per_assembly[n_assemblies_per_plane * plane
                                                          + i];
             }
-
           }
           if (std::abs(sum) > 0.0)
             radial_power[i] = sum / n_assemblies_per_plane
@@ -1799,26 +1788,25 @@ template <int dim, int n_fe_degree>
         }
       }
 
+      // If we want to require a specific number of retained basis vectors
+      unsigned int M_req = 0;
+      get_uint_from_options("-m_req", M_req);
+
       if (rom_group_wise == "Monolithic")
       {
-        if (LUPOD_flag)
-        {
-          compute_LUPOD_basis_monolithic(snapshots[rom], epsilon_M, epsilon_N,
-            snaps, points, dim_rom, snap_basis, snap_basis_red);
-
-        }
-        else
-          compute_POD_basis_monolithic(snapshots[rom], epsilon_M,
-            snaps, dim_rom, snap_basis);
+        if (LUPOD_type == "POD")
+          compute_POD_basis_monolithic(snapshots[rom], epsilon_M, M_req,
+            dim_rom, snap_basis);
       }
       else if (rom_group_wise == "Group_Wise")
       {
-        if (LUPOD_flag)
-          compute_LUPOD_basis_group_wise(snapshots[rom], epsilon_M, epsilon_N,
-            snaps, points, dim_rom, snap_basis, snap_basis_red);
-        else
-          compute_POD_basis_group_wise(snapshots[rom], epsilon_M,
-            snaps, dim_rom, snap_basis);
+        std::vector<std::vector<unsigned int> > points_per_block;
+        //if (LUPOD_type == "LUPOD") // TODO
+        //compute_LUPOD_basis_group_wise(snapshots[rom], epsilon_M, epsilon_N,
+        //  snaps, points_per_block, dim_rom, snap_basis_ful, snap_basis_red);
+        if (LUPOD_type == "POD")
+          compute_POD_basis_group_wise(snapshots[rom], epsilon_M, M_req,
+            dim_rom, snap_basis);
       }
       else
         AssertRelease(false, "rom_group_wise must be Monolithic or Group_Wise");

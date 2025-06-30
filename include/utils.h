@@ -55,19 +55,27 @@ DeclException1(ExcCantConvertString, std::string,
 //   Convert a PetscBool into a C bool.
 bool petscBool_to_bool (PetscBool flag);
 
-//
-// is_similar(double num1, double num2, double tol)
-//
+
+/**
+ * @brief Check if two numbers are similar whitin a tolerance
+ */
 bool is_similar (const double num1,
   const double num2,
   const double tol = 1e-5);
 
-//
+
 /**
  * Assert the condition also in  Release Mode. Useful to check input parameters.
  */
 void AssertRelease (bool condition,
   const std::string &message);
+
+/**
+ * @brief Find a value in a std::vector<unsigned int>  and return its index.
+ */
+unsigned int find_index (
+  const std::vector<unsigned int> &vec,
+  unsigned int value);
 
 /**
  *  Assert if two vectors are similarly equal.
@@ -635,6 +643,13 @@ template <int dim>
     const bool changeMat);
 
 /**
+ *
+ */
+unsigned int binarySearch (
+  const std::vector<unsigned int> &vec,
+  unsigned int target);
+
+/**
  * This function does a binary search and returns the index i such that
  * x is between wl[i] and wl[i+1], except that i is restricted to the
  * range from 0 to n-2 inclusive.
@@ -816,17 +831,26 @@ void copy_to_BlockVector (
   Vec src);
 
 /**
+ *
+ */
+void copy_to_Vector (
+  Vector<double> &dst,
+  PETScWrappers::MPI::BlockVector src);
+
+/**
  * @brief Copy a LinearAlgebra::distributed::Vector to PETScWrappers::MPI::Vector.
  * Be careful this function involves copy a vector.
  */
-void copy_to_Vector (PETScWrappers::MPI::Vector &dst,
+void copy_to_Vector (
+  PETScWrappers::MPI::Vector &dst,
   const LinearAlgebra::distributed::Vector<double, MemorySpace::Host> &src);
 
 /**
  * @brief Copy a Petsc Vec to LinearAlgebra::distributed::Vector.
  * Be careful this function involves copy a vector.
  */
-void copy_to_Vector (LinearAlgebra::distributed::Vector<double, MemorySpace::Host> &dst,
+void copy_to_Vector (
+  LinearAlgebra::distributed::Vector<double, MemorySpace::Host> &dst,
   Vec src);
 
 /**

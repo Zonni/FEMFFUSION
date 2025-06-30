@@ -1119,8 +1119,7 @@ template <int dim, int n_fe_degree>
       for (unsigned int g1 = 0; g1 < n_groups; g1++)
         for (unsigned int g2 = 0; g2 < n_groups; g2++)
         {
-          this->matrix_blocks[g1][g2] =
-                                        new PETScWrappers::MPI::SparseMatrix;
+          this->matrix_blocks[g1][g2] = new PETScWrappers::MPI::SparseMatrix;
           this->matrix_blocks[g1][g2]->reinit(this->locally_owned_dofs,
             this->locally_owned_dofs, this->sp, this->comm);
         }

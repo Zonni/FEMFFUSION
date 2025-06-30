@@ -15,7 +15,7 @@ from utils import remove_repeated_point, remove_repeated_data_point
 import numpy as np
 
 plt.close('all')
-(\%)
+
 params = {'backend': 'pdf',
 #          'font.family': 'serif',
           'font.size': 14,

@@ -27,7 +27,7 @@ set Cell_Pitch_z        = 10* 20.0
 set Geometry_Points     = 2 10 1 11 1 11 1 11 1 11 1 11 1 11 1 11 1 11 1 11 2 10
 
 # Boundary Conditopns (LEFT  RIGHT TOP BOTTOM UP DOWN)  (0 = ZeroFlux) (1  Simetria) (2 Albedo) (3 Vaccum, beta=0) 
-set Boundary_Conditions = 0 0 0 0 0 0
+set Boundary_Conditions = 2 2 2 2 2 2
 
 #
 # OUT OPTIONS

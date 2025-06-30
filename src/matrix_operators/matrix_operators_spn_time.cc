@@ -910,7 +910,7 @@ template <int dim, int n_fe_degree>
       //  Initialize Matrix free data
       typename dealii::MatrixFree<dim, double>::AdditionalData additional_data;
       additional_data.tasks_parallel_scheme =
-          dealii::MatrixFree<dim, double>::AdditionalData::partition_partition;
+          dealii::MatrixFree<dim, double>::AdditionalData::none;
       additional_data.mapping_update_flags = (update_values
                                               | update_JxW_values);
       MappingQ1<dim> mapping;
@@ -1144,7 +1144,7 @@ template <int dim, int n_fe_degree>
       //  Initialize Matrix free data
       typename dealii::MatrixFree<dim, double>::AdditionalData additional_data;
       additional_data.tasks_parallel_scheme =
-          dealii::MatrixFree<dim, double>::AdditionalData::partition_partition;
+          dealii::MatrixFree<dim, double>::AdditionalData::none;
 
       additional_data.mapping_update_flags = (update_values
                                               | update_JxW_values);

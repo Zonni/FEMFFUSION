@@ -146,7 +146,8 @@ template <int dim, int n_fe_degree, typename number>
     /**
      * @brief
      */
-    void vmult_add_row (PETScWrappers::MPI::Vector &dst,
+    void vmult_add_row (
+      double &dst,
       const PETScWrappers::MPI::Vector &src,
       unsigned int row_dst);
 
@@ -287,6 +288,14 @@ template <int dim, int n_fe_degree, typename number>
       const ParallelVector &src) const;
 
     /**
+     * @brief Vector Matrix multiplication only 1 row
+     */
+    void vmult_add_row (
+      double &dst,
+      const PETScWrappers::MPI::Vector &src,
+      unsigned int row_dst);
+
+    /**
      * @brief
      */
     void Tvmult (ParallelVector &dst,
@@ -368,6 +377,15 @@ template <int dim, int n_fe_degree, typename number>
       const ParallelVector &src,
       const std::pair<unsigned int, unsigned int> &cell_range) const;
 
+    /**
+     *
+     */
+    void cell_local_apply_row (
+      const dealii::MatrixFree<dim, number> &matfree_data,
+      ParallelVector &dst,
+      const ParallelVector &src,
+      const std::pair<unsigned int, unsigned int> &cell_range) const;
+
     void cell_boundary_apply (const dealii::MatrixFree<dim, number> &matfree_data,
       ParallelVector &dst,
       const ParallelVector &src,
@@ -401,6 +419,8 @@ template <int dim, int n_fe_degree, typename number>
     const std::vector<unsigned int> *boundary_conditions;
     const std::vector<double> *albedo_factors;
     const AffineConstraints<double> *constraints;
+
+    unsigned int apply_on_row_index;
 
   };
 

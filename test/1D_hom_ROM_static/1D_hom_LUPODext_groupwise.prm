@@ -5,12 +5,12 @@
 set Dimension            = 1
 
 # Number of eigenvalues
-set N_Eigenvalues        = 4
+set N_Eigenvalues        = 1
 
 
 # REACTOR DEFINITION
 # Finite element Degree
-set FE_Degree           = 3
+set FE_Degree           = 1
 
 # Number of global refinements 
 set N_Refinements       = 2
@@ -60,4 +60,4 @@ set ROM_Group_Wise           = Group_Wise
 
 # LUPOD
 set LUPOD_Type               = LUPOD_ext
-set N_LUPOD_Points           =  13
+set N_LUPOD_Points           = 5

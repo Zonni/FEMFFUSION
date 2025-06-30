@@ -253,13 +253,15 @@ template <int dim, int n_fe_degree>
     unsigned int n_matsvecs;
 
     // LUPOD data
-    bool LUPOD_flag;
+    std::string LUPOD_type;
     double epsilon_N;
     double epsilon_M;
-    std::vector<unsigned int> snaps;   // Store selected snapshot indices
+    //std::vector<unsigned int> snaps;   // Store selected snapshot indices
     std::vector<unsigned int> points;  // Store collocation point indices
+    //std::vector<BlockVector<double> > snap_basis_red;
+    //std::vector<BlockVector<double> > snap_basis_ful;
     std::vector<Vector<double> > snap_basis_red;
-    //std::vector<PETScWrappers::MPI::BlockVector> snap_basis_full;
+    std::vector<Vector<double> > snap_basis_ful;
 
   };
 

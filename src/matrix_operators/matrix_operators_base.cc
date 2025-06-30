@@ -642,7 +642,7 @@ template <int dim, int n_fe_degree>
     AssertDimension(src.size(), this->m());
 
     const unsigned int row_block = static_cast<unsigned int>(row / this->n_dofs_block);
-    const unsigned int row_index_on_block = row %  this->n_dofs_block;
+    const unsigned int row_index_on_block = row % this->n_dofs_block;
 
     for (unsigned int j = 0; j < n_blocks; j++)
     {
@@ -814,21 +814,25 @@ template <int dim, int n_fe_degree>
     AssertIndexRange(row, n_blocks);
     AssertIndexRange(col, n_blocks);
 
-    //if (matrixfree_type == non_diagonal or matrixfree_type == full_matrixfree)
-    //  mass_mf_blocks[row][col]->vmult_add_row(dst, src, dst_row);
-    //else FIXME
-    //  matrix_blocks[row][col]->vmult_add(dst, src, dst_row);
-    AssertRelease(matrixfree_type == full_allocated,
-      "LUPOD ONLY IMPLEMENTED FOR full_allocated");
+    if (matrixfree_type == non_diagonal or matrixfree_type == full_matrixfree)
+    {
+      //mass_mf_blocks[row][col]->vmult_add_row(dst, src, dst_row);
+    }
+    else
+    {
+      //  matrix_blocks[row][col]->vmult_add(dst, src, dst_row);
+      AssertRelease(matrixfree_type == full_allocated,
+        "LUPOD ONLY IMPLEMENTED FOR full_allocated");
 
-    PetscInt ncols;
-    const PetscInt *cols;
-    const PetscScalar *vals;
-    MatGetRow((*matrix_blocks[row][col]), row_index_on_block, &ncols, &cols, &vals);
-    for (PetscInt j = 0; j < ncols; j++)
-      dst += src[cols[j]] * vals[j];
+      PetscInt ncols;
+      const PetscInt *cols;
+      const PetscScalar *vals;
+      MatGetRow((*matrix_blocks[row][col]), row_index_on_block, &ncols, &cols, &vals);
+      for (PetscInt j = 0; j < ncols; j++)
+        dst += src[cols[j]] * vals[j];
 
-    MatRestoreRow((*matrix_blocks[row][col]), row_index_on_block, &ncols, &cols, &vals);
+      MatRestoreRow((*matrix_blocks[row][col]), row_index_on_block, &ncols, &cols, &vals);
+    }
   }
 
 //-------------------------------------------------------------------------------------------//
@@ -971,7 +975,7 @@ template <int dim, int n_fe_degree>
 
     const unsigned int row_block = static_cast<unsigned int>(row / this->n_dofs_block);
     const unsigned int row_index_on_block = row % this->n_dofs_block;
-       for (unsigned int j = 0; j < n_blocks; j++)
+    for (unsigned int j = 0; j < n_blocks; j++)
     {
       this->vmult_add_row(row_block, j, dst, src.block(j), row_index_on_block);
     }
@@ -1302,21 +1306,26 @@ template <int dim, int n_fe_degree>
     AssertIndexRange(row, n_blocks);
     AssertIndexRange(col, n_blocks);
 
-    //if (matrixfree_type == non_diagonal or matrixfree_type == full_matrixfree)
-    //  mass_mf_blocks[row][col]->vmult_add_row(dst, src, dst_row);
-    //else FIXME
-    //matrix_blocks[row][col]->vmult_add_row(dst, src, dst_row);
-    AssertRelease(matrixfree_type == full_allocated,
-      "LUPOD ONLY IMPLEMENTED FOR full_allocated");
+    if (matrixfree_type == non_diagonal or matrixfree_type == full_matrixfree)
+    {
+      mass_mf_blocks[row][col]->vmult_add_row(dst, src, dst_row_on_block);
+    }
+    else
+    {
+      //matrix_blocks[row][col]->vmult_add_row(dst, src, dst_row);
+      AssertRelease(matrixfree_type == full_allocated,
+        "LUPOD ONLY IMPLEMENTED FOR full_allocated");
 
-    PetscInt ncols;
-    const PetscInt *cols;
-    const PetscScalar *vals;
-    MatGetRow((*matrix_blocks[row][col]), dst_row_on_block, &ncols, &cols, &vals);
-    for (PetscInt j = 0; j < ncols; j++)
-      dst += src[cols[j]] * vals[j];
+      PetscInt ncols;
+      const PetscInt *cols;
+      const PetscScalar *vals;
+      MatGetRow((*matrix_blocks[row][col]), dst_row_on_block, &ncols, &cols, &vals);
+      for (PetscInt j = 0; j < ncols; j++)
+        dst += src[cols[j]] * vals[j];
 
-    MatRestoreRow((*matrix_blocks[row][col]), dst_row_on_block, &ncols, &cols, &vals);
+      MatRestoreRow((*matrix_blocks[row][col]), dst_row_on_block, &ncols, &cols, &vals);
+    }
+
   }
 
 /**

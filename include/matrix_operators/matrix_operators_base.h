@@ -363,6 +363,7 @@ template <int dim, int n_fe_degree>
 
     IndexSet locally_owned_dofs;
     IndexSet locally_relevant_dofs;
+    //std::vector<types::global_dof_index> local_dofs_per_process;
 
     MatrixFreeType matrixfree_type;
 

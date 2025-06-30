@@ -22,6 +22,8 @@
 #include "../include/rom/rom_kinetics.h"
 #include "../include/rom/rom_static.h"
 
+#include <omp.h>
+
 /**
  * Print the FEMFFUSION logo.
  */
@@ -283,6 +285,8 @@ void prm_declare_entries (ParameterHandler &prm)
     "Time Break of Snapshots used in ROM calculation");
   prm.declare_entry("N_Snapshots", "2", Patterns::Integer(),
     "Number of snapshots for the ROM method");
+  prm.declare_entry("N_Test", "50", Patterns::Integer(),
+    "Number of test for the Static ROM Method");
   prm.declare_entry("ROM_Slope_Up", "0.0", Patterns::Anything(),
     "Slope for the ramp perturbation");
   prm.declare_entry("ROM_Slope_Down", "0.0", Patterns::Anything(),
@@ -295,15 +299,15 @@ void prm_declare_entries (ParameterHandler &prm)
 
   // LUPOD
   prm.declare_entry("LUPOD_Type", "POD",
-    Patterns::Selection("POD | LUPOD | LUPOD_ext"),
+    Patterns::Selection("POD | LUPOD | LUPOD_ext | Random | FEM1"),
     "Activate LUPOD or LUPOD_ext techniques to optimize ROM");
   prm.declare_entry("Epsilon_N", "0.0", Patterns::Double(0, 1.0),
     "Epsilon_M of LUPOD technique");
   prm.declare_entry("Epsilon_M", "0.0", Patterns::Double(0, 1.0),
     "Epsilon_M of LUPOD technique");
   prm.declare_entry("N_LUPOD_Points", "0",
-      Patterns::Integer(),
-      "Number of LUPOD points retained in the cross products");
+    Patterns::Integer(),
+    "Number of LUPOD points retained in the cross products");
 }
 
 /**
@@ -425,6 +429,11 @@ int main (int argc,
 
       AssertRelease(dim >= 0 and dim <= 3,
         "Spatial dimension not valid,  dim = " + num_to_str(dim));
+
+      MultithreadInfo::set_thread_limit(1);
+
+      omp_set_dynamic(0);        // Disable dynamic teams
+      omp_set_num_threads(1);    // Set fixed number of threads
 
       // The template parameters must be a constant:
       // This way, we ensure the compilation of all the cases
@@ -576,6 +585,8 @@ int main (int argc,
               NoiseDiffusion<3, 1> noise_prob(prm, static_prob, verbose, silent);
             else if (rom_transient)
               ROMKinetics<3, 1> rom_pro(prm, static_prob, verbose, silent);
+            else if (rom_static)
+              ROMStatic<3, 1> rom_pro(prm, static_prob, verbose, silent);
           }
           else if (fe_degree == 2)
           {
@@ -633,6 +644,7 @@ int main (int argc,
       /* ------------------------------------------------------ */
       if (transport == "spn")
       {
+        AssertRelease(rom_static == false, "ROM STATIC not implemented with SPN");
         if (dim == 1)
         {
           if (fe_degree == 1)

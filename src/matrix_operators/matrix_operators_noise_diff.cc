@@ -360,7 +360,7 @@ template <int dim, int n_fe_degree>
     //  Initialize Matrix free data
     typename dealii::MatrixFree<dim, double>::AdditionalData additional_data;
     additional_data.tasks_parallel_scheme =
-        dealii::MatrixFree<dim, double>::AdditionalData::partition_color;
+        dealii::MatrixFree<dim, double>::AdditionalData::none;
     additional_data.mapping_update_flags = (update_values
                                             | update_gradients
                                             | update_JxW_values);

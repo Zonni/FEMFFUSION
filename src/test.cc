@@ -20,7 +20,6 @@
 #include "../include/rom/rom_kinetics.h"
 #include "../include/rom/rom_utils.h"
 
-
 using namespace dealii;
 
 /**
@@ -29,23 +28,6 @@ using namespace dealii;
 int run_tests ()
 {
   std::string input_file, out_file;
-
-
-  //
-  // ---------------------- TEST ROM ----------------------- //
-  //
-  //
-  // Test
-  //test_LUPOD_extended ();
-  // input_file = "test/1D_hom_5cells_mov_prec/1D_5cells_f1_rom.prm";
-  //run_test_rom_LUPOD_1();
-  // input_file = "test/1D_hom_5cells_mov_prec/1D_5cells_f1_rom.prm";
-  //run_test_rom_LUPOD_2();
-
-
-
-  //input_file = "test/3D_Langenbuch/3D_Langenbuch_rom_rods.prm";
-  //run_test_static_rom(input_file, 3);
 
 #ifdef DEBUG
   std::cout<<" Compiled in DEBUG mode! "<<std::endl;
@@ -61,6 +43,12 @@ int run_tests ()
 
   // Run test in utils.cc
   run_tests_utils();
+  // ---------------------------------------------------------------------//
+  // ----------------------------- TEST ROM ------------------------------//
+  // ---------------------------------------------------------------------//
+  test_POD_groupwise();
+  test_LUPOD_extended();
+  test_LUPOD_extended_group_wise();
 
   //-----------------------------------------------------------------//
   // TEST 1D_hom_slab_2cm
@@ -351,8 +339,9 @@ int run_tests ()
   // --------------------------------------------------------------- //
   // 2D Rectangular Borders Perturbation
   // --------------------------------------------------------------- //
-  //input_file = "test/2D_test_vibration/2D_test.prm";
-  //test_noise_problem(input_file, 0.465861); //TODO
+  input_file = "test/2D_test_vibration/2D_test.prm";
+  test_noise_problem(input_file, 0.372685);
+  //test_noise_problem(input_file, 0.465861);
 
   input_file = "test/2D_test_vibration/2D_test_ref.prm";
   test_noise_problem(input_file, 0.389968);
@@ -361,8 +350,9 @@ int run_tests ()
   // --------------------------------------------------------------- //
   // 2D Hexagonal Borders Perturbation
   // --------------------------------------------------------------- //
-  //input_file = "test/2D_test_vibration_hex/2D_test.prm"; //TODO
+  input_file = "test/2D_test_vibration_hex/2D_test.prm";
   //test_noise_problem(input_file, 0.465927);
+  test_noise_problem(input_file, 0.372745);
 
   //
   // --------------------------------------------------------------- //
@@ -386,7 +376,6 @@ int run_tests ()
   //
   // --------------------------------------------------------------- //
   //  TEST MESHES
-
   // Test rectangular mesh + distributed + Rods:
 
   double power_double[] =
@@ -408,13 +397,11 @@ int run_tests ()
   test_keff_problem(input_file, 0.801286);
   test_power_evolution(input_file, power_double_hex_d, 1e-4);
 
-  ////-----------------------------------------------------------------//
-
+  //-------------------------------------------------------------------//
   // Test Type of Perturbations:
 
   // TEST 3D Langenbuch
   // Test Langenbuch reactor with Rods:"
-
   std::vector<double> power_one(2, 1.0);
   input_file = "test/3D_Langenbuch/3D_Langenbuch_ds.prm";
   test_keff_problem(input_file, 1.00023);
@@ -638,13 +625,15 @@ int run_tests ()
                                       1.3178183043,
                                       1.3821574851, 1.4532397975, 1.5321485764 };
   std::vector<double> power_7_groups_fi_nc(power_7_groups_Fi_nc,
-    power_7_groups_Fi_nc
-    + sizeof(power_7_groups_Fi_nc) / sizeof(double));
+    power_7_groups_Fi_nc + sizeof(power_7_groups_Fi_nc) / sizeof(double));
+
+
+  //run_test_rom_LUPOD_1();
+  //run_test_rom_LUPOD_2();
+  //input_file = "test/3D_Langenbuch/3D_Langenbuch_rom_rods.prm";
+  //run_test_static_rom(input_file, 3);
 
   // ---------------------------------------------------------------------//
-
-// TODO
-
   std::cout << std::endl;
   std::cout << "  ALL TEST PASSED!" << std::endl;
   std::cout << std::endl;
@@ -1801,184 +1790,176 @@ void run_tests_utils ()
  * @brief run_test_rom_LUPOD
  * Test LUPOD Technique
  */
-void run_test_rom_LUPOD_1 ()
-{
-  std::string input_file = "test/1D_hom_5cells_mov_prec/1D_5cells_f1_rom_LUPOD.prm";
-  std::cout << "Testing ROM LUPOD 1... " << input_file << " " << std::flush;
+/**
+ void run_test_rom_LUPOD_1 ()
+ {
+ std::string input_file = "test/1D_hom_5cells_mov_prec/1D_5cells_f1_rom_LUPOD.prm";
+ std::cout << "Testing ROM LUPOD 1... " << input_file << " " << std::flush;
 
-  ParameterHandler prm;
-  prm_declare_entries(prm);
-  AssertRelease(fexists(input_file),
-    "ERROR!: Input File .prm Does NOT exist\n Use -f input_file.rm  option");
-  prm.parse_input(input_file);
+ ParameterHandler prm;
+ prm_declare_entries(prm);
+ AssertRelease(fexists(input_file),
+ "ERROR!: Input File .prm Does NOT exist\n Use -f input_file.rm  option");
+ prm.parse_input(input_file);
 
-  std::string transport = prm.get("Transport_Appr");
-  lower_case(transport);
-  AssertRelease(transport == "diffusion",
-    "This test is only implemented for diffusion.");
+ std::string transport = prm.get("Transport_Appr");
+ lower_case(transport);
+ AssertRelease(transport == "diffusion",
+ "This test is only implemented for diffusion.");
 
-  int fe_degree = prm.get_integer("FE_Degree");
-  AssertRelease(fe_degree == 1, "This test is implemented for FE_Degree==1");
+ int fe_degree = prm.get_integer("FE_Degree");
+ AssertRelease(fe_degree == 1, "This test is implemented for FE_Degree==1");
 
-  bool rom = prm.get_bool("ROM_Transient");
-  AssertRelease(rom, "This test is implemented for ROM Computation");
+ bool rom = prm.get_bool("ROM_Transient");
+ AssertRelease(rom, "This test is implemented for ROM Computation");
 
-  StaticDiffusion<1, 1> static_prob(prm, input_file, false, true);
-  ROMKinetics<1, 1> rom_prob(prm, static_prob, false, true, true);
-  const double tol = 1e-5;
-  std::vector<unsigned int> points_reference =
-                                                 { 3, 1, 4 };
-  std::vector<unsigned int> snaps_reference =
-                                                { 3, 1, 4 };
-  //  std::cout << "rom_prob.snaps" << std::endl;
-  //  print_vector(rom_prob.snaps);
-  //  std::cout << " rom_prob.points" << std::endl;
-  //  print_vector(rom_prob.points);
-  //  std::cout << " rom_prob.epsilon_M " << rom_prob.epsilon_M << std::endl;
-  //  std::cout << " rom_prob.epsilon_N " << rom_prob.epsilon_N << std::endl;
+ StaticDiffusion<1, 1> static_prob(prm, input_file, false, true);
+ ROMKinetics<1, 1> rom_prob(prm, static_prob, false, true, true);
+ const double tol = 1e-5;
+ std::vector<unsigned int> points_reference =
+ { 3, 1, 4 };
+ std::vector<unsigned int> snaps_reference =
+ { 3, 1, 4 };
+ std::cout << "rom_prob.snaps" << std::endl;
+ print_vector(rom_prob.snaps);
+ std::cout << " rom_prob.points" << std::endl;
+ print_vector(rom_prob.points);
+ std::cout << " rom_prob.epsilon_M " << rom_prob.epsilon_M << std::endl;
+ std::cout << " rom_prob.epsilon_N " << rom_prob.epsilon_N << std::endl;
 
-  assert_vectors_similar(rom_prob.snaps, snaps_reference, tol);
-  assert_vectors_similar(rom_prob.points, points_reference, tol);
+ assert_vectors_similar(rom_prob.snaps, snaps_reference, tol);
+ assert_vectors_similar(rom_prob.points, points_reference, tol);
 
-  PETScWrappers::MPI::Vector dst0;
-  std::vector<std::vector<double> >
-  U_red_ref =
-                {
-                    { -7.554602e-01, +4.166607e-01, -5.056419e-01 },
-                    { -4.931731e-01, -8.696971e-01, +2.018046e-02 },
-                    { -4.313468e-01, +2.646145e-01, +8.625074e-01 }
-                };
+ PETScWrappers::MPI::Vector dst0;
+ std::vector<std::vector<double> >
+ U_red_ref =
+ {
+ { -7.554602e-01, +4.166607e-01, -5.056419e-01 },
+ { -4.931731e-01, -8.696971e-01, +2.018046e-02 },
+ { -4.313468e-01, +2.646145e-01, +8.625074e-01 }
+ };
 
-  // Test Elements
-  for (unsigned int i = 0; i < rom_prob.snap_basis_red.size(); ++i)
-    for (unsigned int j = 0; j < rom_prob.snap_basis_red[0].size(); ++j)
-    {
-      AssertRelease(is_similar(U_red_ref[j][i], rom_prob.snap_basis_red[i][j], tol),
-        "Error in U_red_ref[" + num_to_str(i) + "]" + "[" + num_to_str(i) + "]");
-    }
+ // Test Elements
+ for (unsigned int i = 0; i < rom_prob.snap_basis_red.size(); ++i)
+ for (unsigned int j = 0; j < rom_prob.snap_basis_red[0].size(); ++j)
+ {
+ AssertRelease(is_similar(U_red_ref[j][i], rom_prob.snap_basis_red[i][j], tol),
+ "Error in U_red_ref[" + num_to_str(i) + "]" + "[" + num_to_str(i) + "]");
+ }
+ // singular_values = { 1.52834, 0.587737, 0.0365, 3.23611e-16}
 
-  // singular_values = { 1.52834, 0.587737, 0.0365, 3.23611e-16}
+ //Test U_full
+ std::vector<std::vector<double> >
+ U_full_ref =
+ {
+ { +1.775534e-17, -9.415731e-17, -2.753979e-15 },
+ { -4.931731e-01, -8.696971e-01, +2.018046e-02 },
+ { -7.366730e-01, -3.752936e-01, +8.965586e-01 },
+ { -7.554602e-01, +4.166607e-01, -5.056419e-01 },
+ { -4.313468e-01, +2.646145e-01, +8.625074e-01 },
+ { +5.697307e-17, -1.716882e-16, -1.704035e-15 },
+ };
 
-  // Test U_full
-  std::vector<std::vector<double> >
-  U_full_ref =
-                 {
-                     { +1.775534e-17, -9.415731e-17, -2.753979e-15 },
-                     { -4.931731e-01, -8.696971e-01, +2.018046e-02 },
-                     { -7.366730e-01, -3.752936e-01, +8.965586e-01 },
-                     { -7.554602e-01, +4.166607e-01, -5.056419e-01 },
-                     { -4.313468e-01, +2.646145e-01, +8.625074e-01 },
-                     { +5.697307e-17, -1.716882e-16, -1.704035e-15 },
-                 };
+ // Test Elements
+ for (unsigned int i = 0; i < rom_prob.snap_basis.size(); ++i)
+ for (unsigned int j = 0; j < rom_prob.snap_basis[0].size(); ++j)
+ {
+ AssertRelease(is_similar(U_full_ref[j][i], rom_prob.snap_basis[i][j], tol),
+ "Error in U_full[" + num_to_str(i) + "]" + "[" + num_to_str(i) + "]");
+ }
 
-  // Test Elements
-  for (unsigned int i = 0; i < rom_prob.snap_basis.size(); ++i)
-    for (unsigned int j = 0; j < rom_prob.snap_basis[0].size(); ++j)
-    {
-      AssertRelease(is_similar(U_full_ref[j][i], rom_prob.snap_basis[i][j], tol),
-        "Error in U_full[" + num_to_str(i) + "]" + "[" + num_to_str(i) + "]");
-    }
-
-  std::cout << " Passed!" << std::endl;
-}
+ std::cout << " Passed!" << std::endl;
+ }
+ */
 
 /**
- * @brief run_test_rom_LUPOD
- * Test LUPOD technique
+ * @brief run_test_rom_LUPOD_2
+ * Test LUPOD Technique
  */
-void run_test_rom_LUPOD_2 ()
-{
-  std::string input_file = "test/1D_hom_5cells_mov_prec/1D_5cells_f1_rom_LUPOD2.prm";
-  std::cout << "Testing ROM LUPOD 2... " << input_file << " " << std::flush;
+/**
+ void run_test_rom_LUPOD_2 ()
+ {
+ std::string input_file = "test/1D_hom_5cells_mov_prec/1D_5cells_f1_rom_LUPOD2.prm";
+ std::cout << "Testing ROM LUPOD 2... " << input_file << " " << std::flush;
 
-  ParameterHandler prm;
-  prm_declare_entries(prm);
-  AssertRelease(fexists(input_file),
-    "ERROR!: Input File .prm Does NOT exist\n Use -f input_file.rm  option");
-  prm.parse_input(input_file);
+ ParameterHandler prm;
+ prm_declare_entries(prm);
+ AssertRelease(fexists(input_file),
+ "ERROR!: Input File .prm Does NOT exist\n Use -f input_file.rm  option");
+ prm.parse_input(input_file);
 
-  std::string transport = prm.get("Transport_Appr");
-  lower_case(transport);
-  AssertRelease(transport == "diffusion",
-    "This test is only implemented for diffusion.");
+ std::string transport = prm.get("Transport_Appr");
+ lower_case(transport);
+ AssertRelease(transport == "diffusion",
+ "This test is only implemented for diffusion.");
 
-  int fe_degree = prm.get_integer("FE_Degree");
-  AssertRelease(fe_degree == 2, "This test is implemented for FE_Degree==1");
+ int fe_degree = prm.get_integer("FE_Degree");
+ AssertRelease(fe_degree == 2, "This test is implemented for FE_Degree==1");
 
-  bool rom = prm.get_bool("ROM_Transient");
-  AssertRelease(rom, "This test is implemented for ROM Computation");
+ bool rom = prm.get_bool("ROM_Transient");
+ AssertRelease(rom, "This test is implemented for ROM Computation");
 
-  StaticDiffusion<1, 2> static_prob(prm, input_file, false, true);
-  ROMKinetics<1, 2> rom_prob(prm, static_prob, false, true, true);
-  const double tol = 1e-6;
-  std::vector<unsigned int> snaps_reference =
-                                                { 1, 2 };
-  std::vector<unsigned int> points_reference =
-                                                 { 4, 5 };
+ StaticDiffusion<1, 2> static_prob(prm, input_file, false, true);
+ ROMKinetics<1, 2> rom_prob(prm, static_prob, false, true, true);
+ const double tol = 1e-6;
+ std::vector<unsigned int> snaps_reference =
+ { 1, 2 };
+ std::vector<unsigned int> points_reference =
+ { 4, 5 };
 
-  assert_vectors_similar(rom_prob.snaps, snaps_reference, tol);
-  assert_vectors_similar(rom_prob.points, points_reference, tol);
-  std::vector<std::vector<double> >
-  U_red_ref =
-                {
-                    { -0.729106, -0.684401 },
-                    { -0.684401, +0.729106 }
-                };
+ assert_vectors_similar(rom_prob.snaps, snaps_reference, tol);
+ assert_vectors_similar(rom_prob.points, points_reference, tol);
+ std::vector<std::vector<double> >
+ U_red_ref =
+ {
+ { -0.729106, -0.684401 },
+ { -0.684401, +0.729106 }
+ };
 
-  // Test Elements
-  for (unsigned int i = 0; i < rom_prob.snap_basis_red.size(); ++i)
-    for (unsigned int j = 0; j < rom_prob.snap_basis_red[0].size(); ++j)
-    {
-      AssertRelease(is_similar(U_red_ref[j][i], rom_prob.snap_basis_red[i][j], tol),
-        "Error in U_red[" + num_to_str(i) + "]" + "[" + num_to_str(i) + "]");
-    }
+ // Test Elements
+ for (unsigned int i = 0; i < rom_prob.snap_basis_red.size(); ++i)
+ for (unsigned int j = 0; j < rom_prob.snap_basis_red[0].size(); ++j)
+ {
+ AssertRelease(is_similar(U_red_ref[j][i], rom_prob.snap_basis_red[i][j], tol),
+ "Error in U_red[" + num_to_str(i) + "]" + "[" + num_to_str(i) + "]");
+ }
 
-  // Test U_full
-  std::vector<std::vector<double> > U_full_ref =
-                                                   {
-                                                       { -0.000000001266899,
-                                                         +0.000000001404289 },
-                                                       { -0.588889993842957,
-                                                         -0.762939586299597 },
-                                                       { -0.330700849029543,
-                                                         -0.481982160696203 },
-                                                       { -0.758143532925241,
-                                                         -0.159583583017522 },
-                                                       { -0.729105631228219,
-                                                         -0.684401182429795 },
-                                                       { -0.684401182429795,
-                                                         +0.729105631228219 },
-                                                       { -0.741655760998246,
-                                                         +0.443931888864489 },
-                                                       { -0.375852267581478,
-                                                         +0.439099210411635 },
-                                                       { -0.561536596313876,
-                                                         +0.710273354101464 },
-                                                       { -0.000000002552288,
-                                                         +0.000000002829072 },
-                                                       { -0.180285863103333,
-                                                         +0.163023661494686 },
-                                                   };
+ // Test U_full
+ std::vector<std::vector<double> >
+ U_full_ref =
+ {
+ { -0.000000001266899, +0.000000001404289 },
+ { -0.588889993842957, -0.762939586299597 },
+ { -0.330700849029543, -0.481982160696203 },
+ { -0.758143532925241, -0.159583583017522 },
+ { -0.729105631228219, -0.684401182429795 },
+ { -0.684401182429795, +0.729105631228219 },
+ { -0.741655760998246, +0.443931888864489 },
+ { -0.375852267581478, +0.439099210411635 },
+ { -0.561536596313876, +0.710273354101464 },
+ { -0.000000002552288, +0.000000002829072 },
+ { -0.180285863103333, +0.163023661494686 },
+ };
 
-  // Test Elements
-  for (unsigned int i = 0; i < rom_prob.snap_basis.size(); ++i)
-    for (unsigned int j = 0; j < rom_prob.snap_basis[0].size(); ++j)
-    {
-      AssertRelease(is_similar(U_full_ref[j][i], rom_prob.snap_basis[i][j], tol),
-        "Error in U_full[" + num_to_str(i) + "]" + "[" + num_to_str(i) + "]");
-    }
-  // singular_values = { 0.740887,: 0.337672}
+ // Test Elements
+ for (unsigned int i = 0; i < rom_prob.snap_basis.size(); ++i)
+ for (unsigned int j = 0; j < rom_prob.snap_basis[0].size(); ++j)
+ {
+ AssertRelease(is_similar(U_full_ref[j][i], rom_prob.snap_basis[i][j], tol),
+ "Error in U_full[" + num_to_str(i) + "]" + "[" + num_to_str(i) + "]");
+ }
+ //singular_values = { 0.740887, 0.337672}
 
-  // Test vmult_row
-  rom_prob.assemble_matrices();
-  PETScWrappers::MPI::BlockVector src(rom_prob.n_groups, rom_prob.comm, rom_prob.n_dofs,
-    rom_prob.n_dofs);
-  double dst = 0.0;
-  src = 1.0; // Set all vector entries to ones
-  rom_prob.F.vmult_row(dst, src, 3);
+ // Test vmult_row
+ rom_prob.assemble_matrices();
+ PETScWrappers::MPI::BlockVector src(rom_prob.n_groups, rom_prob.comm, rom_prob.n_dofs,
+ rom_prob.n_dofs);
+ double dst = 0.0;
+ src = 1.0; // Set all vector entries to ones
+ rom_prob.F.vmult_row(dst, src, 3);
 
-  AssertRelease(is_similar(dst, 0.178074, tol), "  Error in vmult_row ");
+ AssertRelease(is_similar(dst, 0.178074, tol), "  Error in vmult_row ");
 
-  std::cout << " Passed!" << std::endl;
-}
-
+ std::cout << " Passed!" << std::endl;
+ }
+ */

@@ -62,7 +62,7 @@ void compute_qr (
  * on matrix A using as a pivot (j_index, k_index)
  */
 void gaussian_elimination (
-  LAPACKFullMatrix<double> &S_mod,
+  FullMatrix<double> &S_mod,
   unsigned int j_index,
   unsigned int k_index);
 
@@ -71,12 +71,12 @@ void gaussian_elimination (
  * of matrix A.
  */
 void find_max_index (
-  const LAPACKFullMatrix<double> &A,
+  const FullMatrix<double> &A,
   unsigned int &j_index,
   unsigned int &k_index);
 
 /**
- *
+ *  @brief
  */
 void LUPOD (
   const LAPACKFullMatrix<double> &S,
@@ -88,16 +88,93 @@ void LUPOD (
   LAPACKFullMatrix<double> &U_red);
 
 /**
- *
+ *  @brief
  */
-void LUPOD_extended (
-  const LAPACKFullMatrix<double> &S,
-  const double epsilon_M,
-  const unsigned N_points,
+void get_points_LUPOD_extended (
+  const std::vector<PETScWrappers::MPI::BlockVector> &S,
+  const unsigned int n_points,
   std::vector<unsigned int> &snaps,
   std::vector<unsigned int> &points,
-  LAPACKFullMatrix<double> &U_full,
-  LAPACKFullMatrix<double> &U_red);
+  const unsigned int block); // -1 if yoy want all blocks of S considered
+
+/**
+ * @brief
+ */
+void compute_POD_basis_monolithic (
+  std::vector<PETScWrappers::MPI::BlockVector> &snapshots,
+  const double epsilon_M,
+  const unsigned int M_req,
+  unsigned int &dim_rom,
+  std::vector<PETScWrappers::MPI::BlockVector> &snap_basis);
+
+/**
+ * @brief
+ */
+void compute_POD_basis_group_wise (
+  std::vector<PETScWrappers::MPI::BlockVector> &snapshots,
+  const double epsilon_M,
+  const unsigned int M_req,
+  unsigned int &dim_rom,
+  std::vector<PETScWrappers::MPI::BlockVector> &snap_basis);
+
+/**
+ * @brief
+ */
+void petsc_svd (
+  Mat &Mat_snap,
+  const double epsilon_M,
+  const unsigned int M_req,
+  std::vector<PETScWrappers::MPI::Vector> &snap_basis);
+
+/**
+ *  @brief
+ */
+void compute_LUPOD_basis_monolithic (
+  std::vector<PETScWrappers::MPI::BlockVector> &snapshots,
+  const double epsilon_M,
+  const double epsilon_N,
+  std::vector<std::vector<unsigned int> > &points,
+  unsigned int &dim_rom,
+  std::vector<BlockVector<double> > &snap_basis,
+  std::vector<BlockVector<double> > &snap_basis_red);
+
+/**
+ * @brief
+ */
+void compute_LUPOD_basis_group_wise (
+  std::vector<PETScWrappers::MPI::BlockVector> &snapshots,
+  const double epsilon_M,
+  const double epsilon_N,
+  std::vector<std::vector<unsigned int> > &points,
+  unsigned int &dim_rom,
+  std::vector<BlockVector<double> > &snap_basis,
+  std::vector<BlockVector<double> > &snap_basis_red);
+
+/**
+ * @brief
+ */
+void compute_LUPODext_basis_monolithic (
+  std::vector<PETScWrappers::MPI::BlockVector> &snapshots,
+  const double epsilon_M,
+  const unsigned int M_req,
+  const unsigned int n_points,
+  std::vector<std::vector<unsigned int> > &points_per_block,
+  unsigned int &dim_rom,
+  std::vector<BlockVector<double> > &snap_basis_ful,
+  std::vector<BlockVector<double> > &snap_basis_red);
+
+/**
+ * @brief
+ */
+void compute_LUPODext_basis_group_wise (
+  std::vector<PETScWrappers::MPI::BlockVector> &snapshots,
+  const double epsilon_M,
+  const unsigned int M_req,
+  const unsigned int n_points_per_block,
+  std::vector<std::vector<unsigned int> > &points_per_block,
+  unsigned int &dim_rom,
+  std::vector<BlockVector<double> > &snap_basis_ful,
+  std::vector<BlockVector<double> > &snap_basis_red);
 
 /**
  * @brief Just a test of LUPOD_extended
@@ -105,75 +182,55 @@ void LUPOD_extended (
 void test_LUPOD_extended ();
 
 /**
- *
+ * @brief Just a test of compute_POD_basis_group_wise
  */
-void compute_POD_basis_monolithic (
-  std::vector<PETScWrappers::MPI::BlockVector> &snapshots,
-  const double epsilon_M,
-  std::vector<unsigned int> &snaps,
-  unsigned int &dim_rom,
-  std::vector<PETScWrappers::MPI::BlockVector> &snap_basis);
+void test_POD_groupwise ();
+
+/**
+ * @brief Just a test of test_LUPOD_extended_group_wise
+ */
+void test_LUPOD_extended_group_wise ();
 
 /**
  *
  */
-void compute_POD_basis_group_wise (
-  std::vector<PETScWrappers::MPI::BlockVector> &snapshots,
-  const double epsilon_M,
-  std::vector<unsigned int> &snaps,
-  unsigned int &dim_rom,
-  std::vector<PETScWrappers::MPI::BlockVector> &snap_basis);
-
-/**
- *
- */
-void compute_LUPOD_basis_monolithic (
-  std::vector<PETScWrappers::MPI::BlockVector> &snapshots,
-  const double epsilon_M,
-  const double epsilon_N,
-  std::vector<unsigned int> &snaps,
-  std::vector<unsigned int> &points,
-  unsigned int &dim_rom,
-  std::vector<PETScWrappers::MPI::BlockVector> &snap_basis,
-  std::vector<Vector<double> > &snap_basis_red);
-
-/**
- *
- */
-void compute_LUPOD_basis_group_wise (
-  std::vector<PETScWrappers::MPI::BlockVector> &snapshots,
-  const double epsilon_M,
-  const double epsilon_N,
-  std::vector<unsigned int> &snaps,
-  std::vector<unsigned int> &points,
-  unsigned int &dim_rom,
-  std::vector<PETScWrappers::MPI::BlockVector> &snap_basis,
-  std::vector<Vector<double> > &snap_basis_red);
-
-/**
- *
- */
-void compute_LUPODext_basis_monolithic (
-  std::vector<PETScWrappers::MPI::BlockVector> &snapshots,
-  const double epsilon_M,
+void get_unique_random_integers (
+  const unsigned int N,
   const unsigned int n_points,
-  std::vector<unsigned int> &snaps,
-  std::vector<unsigned int> &points,
-  unsigned int &dim_rom,
-  std::vector<PETScWrappers::MPI::BlockVector> &snap_basis,
-  std::vector<Vector<double> > &snap_basis_red);
+  std::vector<int> &points);
 
 /**
  *
  */
-void compute_LUPODext_basis_group_wise (
+void compute_random_points_group_wise (
   std::vector<PETScWrappers::MPI::BlockVector> &snapshots,
-  const double epsilon_M,
   const unsigned int n_points,
-  std::vector<unsigned int> &snaps,
-  std::vector<unsigned int> &points,
+  std::vector<std::vector<unsigned int> > &points_per_block,
   unsigned int &dim_rom,
-  std::vector<PETScWrappers::MPI::BlockVector> &snap_basis,
-  std::vector<Vector<double> > &snap_basis_red);
+  std::vector<BlockVector<double> > &snap_basis,
+  std::vector<BlockVector<double> > &snap_basis_red);
+
+/**
+ *
+ */
+template <int dim>
+  void compute_points_FEM1 (
+    const DoFHandler<dim> &dof_handler,
+    std::vector<PETScWrappers::MPI::BlockVector> &snapshots,
+    unsigned int &n_points,
+    std::vector<std::vector<unsigned int> > &points_per_block,
+    unsigned int &dim_rom,
+    std::vector<BlockVector<double> > &snap_basis,
+    std::vector<BlockVector<double> > &snap_basis_red);
+
+/**
+ * @brief Just a test of LUPOD_extended
+ */
+void test_LUPOD_extended ();
+
+/**
+ * @brief Just a test of compute_POD_basis_group_wise
+ */
+void test_POD_groupwise ();
 
 #endif /* ROM_UTILS_H_ */

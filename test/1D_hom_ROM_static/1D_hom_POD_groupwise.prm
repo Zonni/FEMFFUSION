@@ -10,7 +10,7 @@ set N_Eigenvalues        = 4
 
 # REACTOR DEFINITION
 # Finite element Degree
-set FE_Degree           = 3
+set FE_Degree           = 1
 
 # Number of global refinements 
 set N_Refinements       = 2

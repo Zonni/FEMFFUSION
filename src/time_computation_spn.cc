@@ -974,7 +974,7 @@ template <int dim, int n_fe_degree>
       // Setup the solver
       KSPCreate(comm, &ksp);
       KSPGetPC(ksp, &pc);
-      KSPSetTolerances(ksp, tol_ksp, tol_ksp, PETSC_DEFAULT, 200);
+      KSPSetTolerances(ksp, tol_ksp, tol_ksp, PETSC_DEFAULT, 400);
       KSPSetType(ksp, KSPFGMRES);
       PCSetType(pc, PCSHELL);
       PCShellSetApply(pc, apply_preconditioner_spn<dim, n_fe_degree>);

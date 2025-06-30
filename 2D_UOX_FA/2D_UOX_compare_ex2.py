@@ -322,8 +322,6 @@ ax1.set_ylabel("Phase (deg)")
 fig1.savefig(folder + problem + "_noise_line_pha_g2.pdf", format='pdf')
 
 
-
-
 #%% ---------------------------------------------------------------------------
 # CON NORMALIZACIÓN
 
@@ -352,5 +350,6 @@ ax1.legend(loc='best')
 ax1.set_xlabel("x (cm)")
 ax1.set_ylabel("Relative Noise Magnitude (AU)")
 fig1.savefig(folder + problem + "_noise_line_ampnorm_g2.pdf", format='pdf')
+
 
 

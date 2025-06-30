@@ -10,6 +10,7 @@ from utils import  parse_file, parse_file_complex
 #from utils import   parse_vtk_file, parse_vtk_grid, parse_file
 import numpy as np
 import matplotlib.pyplot as plt
+
 #import scipy.io as sio
 plt.close('all')
 
@@ -18,9 +19,10 @@ params = {'backend': 'pdf',
           'font.size': 14,
           'axes.labelsize': 12,
           'legend.fontsize': 12,
+          'axes.titlesize': 13,
           'xtick.labelsize': 13,
           'ytick.labelsize': 13,
-          'text.usetex': True,
+          'text.usetex': False,
           'lines.linewidth': 2,
           'lines.markersize': 5,
           'lines.markeredgewidth': 1,
@@ -28,27 +30,47 @@ params = {'backend': 'pdf',
           'axes.formatter.useoffset': False,
           'figure.autolayout': True,
           }
+plt.rcParams.update(params)
 
 #%% ===========================================================================
 problem = '2D_UOX_FA'
 
 # FEMFFUSION-FD
-case = '3'
-folder = 'exercise_3/'
+# case    = '6'
+# folder  = 'exercise_6/'
+# omega   = 'w0'
+
+case    = '3'
+folder  = 'exercise_3/'
+omega   = 'w0'
 
 # code= 'FEMFFUSIONFD_DIFF'
 # file_fem_out = folder + '2D_UOX_FA_diff.out'
-# code= 'FEMFFUSIONFD_SP1'
-# file_fem_out = folder + '2D_UOX_FA_sp1.out'
-code= 'FEMFFUSIONFD_DIFF'
-file_fem_out = folder + '2D_UOX_FA_ex3_diff.out'
+# code= 'FEMFFUSIONFD_SP7'
+# file_fem_out = folder + '2D_UOX_FA_ex3_2w0_sp7.out'
+# code= 'FEMFFUSIONFD_SP5'
+# file_fem_out = folder + '2D_UOX_FA_ex6_sp5.out'
+# code= 'FEMFFUSIONFD_SP3'
+# file_fem_out = folder + '2D_UOX_FA_ex6_sp3.out'
+code= 'FEMFFUSIONFD_SP7'
+file_fem_out = folder + '2D_UOX_FA_ex3_sp7.out'
+# code= 'FEMFFUSIONFD_DIFF'
+# file_fem_out = folder + '2D_UOX_FA_ex6_diff.out'
 
-file_fd_sta_g1 = folder + code + '_CASE2_STATIC_FLX_G1.txt'
-file_fd_sta_g2 = folder + code + '_CASE2_STATIC_FLX_G2.txt'
-file_fd_amp_g1 = folder + code + '_CASE2_NOISE_AMP_G1.txt'
-file_fd_amp_g2 = folder + code + '_CASE2_NOISE_AMP_G2.txt'
-file_fd_pha_g1 = folder + code + '_CASE2_NOISE_PHASE_G1.txt'
-file_fd_pha_g2 = folder + code + '_CASE2_NOISE_PHASE_G2.txt'
+# code= 'FEMFFUSIONFD_SP1'
+# file_fem_out = folder + '2D_UOX_FA_ex3_w0_sp1.out'
+
+file_fd_sta_g1 = folder + code + '_' + omega + '_STATIC_FLX_G1.txt'
+file_fd_sta_g2 = folder + code + '_' + omega + '_STATIC_FLX_G2.txt'
+file_fd_amp_g1 = folder + code + '_' + omega + '_NOISE_AMP_G1.txt'
+file_fd_amp_g2 = folder + code + '_' + omega + '_NOISE_AMP_G2.txt'
+file_fd_pha_g1 = folder + code + '_' + omega + '_NOISE_PHASE_G1.txt'
+file_fd_pha_g2 = folder + code + '_' + omega + '_NOISE_PHASE_G2.txt'
+
+file_fd_rea_g1 = folder + code + '_' + omega + '_NOISE_REAL_G1.txt'
+file_fd_rea_g2 = folder + code + '_' + omega + '_NOISE_REAL_G2.txt'
+file_fd_ima_g1 = folder + code + '_' + omega + '_NOISE_IMAG_G1.txt'
+file_fd_ima_g2 = folder + code + '_' + omega + '_NOISE_IMAG_G2.txt'
 
 if case == '2':
     nx = 138
@@ -56,46 +78,51 @@ if case == '2':
 if case == '3':
     nx = 174
     ny = 138
-    x = [0.08, 0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215,
-    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215,
-    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215,
-    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215,
-    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215,
-    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215,
-    0.06430, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02,
-    0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.16570, 0.16570,
-    0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02,
-    0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.06430,
-    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215,
-    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215,
-    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215,
-    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215,
-    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215,
-    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215,
-    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215,
-    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215,
-    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215,
-    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215,
-    0.08];
-    
-    y = [0.08, 0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215,
-    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215,
-    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215,
-    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215,
-    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215,
-    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215,
-    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215,
-    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215,
-    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215,
-    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215,
-    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215,
-    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215,
-    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215,
-    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215,
-    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215,
-    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215,
-    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215,
-    0.08]
+    x = [0.08,  # water_strip
+    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215, #1
+    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215, #2
+    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215, #3
+    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215, #4
+    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215, #5
+    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215, #6
+    0.06430, 
+    0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02,
+    0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 
+    0.16570, 0.16570,                                                       #7
+    0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 
+    0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02,
+    0.06430,
+    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215, #8
+    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215, #9
+    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215, #10
+    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215, #11
+    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215, #12
+    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215, #13
+    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215, #14
+    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215, #15
+    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215, #16
+    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215, #17
+    0.08];  # water_strip
+
+    y = [0.08,  # water_strip
+    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215, #1
+    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215, #2
+    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215, #3
+    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215, #4
+    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215, #5
+    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215, #6
+    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215, #7
+    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215, #8
+    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215, #9
+    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215, #10
+    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215, #11
+    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215, #12
+    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215, #13
+    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215, #14
+    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215, #15
+    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215, #16
+    0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215, #17
+    0.08]  # water_strip
     assert(len(x)== nx)
     assert(len(y)== ny)
     
@@ -107,8 +134,66 @@ if case == '5':
     nx = 210
     ny = 138
 if case == '6':
-    nx = 246
-    ny = 138
+     nx = 246
+     ny = 138
+     
+     x = [0.08,
+     0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215, #1
+     0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215, #2
+     0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215, #3
+     0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215, #4
+     0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215, #5
+     0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215, #6 
+     0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215, #7
+     0.06430,  
+     0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 
+     0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02,
+     0.16570, 0.16570,                                                #  Pin 8
+     0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 
+     0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02,
+     0.06430,                                                               
+     0.06430,
+     0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02,
+     0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02,
+     0.16570, 0.16570,                                                #  Pin 9
+     0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 
+     0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02,
+     0.06430,        
+     0.06430,
+     0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 
+     0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 
+     0.16570, 0.16570,                                               #  Pin 10
+     0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02,   
+     0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02,
+     0.06430,  
+     0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215, #11
+     0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215, #12
+     0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215, #13
+     0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215, #14
+     0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215, #15
+     0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215, #16
+     0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215, #17
+     0.08]
+    
+     y = [0.08,  # water_strip
+     0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215, #1
+     0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215, #2
+     0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215, #3
+     0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215, #4
+     0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215, #5
+     0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215, #6
+     0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215, #7
+     0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215, #8
+     0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215, #9
+     0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215, #10
+     0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215, #11
+     0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215, #12
+     0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215, #13
+     0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215, #14
+     0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215, #15
+     0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215, #16
+     0.13215, 0.13215, 0.18285, 0.18285, 0.18285, 0.18285, 0.13215, 0.13215, #17
+     0.08]  # water_strip
 
 n_cells = nx * ny
 x = np.cumsum(x)
@@ -145,10 +230,17 @@ assert(n_cells == len(noise_g1_fem))
 assert(n_cells == len(noise_g2_fem))
 
 
+# REAL PART
+rea_g1_fem = np.real(noise_g1_fem).reshape(ny, nx)
+rea_g2_fem = np.real(noise_g2_fem).reshape(ny, nx)
+
+# IMAGINARY PART
+ima_g1_fem = np.imag(noise_g1_fem).reshape(ny, nx)
+ima_g2_fem = np.imag(noise_g2_fem).reshape(ny, nx)
+
 # AMPLITUDE
 amp_g1_fem = np.abs(noise_g1_fem).reshape(ny, nx)
 amp_g2_fem = np.abs(noise_g2_fem).reshape(ny, nx)
-
 
 # PHASE
 pha_g1_fem = np.angle(noise_g1_fem, deg=True).reshape(ny, nx)
@@ -166,7 +258,7 @@ plt.title('Steady State Fast Flux [AU]')
 plt.xlabel('x (cm)')
 plt.ylabel('y (cm)')
 # cbar.set_label('Noise', rotation=90)
-plt.savefig(folder + code +'_sta_g1_fem.pdf')
+plt.savefig(folder + code + '_' + omega +'_sta_g1_fem.pdf')
 
 plt.figure()
 plt.pcolormesh(X, Y, static_flux_g2_fem, shading='auto')
@@ -175,7 +267,7 @@ cbar = plt.colorbar()
 # cbar.set_label('Noise', rotation=90)
 plt.xlabel('x (cm)')
 plt.ylabel('y (cm)')
-plt.savefig(folder + code + '_sta_g2_fem.pdf')
+plt.savefig(folder + code + '_' + omega +'_sta_g2_fem.pdf')
 
 # Amplitude Results 
 plt.figure()
@@ -185,7 +277,7 @@ cbar = plt.colorbar()
 plt.title('Fast Neutron Noise Amplitude [AU]')
 plt.xlabel('x (cm)')
 plt.ylabel('y (cm)')
-plt.savefig(folder + code +'_amp_g2_fempdf')
+plt.savefig(folder + code + '_' + omega +'_amp_g2_fempdf')
 
 plt.figure()
 plt.pcolormesh(X, Y, amp_g2_fem, shading='auto')
@@ -194,7 +286,26 @@ cbar = plt.colorbar()
 # cbar.set_label('Noise', rotation=90)
 plt.xlabel('x (cm)')
 plt.ylabel('y (cm)')
-plt.savefig(folder + code + '_amp_g2_fem.pdf')
+plt.savefig(folder + code + '_' + omega + '_amp_g2_fem.pdf')
+
+# Amplitude Results 
+plt.figure()
+plt.pcolormesh(X, Y, amp_g1_fem, shading='auto')
+cbar = plt.colorbar()
+# cbar.set_label('Noise', rotation=90)
+plt.title('Fast Neutron Noise Amplitude [AU]')
+plt.xlabel('x (cm)')
+plt.ylabel('y (cm)')
+plt.savefig(folder + code + '_' + omega +'_amp_g2_fempdf')
+
+plt.figure()
+plt.pcolormesh(X, Y, amp_g2_fem, shading='auto')
+plt.title('Thermal Neutron Noise Amplitude [AU]')
+cbar = plt.colorbar()
+# cbar.set_label('Noise', rotation=90)
+plt.xlabel('x (cm)')
+plt.ylabel('y (cm)')
+plt.savefig(folder + code + '_' + omega + '_amp_g2_fem.pdf')
 
 # Relative Amplitude Results 
 plt.figure()
@@ -204,7 +315,7 @@ cbar = plt.colorbar()
 plt.title(r'Fast Neutron Noise Relative Amplitude [%]')
 plt.xlabel('x (cm)')
 plt.ylabel('y (cm)')
-plt.savefig(folder + code +'_rel_amp_g2_fempdf')
+plt.savefig(folder + code +'_' + omega  +'_rel_amp_g2_fempdf')
 
 plt.figure()
 plt.pcolormesh(X, Y,  100*amp_g2_fem/static_flux_g2_fem, shading='auto')
@@ -213,7 +324,7 @@ cbar = plt.colorbar()
 # cbar.set_label('Noise', rotation=90)
 plt.xlabel('x (cm)')
 plt.ylabel('y (cm)')
-plt.savefig(folder + code + '_rel_amp_g2_fem.pdf')
+plt.savefig(folder + code + '_' + omega + '_rel_amp_g2_fem.pdf')
 
 # Phase Results 
 plt.figure()
@@ -232,7 +343,47 @@ cbar = plt.colorbar()
 # cbar.set_label('Noise', rotation=90)
 plt.xlabel('x (cm)')
 plt.ylabel('y (cm)')
-plt.savefig(folder + code + '_pha_g2_fem.pdf')
+plt.savefig(folder + code + '_' + omega + '_pha_g2_fem.pdf')
+
+
+# REAL Results 
+plt.figure()
+plt.pcolormesh(X, Y, rea_g1_fem, shading='auto')
+cbar = plt.colorbar()
+plt.title('Fast Flux Real Part')
+plt.xlabel('x (cm)')
+plt.ylabel('y (cm)')
+# cbar.set_label('Noise', rotation=90)
+plt.savefig(folder + code +'_rea_g1_fem.pdf')
+
+plt.figure()
+plt.pcolormesh(X, Y, rea_g2_fem, shading='auto')
+plt.title('Thermal Flux Real Part')
+cbar = plt.colorbar()
+# cbar.set_label('Noise', rotation=90)
+plt.xlabel('x (cm)')
+plt.ylabel('y (cm)')
+plt.savefig(folder + code + '_' + omega + '_rea_g2_fem.pdf')
+
+# IMAGINARY Results 
+plt.figure()
+plt.pcolormesh(X, Y, ima_g1_fem, shading='auto')
+cbar = plt.colorbar()
+plt.title('Fast Flux Imaginary Part')
+plt.xlabel('x (cm)')
+plt.ylabel('y (cm)')
+# cbar.set_label('Noise', rotation=90)
+plt.savefig(folder + code +'_ima_g1_fem.pdf')
+
+plt.figure()
+plt.pcolormesh(X, Y, ima_g2_fem, shading='auto')
+plt.title('Thermal Flux Imaginary Part')
+cbar = plt.colorbar()
+# cbar.set_label('Noise', rotation=90)
+plt.xlabel('x (cm)')
+plt.ylabel('y (cm)')
+plt.savefig(folder + code + '_' + omega + '_ima_g2_fem.pdf')
+
 
 
 #%% ===========================================================================
@@ -243,6 +394,10 @@ np.savetxt(file_fd_pha_g1, pha_g1_fem.reshape(ny, nx))
 np.savetxt(file_fd_pha_g2, pha_g2_fem.reshape(ny, nx))
 np.savetxt(file_fd_amp_g1, amp_g1_fem.reshape(ny, nx))
 np.savetxt(file_fd_amp_g2, amp_g2_fem.reshape(ny, nx))
+np.savetxt(file_fd_rea_g1, rea_g1_fem.reshape(ny, nx))
+np.savetxt(file_fd_rea_g2, rea_g2_fem.reshape(ny, nx))
+np.savetxt(file_fd_ima_g1, ima_g1_fem.reshape(ny, nx))
+np.savetxt(file_fd_ima_g2, ima_g2_fem.reshape(ny, nx))
 
 #%% ===========================================================================
 # GET AND COMPARE FEMFFUSION-TD DATA 
@@ -326,9 +481,6 @@ np.savetxt(file_fd_amp_g2, amp_g2_fem.reshape(ny, nx))
 #plt.legend()
 #plt.grid()
 
-
-
-
 # plt.figure()
 # plt.imshow(amp_g1_td.reshape(ny, nx), origin='lower');
 # cbar = plt.colorbar()
@@ -346,11 +498,6 @@ np.savetxt(file_fd_amp_g2, amp_g2_fem.reshape(ny, nx))
 # plt.xlabel('X index')
 # plt.ylabel('Y index')
 # plt.savefig(folder + 'Thermal Flux Noise.pdf')
-
-
-
-
-
 
 
 #%% PLOT FEMFFUSSION  RESULTS
