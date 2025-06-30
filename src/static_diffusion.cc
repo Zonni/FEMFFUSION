@@ -1,7 +1,7 @@
 /**
  * @file   static_diffusion.cc
  * @brief  Implementation of the class StaticDiffusion and the main functions of
- *  the Femffusion program.
+ *  the FEMFFUSION program.
  */
 
 #include <deal.II/lac/solver_selector.h>

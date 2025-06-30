@@ -1036,7 +1036,7 @@ void petsc_svd (
       }
     }
   }
-  std::cout << " M_true " << M_true << std::endl;
+  //std::cout << " M_true " << M_true << std::endl;
 
   // Resize Singular Vectors
   U.resize(M_true);

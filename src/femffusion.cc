@@ -363,8 +363,7 @@ int main (int argc,
       }
       if (!strcmp("-t", argv[i]) or !strcmp("--test", argv[i]))
       {
-        Utilities::MPI::MPI_InitFinalize mpi_initialization(argc, argv,
-          1);
+        Utilities::MPI::MPI_InitFinalize mpi_initialization(argc, argv, 1);
         {
           run_tests();
           return 0;
@@ -429,11 +428,6 @@ int main (int argc,
 
       AssertRelease(dim >= 0 and dim <= 3,
         "Spatial dimension not valid,  dim = " + num_to_str(dim));
-
-      MultithreadInfo::set_thread_limit(1);
-
-      omp_set_dynamic(0);        // Disable dynamic teams
-      omp_set_num_threads(1);    // Set fixed number of threads
 
       // The template parameters must be a constant:
       // This way, we ensure the compilation of all the cases

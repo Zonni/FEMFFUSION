@@ -1,5 +1,5 @@
 /**
- * @file   matrix_operators_spn.cc
+ * @file   matrix_operators_sdpn.cc
  * @brief  Implementation of TransportMatrixSDPN and FissionMAtrix classes to handle block matrices.
  */
 

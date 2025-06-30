@@ -57,6 +57,8 @@ template <int dim, int n_fe_degree, typename number>
     boundary_req = false;
 
     apply_on_row_index = 0;
+
+    MultithreadInfo::set_thread_limit(1);
   }
 
 /**
