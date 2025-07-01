@@ -36,7 +36,24 @@ These matrices are expected to be sparse, as they are the result of the discreti
 
 *FEMFFUSION* also provides a second glue layer that links the output of the linear/eigen-solver to the input of a post-processing tool ([ParaView](http://www.paraview.org/) ). The effective multiplication factor, keff, is shown in the output file along with the fluxes and power distribution.
  
+# Citing
 
+*FEMFFUSION* is open software but if you use it, consider citing:
+```
+@article{FEMFFUSION2024,
+  title = {FEMFFUSION and its verification using the C5G7 benchmark},
+  volume = {196},
+  ISSN = {0306-4549},
+  url = {http://dx.doi.org/10.1016/j.anucene.2023.110239},
+  DOI = {10.1016/j.anucene.2023.110239},
+  journal = {Annals of Nuclear Energy},
+  publisher = {Elsevier BV},
+  author = {Fontenla,  Y. and Vidal-Ferràndiz,  A. and Carreño,  A. and Ginestar,  D. and Verdú,  G.},
+  year = {2024},
+  month = feb,
+  pages = {110239}
+}
+```
 
 # Install
 
@@ -62,6 +79,22 @@ make -j$(nproc)
 
 If you have any problem, you can contact <anvifer2@upv.es>.
 
+# Problem with paralel jobs
+
+In some computers FEMFFUSION is using all avalaible procesors even though this is not requested. To avoid it, run femffusion as:
+```
+mpirun -n 1 ./femffusion.exe -Other_paramenters
+```
+Or, you can export the folloing environment variable before using the program:
+```
+export OMP_NUM_THREADS=1
+```
+
+
+
+
+
+
 # Examples 
 
 After the successful compilation of the code one recommended step is to run the tests by: 
@@ -81,8 +114,6 @@ The examples consists of a set of nuclear reactors:
 | <img src="doc/figures/1.png" width="85%"/> |
 |:------------------------------------------:|
 | 1st Mode                                   |
-
-
 
  2. **2D_BIBLIS**; Classic neutron difusion benchmark with a characteristic chess board pattern. Solved with SP1, SP3 and SP5 aproximations.
 
