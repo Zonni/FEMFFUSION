@@ -31,7 +31,7 @@
 
 
 
-Actually, *FEMFFUSION* can be seen as deal.II specialization for the neutron transport equation that uses large sparse matrix solvers ([SLEPc](http://www.grycap.upv.es/slepc/) among others). That is to say, *FEMFFUSION* builds the matrices ![](https://latex.codecogs.com/gif.download?L) and ![](https://latex.codecogs.com/gif.download?M) that cast the multigroup neutron transport/diffusion equation as a matrix-based eigenvalue problem:
+Actually, *FEMFFUSION* can be seen as deal.II specialization for the neutron transport equation that uses large sparse matrix solvers ([SLEPc](http://www.grycap.upv.es/slepc/) among others). That is to say, *FEMFFUSION* builds the matrices $L$ and $M$ that cast the multigroup neutron transport/diffusion equation as a matrix-based eigenvalue problem:
 
 $$
 L \phi = \frac{1}{k_{eff}} M \phi
