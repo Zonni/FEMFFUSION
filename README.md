@@ -32,8 +32,9 @@
 
 
 Actually, *FEMFFUSION* can be seen as deal.II specialization for the neutron transport equation that uses large sparse matrix solvers ([SLEPc](http://www.grycap.upv.es/slepc/) among others). That is to say, *FEMFFUSION* builds the matrices ![](https://latex.codecogs.com/gif.download?L) and ![](https://latex.codecogs.com/gif.download?M) that cast the multigroup neutron transport/diffusion equation as a matrix-based eigenvalue problem:
+
 $$
-L \phi = \frac{1}{k_{\text{eff}}} M \phi
+L \phi = \frac{1}{k_{eff}} M \phi
 $$
 
 These matrices are expected to be sparse, as they are the result of the discretization of the differential transport operator using the finite element method, over a certain spatial grid either. Said matrices are thus built in [PETSc](http://www.mcs.anl.gov/petsc/) format, so they can either be passed to a solver (default is [SLEPc](http://www.grycap.upv.es/slepc/), whose algorithms and parameters may be chosen at run-time). 
@@ -196,6 +197,11 @@ There is NO WARRANTY.
 
 <p align="center">
   <img src="doc/logos/logo_UPV_principal_color.png" height="80"/>
+  <img src="doc/logos/logo_imm_blue.png" height="80"/>
+  <img src="doc/logos/logo_isirym.png" height="80"/>
+  <img src="doc/logos/mcin.png" height="80"/>
+</p>
+V_principal_color.png" height="80"/>
   <img src="doc/logos/logo_imm_blue.png" height="80"/>
   <img src="doc/logos/logo_isirym.png" height="80"/>
   <img src="doc/logos/mcin.png" height="80"/>
