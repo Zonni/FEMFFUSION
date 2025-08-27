@@ -17,7 +17,7 @@ params = {'backend': 'pdf',
           'ytick.labelsize': 13,
           'text.usetex': False,
           'lines.linewidth': 1.2,
-          'lines.markersize': 3,
+          'lines.markersize': 5,
           'lines.markeredgewidth': 1,
           'legend.numpoints': 1, 
           'axes.formatter.useoffset': False,
@@ -66,8 +66,8 @@ fig = plt.figure()
 ax = fig.add_subplot(1, 1, 1)
 
 ax.semilogy(indices, singular_mono, 'o-', label='Monolithic')
-ax.semilogy(indices, singular_g1, 'o-', label='Group 1')
-ax.semilogy(indices, singular_g2, 'o-', label='Group 2')
+ax.semilogy(indices, singular_g1, 'x-', label='Group 1')
+ax.semilogy(indices, singular_g2, '^-', label='Group 2')
 ax.grid(True)
 ax.legend()
 ax.set_xlabel('Index')

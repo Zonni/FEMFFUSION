@@ -774,7 +774,7 @@ template <int dim, int n_fe_degree>
 
     while (time_pro.t_end - time_pro.sim_time > -1e-12)
     {
-      time_pro.update_xsec();
+      time_pro.perturbation.update_xsec(sim_time);
       time_pro.assemble_matrices();
       time_pro.compute_RHS();
       time_pro.solve_LHS();
@@ -790,64 +790,6 @@ template <int dim, int n_fe_degree>
 
     n_snap = max_s_snap;
 
-  }
-
-/**
- *
- */
-template <int dim, int n_fe_degree>
-  void ROMKinetics<dim, n_fe_degree>::update_xsec ()
-  {
-
-    if (type_perturbation == "Flux_Distributed"
-        or type_perturbation == "Single_Material"
-        or type_perturbation == "Out_Of_Phase"
-        or type_perturbation == "Ramp_Two_Mats")
-    {
-      verbose_cout << "Apply function to perturbed... " << std::flush;
-      perturbation.apply_function_to_perturb(sim_time);
-      verbose_cout << " Done!" << std::endl;
-    }
-    else if (type_perturbation == "Rods")
-    {
-      verbose_cout << "Moving rods: time" << sim_time << std::flush;
-      perturbation.move_bars(sim_time);
-      verbose_cout << " Done!" << std::endl;
-    }
-    else if (type_perturbation == "AECL")
-    {
-      verbose_cout << "Perturbed the AECL transient: " << std::flush;
-      perturbation.move_th(sim_time);
-      verbose_cout << " Done!" << std::endl;
-    }
-    else if (type_perturbation == "Step_Change_Material")
-    {
-      verbose_cout << "Perturbed the Step_Change_Material: " << std::flush;
-      perturbation.step_change_material(sim_time);
-      verbose_cout << " Done!" << std::endl;
-    }
-    else if (type_perturbation == "Mechanical_Vibration")
-    {
-      verbose_cout << "   move_vibrating... " << std::flush;
-      perturbation.move_vibrating(sim_time);
-      verbose_cout << " Done!" << std::endl;
-    }
-    else if (type_perturbation == "C5G7-TD1.1")
-    {
-      verbose_cout << "Apply perturbation C5G7-TD1.1: " << std::endl;
-      perturbation.apply_c5G7_perturb(sim_time);
-      verbose_cout << " Done!" << std::endl;
-    }
-    else if (type_perturbation == "Read_XS_File")
-    {
-      verbose_cout << "   move_read_xs_file... " << std::flush;
-      perturbation.move_read_xs_file(sim_time);
-      verbose_cout << " Done!" << std::endl;
-    }
-    else
-    {
-      AssertRelease(false, "Invalid type of perturbation");
-    }
   }
 
 /**
@@ -1345,7 +1287,7 @@ template <int dim, int n_fe_degree>
       TSobject->phi.add(n[dr], TSobject->snap_basis[dr]);
 
     TSobject->sim_time = real_time;
-    TSobject->update_xsec();
+    TSobject->perturbation.update_xsec(real_time);
     TSobject->postprocess_time_step();
 
     //    if (real_time < TSobject->t_end_upd)
@@ -1906,7 +1848,7 @@ template <int dim, int n_fe_degree>
     if (std::abs(TSobject->sim_time - real_time) > 1e-10)
     {
       TSobject->sim_time = real_time;
-      TSobject->update_xsec();
+      TSobject->perturbation.update_xsec(real_time);
       TSobject->assemble_ROM_matrices();
     }
 

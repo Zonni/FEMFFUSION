@@ -134,20 +134,7 @@ class Materials
    * Set the default 2 group spectra: 1.0, 0.0
    */
   void set_default_spectra ();
-  /**
-   *
-   */
-  double get_lambda_prec (const unsigned int group) const;
 
-  /**
-   *
-   */
-  double get_beta_prec (const unsigned int group) const;
-
-  /**
-   *
-   */
-  double get_beta_total () const;
 
   /**
    *
@@ -500,11 +487,6 @@ class Materials
   /**
    *
    */
-  void modify_xsec_c5g7_td11 (double sim_time);
-
-  /**
-   *
-   */
   void create_new_added_mat (
     const unsigned int new_mat,
     const double frac,
@@ -560,16 +542,6 @@ class Materials
     std::string xsec_type,
     std::vector<double> &delta_xsec);
 
-  /*
-   *
-   */
-  void save_initial_xsec ();
-
-  /*
-   *
-   */
-  void save_n_mats_init ();
-
   /**
    *
    */
@@ -583,14 +555,9 @@ class Materials
   unsigned int n_assemblies;
 
   double keff;
-  unsigned int n_mats_init;
+
   bool transient;
   bool listen_to_material_id;
-
-  std::vector<std::vector<double> > init_sigma_tr, init_sigma_t, init_nu_sigma_f,
-      init_sigma_f, init_chi, init_sigma_r;
-  // Group-to-group assemblies  XS[from_group][to_group][material]
-  std::vector<std::vector<std::vector<double> > > init_sigma_s;
 
   private:
 
@@ -656,7 +623,7 @@ class Materials
   std::vector<std::vector<double>> velocities_vector;
 
   std::vector<unsigned int> materials_vector;
-  std::vector<unsigned int> materials_vector_init;
+
   std::vector<unsigned int> materials_vector_no_bar;
   std::vector<unsigned int> materials_vector_with_holes;
 

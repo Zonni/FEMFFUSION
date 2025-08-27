@@ -74,7 +74,7 @@ void prm_declare_entries (ParameterHandler &prm)
   prm.declare_entry("Mesh_Filename", "no.msh", Patterns::FileName(),
     ".msh File where it is the 2d mesh.");
   prm.declare_entry("Geometry_Filename", "", Patterns::FileName(),
-    ".xml File where it is declared the mesh in dream way");
+    ".xml File where it is declared the mesh in a dream way");
   prm.declare_entry("Mesh_Size", "", Patterns::Anything(),
     "Number of cells per dimension");
   prm.declare_entry("Cell_Pitch_x", " ", Patterns::Anything(),
@@ -99,6 +99,13 @@ void prm_declare_entries (ParameterHandler &prm)
     "Refinement model for the Composed geometry case, available options are\n"
       "Local | Uniform");
 
+  // Static
+  prm.declare_entry("Spatial_Modes", "lambda",
+    Patterns::Selection("lambda | alpha | gamma"),
+    "Type of modes equation: lambda or alpha");
+  prm.declare_entry("PseudoStatic", "false", Patterns::Bool(),
+    "True/false - Make a pseudostatic calculation"); // Static  - Move - Static
+
   // Output
   prm.declare_entry("Output_Filename", "out", Patterns::FileName(),
     "Filename where will be written the output");
@@ -121,12 +128,6 @@ void prm_declare_entries (ParameterHandler &prm)
     "Delta time iteration");
   prm.declare_entry("Time_End", "0.0", Patterns::Double(),
     "Final time of computation");
-
-  // Save Static Calculation
-  prm.declare_entry("Save_Static", "false", Patterns::Bool(),
-    "Save_Static");
-  prm.declare_entry("STA_Filename", "none.sta", Patterns::FileName(),
-    "Load Steady state calculation from a previous one.");
 
   // Solver Options
   prm.declare_entry("Renumbering", "Reversed_Cuthill_McKee",
@@ -168,7 +169,7 @@ void prm_declare_entries (ParameterHandler &prm)
   prm.declare_entry("PREC_Filename", "none", Patterns::FileName(),
     "Filename where it is stored the precursors data");
 
-  // Noise Calculation
+  // Frequency Domain Noise Calculation
   prm.declare_entry("Noise_Calculation", "false", Patterns::Bool(),
     "True/false - Activate Noise Calculation");
   prm.declare_entry("DS_Filename", "", Patterns::FileName(),
@@ -182,10 +183,14 @@ void prm_declare_entries (ParameterHandler &prm)
     " Type of the perturbation (Cell_Wise or Borders)");
   prm.declare_entry("PC_Noise", "gauss_seidel", Patterns::Anything(),
     "Preconditioner used for the noise complex linear system solver");
-  prm.declare_entry("KSP_Noise_Tolerance", "1e-8", Patterns::Double(),
+  prm.declare_entry("KSP_Noise_Tolerance", "1e-14", Patterns::Double(),
     "Relative tolerance of the noise complex linear system solver");
 
-  // Time Step
+  // Time Domain Variables
+  prm.declare_entry("Distributed_Time_Scheme", "Implicit-Exponential",
+    Patterns::Selection(
+      "Implicit-Exponential | Semi-Implicit-Exponential | Semi-Implicit-Euler"),
+    "Time Scheme used to solve the distributed time equation");
   prm.declare_entry("Time_Delta", "0.01", Patterns::Double(),
     "Delta time of the iteration");
   prm.declare_entry("Time_Delta_Updating", "0.0", Patterns::Double(),
@@ -200,11 +205,11 @@ void prm_declare_entries (ParameterHandler &prm)
     "Time Preconditioner defined fixed | good-broyden | bad-broyden");
   prm.declare_entry("Initial_Time_Preconditioner", "gs-cgilu",
     Patterns::Selection("gs-cgilu | gs-ilu | diagonal"),
-    "Time Preconditioner defined fixed | good-broyden | bad-broyden");
+    "Initial_Time_Preconditioner defined gs-cgilu | gs-ilu | diagonal");
   prm.declare_entry("Print_Time_Dependent_Data", "false", Patterns::Bool(),
     "True/ false - Print Radial Output data each time step");
 
-  // Time Variables
+  // Perturbations
   prm.declare_entry("Frequency", "1.0", Patterns::Double(),
     "Frequency of the vibration in Hz");
   prm.declare_entry("Amplitude", "0.0", Patterns::Double(),
@@ -227,44 +232,26 @@ void prm_declare_entries (ParameterHandler &prm)
     "Second Material where the instability is inserted");
   prm.declare_entry("XS_Name", "Sigma_f", Patterns::Anything(),
     "Cross Section where the Sigma_f/Sigma_a...");
-
-  prm.declare_entry("Distributed_Time_Scheme", "Implicit-Exponential",
-    Patterns::Selection(
-      "Implicit-Exponential | Semi-Implicit-Exponential | Semi-Implicit-Euler"),
-    "Time Scheme used to solve the distributed time equation");
   prm.declare_entry("Type_Perturbation", "None",
     Patterns::Selection(
       "Flux_Distributed | Single_Material | Out_Of_Phase | Ramp_Two_Mats | Step_Change_Material "
         "| Rods | AECL | Mechanical_Vibration | Read_XS_File | Read_XML_File | C5G7-TD1.1 | Random_XS| None"),
     "Distribution of the instability: Flux_Distributed or Single_Material");
   prm.declare_entry("Perturbation_Function", "Constant",
-    Patterns::Selection("Constant | Ramp | Sinus | Ramp_hex | Noise_7g "),
+    Patterns::Selection("Constant | Ramp | Sinus | Ramp_hex | Noise_7g | 1D_UOX_FA"),
     "Type of instability Constant, Ramp, Sinus, Ramp_hex or Noise_7g");
-  prm.declare_entry("Spatial_Modes", "lambda",
-    Patterns::Selection("lambda | alpha | gamma"),
-    "Type of modes equation: lambda or alpha");
   prm.declare_entry("Bar_Filename", "no.bar", Patterns::FileName(),
     "Filename where it is defined the movement of the Rods");
   prm.declare_entry("Rod_Cusping_Method", "volhom",
     Patterns::Selection("volhom | fluxwei "),
     "Rod cusping method: volhom or fluxwei");
-
-  prm.declare_entry("Save_Time", "false", Patterns::Bool(),
-    "# True/false - Activate Save_Time");
-  prm.declare_entry("Load_Time", "false", Patterns::Bool(),
-    "# True/false - Activate Load_Time");
-  prm.declare_entry("Reinit_File", "nofile", Patterns::FileName(),
-    "# Filename where the reinit is saved/loaded");
-
-  // Perturbations
+  // Perturbations -- More
   prm.declare_entry("Vibrating_Material", "0", Patterns::Integer(),
     "Material of the  assembly that is vibrating");
   prm.declare_entry("Static_Position", "", Patterns::Anything(),
     "Static position of the assembly that is vibrating (x_left x_right y_left y_right)");
   prm.declare_entry("Direction", "0", Patterns::Integer(),
     "Direction of the vibration (x=0, y=1, z=2)");
-  prm.declare_entry("PseudoStatic", "false", Patterns::Bool(),
-    "True/false - Make a pseudostatic calculation");
   prm.declare_entry("Read_XS_Filename", " ",
     Patterns::FileName(Patterns::FileName::FileType::input),
     "Filename where the XS of the read_xs_file perturbation.");
@@ -273,6 +260,19 @@ void prm_declare_entries (ParameterHandler &prm)
     "Filename where the XS of the read_xml_file perturbation.");
   prm.declare_entry("XS_Perturbation_Fraction", "0.0", Patterns::Double(),
     "True/false - Make a pseudostatic calculation");
+
+  // Save/Load Time dependent Calculations
+  prm.declare_entry("Save_Time", "false", Patterns::Bool(),
+    "# True/false - Activate Save_Time");
+  prm.declare_entry("Load_Time", "false", Patterns::Bool(),
+    "# True/false - Activate Load_Time");
+  prm.declare_entry("Reinit_File", "nofile", Patterns::FileName(),
+    "# Filename where the reinit is saved/loaded");
+  // Save Static Calculation
+  prm.declare_entry("Save_Static", "false", Patterns::Bool(),
+    "Save_Static");
+  prm.declare_entry("STA_Filename", "none.sta", Patterns::FileName(),
+    "Load Steady state calculation from a previous one.");
 
   // ROM variables
   prm.declare_entry("ROM_Static", "false", Patterns::Bool(),

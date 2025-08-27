@@ -1008,6 +1008,7 @@ template <int dim, int n_fe_degree>
     calculate_precursors_factor(mat_id, materials, omega, prec_factor);
 
     for (unsigned int g1 = 0; g1 < materials.get_n_groups(); g1++)
+    {
       for (unsigned int g2 = 0; g2 < materials.get_n_groups(); g2++)
       {
         if (g1 == g2)
@@ -1023,6 +1024,16 @@ template <int dim, int n_fe_degree>
                             * pert.get_delta_sigma_f(g2, pert_id)
                             / materials.keff;
       }
+    }
+    /*
+    std::cout << " delta_sigma_r1 " << pert.get_delta_sigma_r(0, pert_id) << std::endl;
+    std::cout << " delta_sigma_r2 " << pert.get_delta_sigma_r(1, pert_id) << std::endl;
+    std::cout << " delta_nusigma_f1 " << pert.get_delta_sigma_f(0, pert_id) / materials.keff << std::endl;
+    std::cout << " delta_nusigma_f2 " << pert.get_delta_sigma_f(1, pert_id)  / materials.keff << std::endl;
+    std::cout << " delta_sigma_s12 " << pert.get_delta_sigma_s(0, 1, pert_id)
+              << std::endl;
+    */
+
   }
 
 /**
@@ -1053,8 +1064,7 @@ template <int dim, int n_fe_degree>
     FullMatrix<double> cell_val(dofs_per_cell, dofs_per_cell);
     FullMatrix<double> cell_B(dofs_per_cell, dofs_per_cell);
 
-    typename DoFHandler<dim>::active_cell_iterator cell =
-                                                          dof_handler.begin_active();
+    typename DoFHandler<dim>::active_cell_iterator cell = dof_handler.begin_active();
     typename DoFHandler<dim>::active_cell_iterator endc = dof_handler.end();
     for (; cell != endc; ++cell)
       if (cell->is_locally_owned())

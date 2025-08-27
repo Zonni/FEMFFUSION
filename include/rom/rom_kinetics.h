@@ -120,7 +120,6 @@ template <int dim, int n_fe_degree>
       unsigned int mat_chan,
       double num_mat);
 
-    void update_xsec ();
 
     void assemble_matrices ();
     void assemble_ROM_matrices ();

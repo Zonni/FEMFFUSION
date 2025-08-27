@@ -90,12 +90,6 @@ template <int dim, int n_fe_degree>
     void init_time_computation ();
     void get_parameters_from_command_line ();
 
-    // Adaptive time control
-    void update_delta_t ();
-    void save_time_functions ();
-
-    void update_xsec ();
-    void load_parcs ();
 
     void assemble_matrices ();
     void assemble_small_time_decay_matrix ();

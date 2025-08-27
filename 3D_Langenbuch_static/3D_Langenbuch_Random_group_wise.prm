@@ -53,7 +53,7 @@ set Output_Filename     = 3D_Langenbuch_static/3D_Langenbuch_Random_groupwise.ou
 # True/false - Activate ROM Calculation
 set ROM_Static               = true
 set ROM_Type_Snapshots       = IHS_XS
-set N_Snapshots              = 20
+set N_Snapshots              = 15
 set Type_Perturbation        = Random_XS
 set XS_Perturbation_Fraction = 0.20
 set ROM_Group_Wise           = Group_Wise

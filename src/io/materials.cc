@@ -38,7 +38,6 @@ Materials::Materials (ConditionalOStream &verbose_cout) :
   listen_to_material_id = false;
   n_precursors = 0;
 //  beta_total = 0.0;
-  n_mats_init = 0;
   n_total_assemblies = 0;
   n_prec_mat = 0;
   keff = 1.0;
@@ -198,7 +197,7 @@ unsigned int Materials::get_n_assemblies () const
 }
 
 /**
- * @brief Get the number of energy groups.
+ * @brief Get the number of precursors groups.
  * @return n_precursors
  */
 unsigned int Materials::get_n_precursors () const
@@ -206,44 +205,9 @@ unsigned int Materials::get_n_precursors () const
   return n_precursors;
 }
 
-///**
-// *
-// */
-//double Materials::get_velocity (const unsigned int group) const
-//{
-//  AssertIndexRange(group, velocities.size());
-//  return velocities[group];
-//}
-//
-///**
-// *
-// */
-//double Materials::get_lambda_prec (const unsigned int group) const
-//{
-//  AssertIndexRange(group, lambda_prec.size());
-//  return lambda_prec[group];
-//}
-//
-///**
-// *
-// */
-//double Materials::get_beta_prec (const unsigned int group) const
-//{
-//  AssertIndexRange(group, beta_prec.size());
-//  return beta_prec[group];
-//}
-//
-///**
-// *
-// */
-//double Materials::get_beta_total () const
-//{
-//
-//  return beta_total;
-//}
-
 /**
- *  Generalization of precursors
+ *  @brief Get the total delayed fraction for each material. Also called beta_total
+ *  @return std::vector<double>  delayed_fraction_total
  */
 std::vector<double> Materials::get_delayed_fraction_sum ()
 {
@@ -251,8 +215,10 @@ std::vector<double> Materials::get_delayed_fraction_sum ()
   return delayed_fraction_sum;
 }
 
+
 /**
- *
+ *  @brief Get the total delayed fraction for a specific material. Also called beta_total
+ *  @return std::vector<double>  delayed_fraction_total
  */
 double Materials::get_delayed_fraction_sum (unsigned int mat) const
 {
@@ -711,7 +677,7 @@ void Materials::set_chi (
 /**
  *
  */
-void Materials::set_sigma_s (const double set_sigma_s_coeff,
+void Materials::set_sigma_s (const double sigma_s_coeff,
   const unsigned int from_group,
   const unsigned int to_group,
   const unsigned int mat)
@@ -719,7 +685,7 @@ void Materials::set_sigma_s (const double set_sigma_s_coeff,
   AssertIndexRange(from_group, sigma_s.size());
   AssertIndexRange(to_group, sigma_s[from_group].size());
   AssertIndexRange(mat, sigma_s[from_group][to_group].size());
-  sigma_s[from_group][to_group][mat] = set_sigma_s_coeff;
+  sigma_s[from_group][to_group][mat] = sigma_s_coeff;
 }
 
 /**
@@ -1004,7 +970,6 @@ void Materials::create_new_mixed_mat_flux (
  */
 void Materials::make_critical (const double &keffective)
 {
-
   // Compute diffusion Coefficients
   for (unsigned int g = 0; g < n_groups; ++g)
     for (unsigned int mat = 0; mat < n_mats; ++mat)
@@ -1018,7 +983,7 @@ void Materials::make_critical (const double &keffective)
 }
 
 /**
- *
+ * TODO  HERE OR IN PERTURBATION?
  */
 void Materials::modify_xsec (
   std::string xsec_type,
@@ -1048,7 +1013,7 @@ void Materials::modify_xsec (
 }
 
 /**
- *
+ *  TODO HERE oR IN PERTURBATION?
  */
 void Materials::modify_xsec_all (
   std::string xsec_type,
@@ -1073,124 +1038,6 @@ void Materials::modify_xsec_all (
   // sigma_s
   sigma_s[0][1][mat] = new_xsec[3][0];
 
-  return;
-}
-
-/**
- *
- */
-void Materials::modify_xsec_7g (std::string xsec_type,
-  double sim_time,
-  std::vector<double> amplitudes,
-  unsigned int n_mat)
-{
-
-  double frequency = 1.0;
-
-  if (xsec_type == "capture")
-  {
-    // Copy xsec
-    for (unsigned int g = 0; g < n_groups; ++g)
-    {
-
-      sigma_tr[g][n_mat] = init_sigma_tr[g][n_mat]
-                           + amplitudes[g]
-                             * sin(2 * M_PI * frequency * sim_time);
-
-      sigma_t[g][n_mat] = init_sigma_t[g][n_mat]
-                          + amplitudes[g]
-                            * sin(2 * M_PI * frequency * sim_time);
-
-      sigma_r[g][n_mat] = init_sigma_r[g][n_mat]
-                          + amplitudes[g]
-                            * sin(2 * M_PI * frequency * sim_time);
-    }
-  }
-
-  return;
-}
-
-/**
- *
- */
-void Materials::modify_xsec_c5g7_td11 (
-  double sim_time)
-{
-
-  const unsigned int changing_mat = 7;
-  const unsigned int rodded_mat = 8;
-
-  if (sim_time < 1.0)
-  {
-    for (unsigned int g = 0; g < n_groups; ++g)
-    {
-      sigma_tr[g][changing_mat] = init_sigma_tr[g][changing_mat]
-          + 0.01 * (init_sigma_tr[g][rodded_mat] - init_sigma_tr[g][changing_mat])
-            * sim_time;
-
-      sigma_t[g][changing_mat] = init_sigma_t[g][changing_mat]
-          + 0.01 * (init_sigma_t[g][rodded_mat] - init_sigma_t[g][changing_mat])
-            * sim_time;
-
-      sigma_r[g][changing_mat] = init_sigma_r[g][changing_mat]
-          + 0.01 * (init_sigma_r[g][rodded_mat] - init_sigma_r[g][changing_mat])
-            * sim_time;
-
-      // TODO Init Velocities? Yo crec que está mal
-      velocities_vector[g][changing_mat] = velocities_vector[g][changing_mat]
-          + 0.01 * (velocities_vector[g][rodded_mat] - velocities_vector[g][changing_mat])
-            * sim_time;
-
-      for (unsigned int g2 = 0; g2 < n_groups; g2++)
-      {
-
-        sigma_s[g][g2][changing_mat] = init_sigma_s[g][g2][changing_mat]
-            + 0.01 * (init_sigma_s[g][g2][rodded_mat] - init_sigma_s[g][g2][changing_mat])
-              * sim_time;
-      }
-    }
-  }
-  else if (sim_time < 2.0)
-  {
-    for (unsigned int g = 0; g < n_groups; ++g)
-    {
-      sigma_tr[g][changing_mat] = init_sigma_tr[g][changing_mat]
-          + 0.01 * (init_sigma_tr[g][rodded_mat] - init_sigma_tr[g][changing_mat])
-            * (2.0 - sim_time);
-
-      sigma_t[g][changing_mat] = init_sigma_t[g][changing_mat]
-          + 0.01 * (init_sigma_t[g][rodded_mat] - init_sigma_t[g][changing_mat])
-            * (2.0 - sim_time);
-
-      sigma_r[g][changing_mat] = init_sigma_r[g][changing_mat]
-          + 0.01 * (init_sigma_r[g][rodded_mat] - init_sigma_r[g][changing_mat])
-            * (2.0 - sim_time);
-
-      // FIXME initi velocities
-      velocities_vector[g][changing_mat] = velocities_vector[g][changing_mat]
-          + 0.01 * (velocities_vector[g][rodded_mat] - velocities_vector[g][changing_mat])
-            * (2.0 - sim_time);
-
-      for (unsigned int g2 = 0; g2 < n_groups; ++g2)
-        sigma_s[g][g2][changing_mat] = init_sigma_s[g][g2][changing_mat]
-            + 0.01 * (init_sigma_s[g][g2][rodded_mat] - init_sigma_s[g][g2][changing_mat])
-              * (2.0 - sim_time);
-    }
-  }
-  else
-  {
-    for (unsigned int g = 0; g < n_groups; ++g)
-    {
-      sigma_tr[g][changing_mat] = init_sigma_tr[g][changing_mat];
-      sigma_t[g][changing_mat] = init_sigma_t[g][changing_mat];
-      sigma_r[g][changing_mat] = init_sigma_r[g][changing_mat];
-
-      //velocities_vector[g][changing_mat] = velocities_vector[g][changing_mat];
-
-      for (unsigned int g2 = 0; g2 < n_groups; ++g2)
-        sigma_s[g][g2][changing_mat] = init_sigma_s[g][g2][changing_mat];
-    }
-  }
   return;
 }
 
@@ -1444,47 +1291,6 @@ void Materials::remove_perturbation_xsec (
 /**
  *
  */
-void Materials::save_initial_xsec ()
-{
-  // Resize Initial XS
-  init_sigma_tr.resize(n_groups, std::vector<double>(n_mats));
-  init_sigma_t.resize(n_groups, std::vector<double>(n_mats));
-  init_sigma_r.resize(n_groups, std::vector<double>(n_mats));
-  init_nu_sigma_f.resize(n_groups, std::vector<double>(n_mats));
-  init_chi.resize(n_groups, std::vector<double>(n_mats));
-  init_sigma_f.resize(n_groups, std::vector<double>(n_mats));
-  init_sigma_s.resize(n_groups,
-    std::vector<std::vector<double> >(n_groups,
-      std::vector<double>(n_mats)));
-
-  // Copy XS
-  for (unsigned int g = 0; g < n_groups; ++g)
-  {
-    init_sigma_tr[g] = sigma_tr[g];
-    init_sigma_t[g] = sigma_t[g];
-    init_sigma_r[g] = sigma_r[g];
-    init_nu_sigma_f[g] = nu_sigma_f[g];
-    init_chi[g] = chi[g];
-    init_sigma_f[g] = sigma_f[g];
-    for (unsigned int to_g = 0; to_g < n_groups; ++to_g)
-      init_sigma_s[g][to_g] = sigma_s[g][to_g];
-  }
-
-  materials_vector_init = materials_vector;
-}
-
-/**
- *
- */
-void Materials::save_n_mats_init ()
-{
-  // Resize xsec
-  n_mats_init = n_mats;
-}
-
-/**
- *
- */
 void Materials::parse_xsec_2g (const std::string &xs_file,
   const std::vector<unsigned int> &n_assemblies_per_dim,
   const unsigned int n_assemblies)
@@ -1564,7 +1370,8 @@ void Materials::parse_xsec_2g (const std::string &xs_file,
 
         // sigma_a1
         iss >> num;
-        double sigma_a1 = num;
+        sigma_r[0][mat] =  num; // Afterward we sum sigma_12 as
+        // sigma_r1 = sigma_a1 + sigma_12
         AssertRelease(!iss.fail(),
           "There are not enough (well) XSEC specified in line "
           + num_to_str(j + 1));
@@ -1583,13 +1390,13 @@ void Materials::parse_xsec_2g (const std::string &xs_file,
           + num_to_str(j + 1));
         sigma_f[0][mat] = num;
 
-        // sigma_12
+        // sigma_12  - down-scattering
         iss >> num;
         AssertRelease(!iss.fail(),
           "There are not enough (well) XSEC specified in line "
           + num_to_str(j + 1));
         sigma_s[0][1][mat] = num;
-        sigma_r[0][mat] = sigma_a1 + num;
+        sigma_r[0][mat] +=  num;
 
         // new line
         get_new_valid_line(input, line);
@@ -1911,7 +1718,6 @@ void Materials::parse_xsec (const std::string &xsec_file,
               + " group "
               + num_to_str(g + 1)
               + ".");
-            // Be careful because we define sigma_s negative!
             sigma_s[g][to_group][mat] = num;
             verbose_cout << "      sigma_s" << g + 1 << "->"
                          << to_group + 1
@@ -2498,7 +2304,6 @@ void Materials::parse_forest_xs (const std::string &xml_file)
       for (unsigned int to_g = 0; to_g < n_groups; ++to_g)
       {
         // Be careful because in input.xs sigma_s is in a different way
-        // Also be careful because we define sigma_s negative!
         sigma_s[from_g][to_g][mat] =
                                      input.xs[mat].sigma_s[to_g][from_g];
 

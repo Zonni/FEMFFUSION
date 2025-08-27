@@ -72,7 +72,6 @@ template <int dim, int n_fe_degree>
     this->n_moments = _n_moments;
     this->n_blocks = this->n_moments * n_groups;
 
-    std::cout << "n_blocks: " << this->n_blocks << std::endl;
     this->n_dofs_block = dof_handler.n_dofs();
 
     this->delta_t = deltat;

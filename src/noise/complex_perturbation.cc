@@ -54,7 +54,8 @@ void ComplexPerturbation::reinit (const std::string &dxs_file,
   const std::string &_pert_type)
 {
   pert_type = _pert_type;
-  if (xsec_type == "XS2G")
+
+  if (xsec_type == "XS2G") // The default 2 groups XS definition
   {
     if (pert_type == "Cell_Wise")
       parse_dxs_file(dxs_file);
@@ -319,7 +320,6 @@ void ComplexPerturbation::parse_dxs_file (const std::string &dxs_file)
       verbose_cout << "  dXS..." << std::endl;
 
       // Resize
-      delta_sigma_a.resize(n_groups, std::vector<complex>(n_mats));
       delta_sigma_r.resize(n_groups, std::vector<complex>(n_mats));
       delta_sigma_t.resize(n_groups, std::vector<complex>(n_mats));
       delta_sigma_f.resize(n_groups, std::vector<complex>(n_mats));
@@ -361,7 +361,7 @@ void ComplexPerturbation::parse_dxs_file (const std::string &dxs_file)
         AssertRelease(!iss.fail(),
           "There are not enough (well) dXS specified in line "
           + num_to_str(j + 1));
-        delta_sigma_a[0][mat] = complex(num_real, num_imag);
+        delta_sigma_r[0][mat] = complex(num_real, num_imag); // Afterwards we sum delta_sigma_s12
 
         // delta_sigma_f1
         iss >> num_real;
@@ -384,6 +384,7 @@ void ComplexPerturbation::parse_dxs_file (const std::string &dxs_file)
           "There are not enough (well) dXS specified in line "
           + num_to_str(j + 1));
         delta_sigma_s[0][1][mat] = complex(num_real, num_imag);
+        delta_sigma_r[0][mat] += complex(num_real, num_imag);
 
         // ---------------------------------------------------------------------------------------------------
         // Second line
@@ -410,7 +411,7 @@ void ComplexPerturbation::parse_dxs_file (const std::string &dxs_file)
         AssertRelease(!iss2.fail(),
           "There are not enough (well) dXS specified in line "
           + num_to_str(j + 1));
-        delta_sigma_a[1][mat] = complex(num_real, num_imag);
+        delta_sigma_r[1][mat]  = complex(num_real, num_imag);
 
         // delta_sigma_f2
         iss2 >> num_real;
@@ -424,9 +425,6 @@ void ComplexPerturbation::parse_dxs_file (const std::string &dxs_file)
         delta_sigma_f[1][mat] = complex(num_real, num_imag);
 
         //------------------------------------
-        delta_sigma_r[0][mat] = delta_sigma_s[0][1][mat]
-                                + delta_sigma_a[0][mat];
-        delta_sigma_r[1][mat] = delta_sigma_a[1][mat];
 
         verbose_cout << "    " << delta_sigma_r[0][mat] << "  "
                      << delta_sigma_f[0][mat]
@@ -474,7 +472,6 @@ void ComplexPerturbation::parse_dxs_XSEC (const std::string &dxs_file)
       verbose_cout << "  dXS..." << std::endl;
 
       // Resize
-      delta_sigma_a.resize(n_groups, std::vector<complex>(n_mats));
       delta_sigma_r.resize(n_groups, std::vector<complex>(n_mats));
       delta_sigma_f.resize(n_groups, std::vector<complex>(n_mats));
       delta_sigma_t.resize(n_groups, std::vector<complex>(n_mats));
@@ -539,11 +536,6 @@ void ComplexPerturbation::parse_dxs_XSEC (const std::string &dxs_file)
 
           }
 
-          /////////////////////////////////////////////////
-          // Calculated DXS from above
-          delta_sigma_a[g][mat] = delta_sigma_t[g][mat];
-          for (unsigned int g2 = 0; g2 < n_groups; g2++)
-            delta_sigma_a[g][mat] -= delta_sigma_s[g][g2][mat];
 
           delta_sigma_r[g][mat] = delta_sigma_t[g][mat] - delta_sigma_s[g][g][mat];
 
@@ -726,7 +718,6 @@ void ComplexPerturbation::parse_borders_file (const std::string &dxs_file)
 
       verbose_cout << "  n_faces_pert " << n_faces_pert << std::endl;
       // Resize
-      delta_sigma_a.resize(n_groups, std::vector<complex>(n_faces_pert));
       delta_sigma_r.resize(n_groups, std::vector<complex>(n_faces_pert));
       delta_sigma_f.resize(n_groups, std::vector<complex>(n_faces_pert));
       delta_sigma_t.resize(n_groups, std::vector<complex>(n_faces_pert));
@@ -768,7 +759,7 @@ void ComplexPerturbation::parse_borders_file (const std::string &dxs_file)
         AssertRelease(!iss.fail(),
           "There are not enough (well) dXS specified in line "
           + num_to_str(face + 1));
-        delta_sigma_a[0][face] = complex(num_real, num_imag);
+        delta_sigma_r[0][face] = complex(num_real, num_imag); // Afterward we sum delta_sigma_s12
 
         // delta_sigma_f1
         iss >> num_real;
@@ -791,6 +782,7 @@ void ComplexPerturbation::parse_borders_file (const std::string &dxs_file)
           "There are not enough (well) dXS specified in line "
           + num_to_str(face + 1));
         delta_sigma_s[0][1][face] = complex(num_real, num_imag);
+        delta_sigma_r[0][face] += complex(num_real, num_imag);
         // ---------------------------------------------------------------------------------------------------
         // Second line
         get_new_valid_line(input, line);
@@ -816,7 +808,7 @@ void ComplexPerturbation::parse_borders_file (const std::string &dxs_file)
         AssertRelease(!iss2.fail(),
           "There are not enough (well) dXS specified in line "
           + num_to_str(face + 1));
-        delta_sigma_a[1][face] = complex(num_real, num_imag);
+        delta_sigma_r[1][face] = complex(num_real, num_imag); // No uppscatering
 
         // delta_sigma_f2
         iss2 >> num_real;
@@ -830,8 +822,6 @@ void ComplexPerturbation::parse_borders_file (const std::string &dxs_file)
         delta_sigma_f[1][face] = complex(num_real, num_imag);
 
         //------------------------------------
-        delta_sigma_r[0][face] = delta_sigma_s[0][1][face] + delta_sigma_a[0][face];
-        delta_sigma_r[1][face] = delta_sigma_a[1][face];
 
         verbose_cout << "    " << delta_sigma_t[0][face] << "  "
                      << delta_sigma_r[0][face]
@@ -925,7 +915,6 @@ void ComplexPerturbation::parse_borders_hex_file (const std::string &dxs_file)
 
       verbose_cout << "  n_faces_pert " << n_faces_pert << std::endl;
       // Resize
-      delta_sigma_a.resize(n_groups, std::vector<complex>(n_faces_pert));
       delta_sigma_r.resize(n_groups, std::vector<complex>(n_faces_pert));
       delta_sigma_f.resize(n_groups, std::vector<complex>(n_faces_pert));
       delta_sigma_t.resize(n_groups, std::vector<complex>(n_faces_pert));
@@ -967,7 +956,7 @@ void ComplexPerturbation::parse_borders_hex_file (const std::string &dxs_file)
         AssertRelease(!iss.fail(),
           "There are not enough (well) dXS specified in line "
           + num_to_str(face + 1));
-        delta_sigma_a[0][face] = complex(num_real, num_imag);
+        delta_sigma_r[0][face] = complex(num_real, num_imag); // Afterwards we sum delta_sigma_s12
 
         // delta_sigma_f1
         iss >> num_real;
@@ -990,6 +979,7 @@ void ComplexPerturbation::parse_borders_hex_file (const std::string &dxs_file)
           "There are not enough (well) dXS specified in line "
           + num_to_str(face + 1));
         delta_sigma_s[0][1][face] = complex(num_real, num_imag);
+        delta_sigma_r[0][face] += complex(num_real, num_imag);
 
         // ---------------------------------------------------------------------------------------------------
         // Second line
@@ -1016,7 +1006,7 @@ void ComplexPerturbation::parse_borders_hex_file (const std::string &dxs_file)
         AssertRelease(!iss2.fail(),
           "There are not enough (well) dXS specified in line "
           + num_to_str(face + 1));
-        delta_sigma_a[1][face] = complex(num_real, num_imag);
+        delta_sigma_r[1][face] = complex(num_real, num_imag);
 
         // delta_sigma_f2
         iss2 >> num_real;
@@ -1030,8 +1020,6 @@ void ComplexPerturbation::parse_borders_hex_file (const std::string &dxs_file)
         delta_sigma_f[1][face] = complex(num_real, num_imag);
 
         //------------------------------------
-        delta_sigma_r[0][face] = delta_sigma_s[0][1][face] + delta_sigma_a[0][face];
-        delta_sigma_r[1][face] = delta_sigma_a[1][face];
 
         verbose_cout << "    " << delta_sigma_t[0][face] << "  "
                      << delta_sigma_r[0][face]

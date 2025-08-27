@@ -8,6 +8,9 @@ set Dimension            = 2
 # Number of eigenvalues required
 set N_Eigenvalues        = 1
 
+# "True/false - Compute the time-dependent computation
+set Transient            = true
+
 # REACTOR and MESH DEFINITION
 # Finite element degree
 set FE_Degree            = 1

@@ -1,0 +1,83 @@
+# Reactor 1D 
+# ---------------------------------------------------------------------------
+
+# Dimension of the problem (1, 2 or 3)
+set Dimension            = 1
+
+# Number of eigenvalues
+set N_Eigenvalues        = 1
+
+# Transient calculation
+set Transient            = true
+
+# True/false - Output static values to noise
+set Output_To_Noise      = true
+
+#
+# REACTOR DEFINITION
+# Finite element Degree
+set FE_Degree           = 1
+
+# Number of global refinements 
+set N_Refinements       = 0
+
+# Number of cells per dimension
+set Mesh_Size           = 138 
+
+# Pitch of the cells    waterStrip   -------------------------  Pin 1      -------------------------   -------------------------  Pin 2      -------------------------   -------------------------  Pin 3      -------------------------   -------------------------  Pin 4      -------------------------   -------------------------  Pin 5      -------------------------   -------------------------  Pin 6      -------------------------   -------------------------  Pin 7      -------------------------   -------------------------  Pin 8      -------------------------   -------------------------  Pin 9      -------------------------   -------------------------  Pin 10     -------------------------   -------------------------  Pin 11     -------------------------   -------------------------  Pin 12     -------------------------   -------------------------  Pin 13     -------------------------   -------------------------  Pin 14     -------------------------   -------------------------  Pin 15     -------------------------   -------------------------  Pin 16     -------------------------   -------------------------  Pin 17     -------------------------  waterstrip
+set Cell_Pitch_x        = 0.08       0.13215 0.13215 0.18285 0.18285 0.18285 0.18285 0.13215 0.13215   0.13215 0.13215 0.18285 0.18285 0.18285 0.18285 0.13215 0.13215   0.13215 0.13215 0.18285 0.18285 0.18285 0.18285 0.13215 0.13215   0.13215 0.13215 0.18285 0.18285 0.18285 0.18285 0.13215 0.13215   0.13215 0.13215 0.18285 0.18285 0.18285 0.18285 0.13215 0.13215   0.13215 0.13215 0.18285 0.18285 0.18285 0.18285 0.13215 0.13215   0.13215 0.13215 0.18285 0.18285 0.18285 0.18285 0.13215 0.13215   0.13215 0.13215 0.18285 0.18285 0.18285 0.18285 0.13215 0.13215   0.13215 0.13215 0.18285 0.18285 0.18285 0.18285 0.13215 0.13215   0.13215 0.13215 0.18285 0.18285 0.18285 0.18285 0.13215 0.13215   0.13215 0.13215 0.18285 0.18285 0.18285 0.18285 0.13215 0.13215   0.13215 0.13215 0.18285 0.18285 0.18285 0.18285 0.13215 0.13215   0.13215 0.13215 0.18285 0.18285 0.18285 0.18285 0.13215 0.13215   0.13215 0.13215 0.18285 0.18285 0.18285 0.18285 0.13215 0.13215   0.13215 0.13215 0.18285 0.18285 0.18285 0.18285 0.13215 0.13215   0.13215 0.13215 0.18285 0.18285 0.18285 0.18285 0.13215 0.13215   0.13215 0.13215 0.18285 0.18285 0.18285 0.18285 0.13215 0.13215   0.08
+
+
+# Boundary Conditions  (0 ZeroFlux) (1 Symmetry) (2 Vacuum)
+set Boundary_Conditions = 0 0
+
+# Set the number of neutron energy groups defined in the calculation
+set Energy_Groups       = 2
+
+#
+# OUTPUT OPTIONS
+# True/false - Make a .vtk file with the output
+set Output_Flag         = false
+
+# True/false - Print the grid in .eps
+set Print_Grid_Flag     = false
+
+# Number of Refinements per cell in the .vtk output
+set Out_Refinements     = 0
+
+#
+# TIME PARAMETERS
+
+# Time Dependent Problem
+set Time_Delta          = 1e-3
+set Time_End            = 3.0
+
+set Type_Perturbation = Mechanical_Vibration	
+
+# Frecuency of the vibration in Hz
+set Frequency           = 1.0
+
+# Amplitude of the vibration in cm
+set Amplitude           = 0.2
+
+# Static position of the assembly that is vibrating (x_left x_right)
+set Static_Position     = 4.0 6.0 
+
+# Material of the assembly that is vibrating
+set Vibrating_Material  = 2
+
+# Direction of the vibration (x=0, y=1, z=2) 
+set Direction           = 0
+
+# SOLVER 
+# Solver Type (power_it, bifpam or slepc_7g)
+set Solver_Type         = bifpam
+
+
+#
+# FILENAMES
+# Filename where it is stored the material cross section
+set XSECS_Filename      = test/1D_mechanical_vibration/1D_5cells.xsec
+
+# Filename where will be written the output
+set Output_Filename     = test/1D_mechanical_vibration/1D_5cells_zeroflux.out

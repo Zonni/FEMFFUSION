@@ -1146,6 +1146,16 @@ template <int dim, int n_fe_degree>
                                         / materials.keff;
           }
 
+    /*
+    std::cout << " delta_sigma_t1 " << pert.get_delta_sigma_t(0, pert_id) << std::endl;
+    std::cout << " delta_sigma_t2 " << pert.get_delta_sigma_t(1, pert_id) << std::endl;
+    std::cout << " delta_sigma_r1 " << pert.get_delta_sigma_r(0, pert_id) << std::endl;
+    std::cout << " delta_sigma_r2 " << pert.get_delta_sigma_r(1, pert_id) << std::endl;
+    std::cout << " delta_nusigma_f1 " << pert.get_delta_sigma_f(0, pert_id) << std::endl;
+    std::cout << " delta_nusigma_f2 " << pert.get_delta_sigma_f(1, pert_id) << std::endl;
+    std::cout << " delta_sigma_s12 " << pert.get_delta_sigma_s(0, 1, pert_id)
+              << std::endl;
+  */
   }
 
 /**

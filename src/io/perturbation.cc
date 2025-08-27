@@ -81,14 +81,49 @@ template <int dim>
       parse_vector(prm.get("Static_Position"), vib_pos_static, 2 * dim);
     mat_vib = prm.get_integer("Vibrating_Material") - 1;
 
-    n_groups = materials.get_n_groups();
-    materials.save_n_mats_init();
-
     // Bars
     n_bars = 0;
     bars_top_pos = 0.0;
-    n_groups = 0;
 
+    // Get Materials
+    n_mats_init = materials.get_n_mats();
+
+  }
+
+/**
+ *
+ */
+template <int dim>
+  void Perturbation<dim>::save_initial_xsec ()
+  {
+    const unsigned int n_mats = materials.get_n_mats();
+    const unsigned int n_groups = materials.get_n_groups();
+    // Resize Initial XS
+    init_sigma_tr.resize(n_groups, std::vector<double>(n_mats));
+    init_sigma_t.resize(n_groups, std::vector<double>(n_mats));
+    init_sigma_r.resize(n_groups, std::vector<double>(n_mats));
+    init_nu_sigma_f.resize(n_groups, std::vector<double>(n_mats));
+    init_chi.resize(n_groups, std::vector<double>(n_mats));
+    init_sigma_f.resize(n_groups, std::vector<double>(n_mats));
+    init_sigma_s.resize(n_groups,
+      std::vector<std::vector<double> >(n_groups,
+        std::vector<double>(n_mats)));
+
+    // Copy XS
+    for (unsigned int mat = 0; mat < n_mats; ++mat)
+      for (unsigned int g = 0; g < n_groups; ++g)
+      {
+        init_sigma_tr[g][mat] = materials.get_sigma_tr(g, mat);
+        init_sigma_t[g][mat] = materials.get_sigma_t(g, mat);
+        init_sigma_r[g][mat] = materials.get_sigma_r(g, mat);
+        init_nu_sigma_f[g][mat] = materials.get_nu_sigma_f(g, mat);
+        init_chi[g][mat] = materials.get_chi(g, mat);
+        init_sigma_f[g][mat] = materials.get_sigma_f(g, mat);
+        for (unsigned int to_g = 0; to_g < n_groups; ++to_g)
+          init_sigma_s[g][to_g][mat] = materials.get_sigma_s(g, to_g, mat);
+      }
+
+    materials_vector_init = materials.get_materials_vector();
   }
 
 /*
@@ -98,58 +133,60 @@ template <int dim>
   void Perturbation<dim>::init_transient ()
   {
 
-    n_groups = materials.get_n_groups();
-    materials.save_initial_xsec();
-    materials.save_n_mats_init();
+    //const unsigned int n_groups = materials.get_n_groups();
 
-    // Save the initial materials
-    xsec_init.resize(n_groups);
-    xsec_init_all.resize(4, std::vector<std::vector<double>>(n_groups));
+    save_initial_xsec();
 
-    for (unsigned int ng = 0; ng < n_groups; ng++)
-    {
-      xsec_init[ng].resize(materials.get_n_mats());
-      xsec_init_all[0][ng].resize(materials.get_n_mats());
-      xsec_init_all[1][ng].resize(materials.get_n_mats());
-      xsec_init_all[2][ng].resize(materials.get_n_mats());
-      xsec_init_all[3][ng].resize(materials.get_n_mats());
-      if (xs_pert_name == "sigma_f")
-        xsec_init[ng] = materials.get_nu_sigma_f(ng);
-      else if (xs_pert_name == "sigma_a")
-        xsec_init[ng] = materials.get_sigma_r(ng);
-      else if (xs_pert_name == "all")
-      {
-        xsec_init_all[0][ng] = materials.get_sigma_tr(ng);
-        xsec_init_all[1][ng] = materials.get_sigma_r(ng);
-        xsec_init_all[2][ng] = materials.get_sigma_f(ng);
-      }
-    }
+    /*
+     // Save the initial materials
+     // FIXME REMOVE xsec_init and xsec_init_all from init_transient
+     xsec_init.resize(n_groups);
+     xsec_init_all.resize(4, std::vector<std::vector<double>>(n_groups));
 
-    if (xs_pert_name == "all")
-    {
-      AssertRelease(n_groups == 2,
-        "This perturbation is only implemented for 2 energy groups");
-      xsec_init_all[3][0] = materials.get_sigma_s(0, 1);
-      amplitudes[2] /= materials.keff;
-      amplitudes[6] /= materials.keff;
-    }
+     for (unsigned int ng = 0; ng < n_groups; ng++)
+     {
+     xsec_init[ng].resize(materials.get_n_mats());
+     xsec_init_all[0][ng].resize(materials.get_n_mats());
+     xsec_init_all[1][ng].resize(materials.get_n_mats());
+     xsec_init_all[2][ng].resize(materials.get_n_mats());
+     xsec_init_all[3][ng].resize(materials.get_n_mats());
+     if (xs_pert_name == "sigma_f")
+     xsec_init[ng] = materials.get_nu_sigma_f(ng);
+     else if (xs_pert_name == "sigma_a")
+     xsec_init[ng] = materials.get_sigma_r(ng);
+     else if (xs_pert_name == "all")
+     {
+     xsec_init_all[0][ng] = materials.get_sigma_tr(ng);
+     xsec_init_all[1][ng] = materials.get_sigma_r(ng);
+     xsec_init_all[2][ng] = materials.get_sigma_f(ng);
+     }
+     }
 
-    if (type_perturbation == "Read_XS_File")
-    {
-      verbose_cout << "  get_read_xs_file... " << std::flush;
-      std::string read_xs_filename = prm.get("Read_XS_Filename");
-      get_read_xs_file(read_xs_filename);
-      verbose_cout << "   Done!" << std::endl;
-    }
+     if (xs_pert_name == "all")
+     {
+     AssertRelease(n_groups == 2,
+     "This perturbation is only implemented for 2 energy groups");
+     xsec_init_all[3][0] = materials.get_sigma_s(0, 1);
+     amplitudes[2] /= materials.keff;
+     amplitudes[6] /= materials.keff;
+     }
 
-    if (type_perturbation == "Read_XML_File")
-    {
-      verbose_cout << "  get_read_xs_file... " << std::flush;
-      std::string read_xml_filename = prm.get("Read_XML_Filename");
-      read_xml_final_file(read_xml_filename);
-      verbose_cout << "   Done!" << std::endl;
-    }
+     if (type_perturbation == "Read_XS_File")
+     {
+     verbose_cout << "  get_read_xs_file... " << std::flush;
+     std::string read_xs_filename = prm.get("Read_XS_Filename");
+     get_read_xs_file(read_xs_filename);
+     verbose_cout << "   Done!" << std::endl;
+     }
 
+     if (type_perturbation == "Read_XML_File")
+     {
+     verbose_cout << "  get_read_xs_file... " << std::flush;
+     std::string read_xml_filename = prm.get("Read_XML_Filename");
+     read_xml_final_file(read_xml_filename);
+     verbose_cout << "   Done!" << std::endl;
+     }
+     */
     get_parameters_from_command_line();
   }
 
@@ -162,6 +199,201 @@ template <int dim>
     get_double_from_options("-out_phase", out_phase);
     get_string_from_options("-rod_cusping_treat", rod_cusping_treat);
 
+  }
+
+/**
+ * @brief update cross sections depending on the perturbation type at sim_time.
+ */
+template <int dim>
+  void Perturbation<dim>::update_xsec (double sim_time)
+  {
+    if (type_perturbation == "Flux_Distributed"
+        or type_perturbation == "Single_Material"
+        or type_perturbation == "Out_Of_Phase"
+        or type_perturbation == "Ramp_Two_Mats")
+    {
+      verbose_cout << "Apply function to perturbed... " << std::flush;
+      apply_function_to_perturb(sim_time);
+      verbose_cout << " Done!" << std::endl;
+    }
+    else if (type_perturbation == "Rods")
+    {
+      verbose_cout << "Moving rods: time" << sim_time << std::flush;
+      move_bars(sim_time);
+      verbose_cout << " Done!" << std::endl;
+    }
+    else if (type_perturbation == "AECL")
+    {
+      verbose_cout << "Perturbed the AECL transient: " << std::flush;
+      move_th(sim_time);
+      verbose_cout << " Done!" << std::endl;
+    }
+    else if (type_perturbation == "Step_Change_Material")
+    {
+      verbose_cout << "Perturbed the Step_Change_Material: " << std::flush;
+      step_change_material(sim_time);
+      verbose_cout << " Done!" << std::endl;
+    }
+    else if (type_perturbation == "Mechanical_Vibration")
+    {
+      verbose_cout << "   move_vibrating... " << std::flush;
+      move_vibrating(sim_time);
+      verbose_cout << " Done!" << std::endl;
+    }
+    else if (type_perturbation == "C5G7-TD1.1")
+    {
+      verbose_cout << "Apply perturbation C5G7-TD1.1: " << std::endl;
+      modify_xsec_c5g7_td11(sim_time);
+      verbose_cout << " Done!" << std::endl;
+    }
+    else if (type_perturbation == "Read_XS_File")
+    {
+      verbose_cout << "   move_read_xs_file... " << std::flush;
+      move_read_xs_file(sim_time);
+      verbose_cout << " Done!" << std::endl;
+    }
+    else
+    {
+      AssertRelease(false, "Invalid type of perturbation");
+    }
+  }
+
+/**
+ *
+ */
+template <int dim>
+  void Perturbation<dim>::modify_xsec_C5G7_7g (std::string xsec_type,
+    double sim_time,
+    std::vector<double> amplitudes,
+    unsigned int pert_mat)
+  {
+
+    double frequency = 1.0;
+    const unsigned int n_groups = materials.get_n_groups();
+
+    if (xsec_type == "capture")
+    {
+      // Copy xsec
+      for (unsigned int g = 0; g < n_groups; ++g)
+      {
+
+        double sigma_tr = init_sigma_tr[g][pert_mat]
+                          + amplitudes[g] * sin(2 * M_PI * frequency * sim_time);
+        materials.set_sigma_tr(sigma_tr, g, pert_mat);
+
+        double sigma_t = init_sigma_t[g][pert_mat]
+                         + amplitudes[g] * sin(2 * M_PI * frequency * sim_time);
+        materials.set_sigma_t(sigma_t, g, pert_mat);
+
+        double sigma_r = init_sigma_r[g][pert_mat]
+                         + amplitudes[g] * sin(2 * M_PI * frequency * sim_time);
+        materials.set_sigma_r(sigma_r, g, pert_mat);
+
+      }
+    }
+
+    return;
+  }
+
+/**
+ * @brief Values for XSEC perturbation in C5G7 TD 1.1 exercise defined in:
+ * TODO Find Reference.
+ */
+template <int dim>
+  void Perturbation<dim>::modify_xsec_c5g7_td11 (
+    double sim_time)
+  {
+    const unsigned int n_groups = materials.get_n_groups();
+    const unsigned int changing_mat = 7;
+    const unsigned int rodded_mat = 8;
+
+    if (sim_time < 1.0)
+    {
+      for (unsigned int g = 0; g < materials.get_n_groups(); ++g)
+      {
+        double sigma_tr = init_sigma_tr[g][changing_mat]
+            + 0.01 * (init_sigma_tr[g][rodded_mat] - init_sigma_tr[g][changing_mat])
+              * sim_time;
+        materials.set_sigma_tr(sigma_tr, g, changing_mat);
+
+        double sigma_t = init_sigma_t[g][changing_mat]
+            + 0.01 * (init_sigma_t[g][rodded_mat] - init_sigma_t[g][changing_mat])
+              * sim_time;
+        materials.set_sigma_t(sigma_t, g, changing_mat);
+
+        double sigma_r = init_sigma_r[g][changing_mat]
+            + 0.01 * (init_sigma_r[g][rodded_mat] - init_sigma_r[g][changing_mat])
+              * sim_time;
+        materials.set_sigma_r(sigma_r, g, changing_mat);
+
+        // TODO Init Velocities? Yo crec que está mal
+        //velocities_vector[g][changing_mat] = velocities_vector[g][changing_mat]
+        //    + 0.01 * (velocities_vector[g][rodded_mat]
+        //              - velocities_vector[g][changing_mat])
+        //      * sim_time;
+
+        for (unsigned int g2 = 0; g2 < n_groups; g2++)
+        {
+          double sigma_s = init_sigma_s[g][g2][changing_mat]
+                           + 0.01 * (init_sigma_s[g][g2][rodded_mat]
+                                     - init_sigma_s[g][g2][changing_mat])
+                             * sim_time;
+          materials.set_sigma_s(sigma_s, g, g2, changing_mat);
+        }
+      }
+    }
+
+    else if (sim_time < 2.0)
+    {
+      for (unsigned int g = 0; g < n_groups; ++g)
+      {
+
+        double sigma_tr = init_sigma_tr[g][changing_mat]
+            + 0.01 * (init_sigma_tr[g][rodded_mat] - init_sigma_tr[g][changing_mat])
+              * (2.0 - sim_time);
+        materials.set_sigma_tr(sigma_tr, g, changing_mat);
+
+        double sigma_t = init_sigma_t[g][changing_mat]
+            + 0.01 * (init_sigma_t[g][rodded_mat] - init_sigma_t[g][changing_mat])
+              * (2.0 - sim_time);
+        materials.set_sigma_t(sigma_t, g, changing_mat);
+
+        double sigma_r = init_sigma_r[g][changing_mat]
+            + 0.01 * (init_sigma_r[g][rodded_mat] - init_sigma_r[g][changing_mat])
+              * (2.0 - sim_time);
+        materials.set_sigma_r(sigma_r, g, changing_mat);
+
+        // FIXME initi velocities
+        //velocities_vector[g][changing_mat] = velocities_vector[g][changing_mat]
+        //    + 0.01 * (velocities_vector[g][rodded_mat]
+        //              - velocities_vector[g][changing_mat])
+        //       * (2.0 - sim_time);
+
+        for (unsigned int g2 = 0; g2 < n_groups; ++g2)
+        {
+          double sigma_s = init_sigma_s[g][g2][changing_mat]
+                           + 0.01 * (init_sigma_s[g][g2][rodded_mat]
+                                     - init_sigma_s[g][g2][changing_mat])
+                             * (2.0 - sim_time);
+          materials.set_sigma_s(sigma_s, g, g2, changing_mat);
+        }
+      }
+    }
+    else // Restore Initial XS
+    {
+      for (unsigned int g = 0; g < n_groups; ++g)
+      {
+        materials.set_sigma_tr(init_sigma_tr[g][changing_mat], g, changing_mat);
+        materials.set_sigma_t(init_sigma_t[g][changing_mat], g, changing_mat);
+        materials.set_sigma_r(init_sigma_r[g][changing_mat], g, changing_mat);
+        //velocities_vector[g][changing_mat] = velocities_vector[g][changing_mat];
+
+        for (unsigned int g2 = 0; g2 < n_groups; ++g2)
+          materials.set_sigma_s(init_sigma_s[g][g2][changing_mat], g, g2, changing_mat);
+      }
+    }
+
+    return;
   }
 
 /**
@@ -368,7 +600,7 @@ template <int dim>
           AssertRelease(
             bar_points[bar][p].first - bar_points[bar][p - 1].first
             > 1e-10,
-            "The times that define the bar possition must be different");
+            "The times that define the bar position must be different");
           bar_pos_z_vec[bar] = bar_points[bar][p - 1].second
                                + (bar_points[bar][p].second
                                   - bar_points[bar][p - 1].second)
@@ -393,8 +625,7 @@ template <int dim>
         ExcMessage("Error in time of the bars definition"));
     }
 
-// Move the bars  one by one (by )
-
+    // Move the bars  one by one (by )
     for (unsigned int plant_pos = 0; plant_pos < bars_position.size();
         ++plant_pos)
     {
@@ -627,9 +858,8 @@ template <int dim>
 template <int dim>
   void Perturbation<dim>::move_th (double sim_time)
   {
-
-    AssertRelease(materials.get_n_groups() == 2,
-      "This is only implemented for 2 energy groups");
+    const unsigned int n_groups = materials.get_n_groups();
+    AssertRelease(n_groups == 2, "This is only implemented for 2 energy groups");
 
     std::vector<double> new_xsec(n_groups);
     for (int nmat = 0; nmat < 26; nmat++)
@@ -719,15 +949,6 @@ template <int dim>
   }
 
 /**
- * @brief Perturbate a xsec for C5G7-TD benchmmark
- */
-template <int dim>
-  void Perturbation<dim>::apply_c5G7_perturb (double sim_time)
-  {
-    materials.modify_xsec_c5g7_td11(sim_time);
-  }
-
-/**
  * @brief
  */
 template <int dim>
@@ -770,143 +991,150 @@ template <int dim>
     double sim_time,
     std::vector<unsigned int> mat_chan)
   {
+    //const unsigned int n_groups = materials.get_n_groups();
 
-    std::vector<double> new_xsec(n_groups);
-    std::vector<std::vector<double> > new_xsec_all(4,
-      std::vector<double>(n_groups));
-
-    unsigned int nmat;
-    for (unsigned int nm = 0; nm < mat_chan.size(); nm++)
+    if (perturbation_function == "Sinus")
     {
-      nmat = mat_chan[nm];
-
-      if (perturbation_function == "Sinus")
+      AssertRelease(false, "Sinus perturbation not implemented yet");
+      /*
+      if (group_changing != static_cast<unsigned int>(-1)) // One energy groups is selected
       {
-
-        if (group_changing != static_cast<unsigned int>(-1)) // One energy groups is selected
+        AssertRelease(xs_pert_name != "all",
+          "This perturbation is only valid for sigmaf or sigmaa");
+        for (unsigned int nm = 0; nm < mat_chan.size(); nm++)
         {
-          AssertRelease(xs_pert_name != "all",
-            "This perturbation is only valid for sigmaf or sigmaa");
           for (unsigned int ng = 0; ng < n_groups; ng++)
-            new_xsec[ng] = xsec_init[ng][nmat];
+            new_xsec[ng] = xsec_init[ng][mat_chan[nm]];
 
           new_xsec[group_changing] += xs_amplitude
-                                      * sin(2 * M_PI * frequency * sim_time + M_PI * nm);
+                                      * sin(2 * M_PI * frequency * sim_time);
+        }
 
-        }
-        else // All energy groups are selected
-        {
-          unsigned int xsec_am = 0;
-          for (unsigned int ng = 0; ng < n_groups; ng++)
-          {
-            if (xs_pert_name == "sigma_f" or xs_pert_name == "sigma_a")
-              new_xsec[ng] = xsec_init[ng][nmat]
-                  + xs_amplitude * sin(2 * M_PI * frequency * sim_time + M_PI * nm);
-            else if (xs_pert_name == "all")
-              for (unsigned xsec = 0; xsec < 4; xsec++)
-              {
-                new_xsec_all[xsec][ng] = xsec_init_all[xsec][ng][nmat]
-                                         + amplitudes[xsec_am] * sin(
-                                             2 * M_PI * frequency * sim_time + M_PI * nm);
-                xsec_am++;
-              }
-          }
-        }
       }
-      else if (perturbation_function == "Constant") // FIXME + 1e-4 es Normal?? No seria un Step y com el valor Amplitude
+      else // All energy groups are selected
       {
+        unsigned int xsec_am = 0;
         for (unsigned int ng = 0; ng < n_groups; ng++)
         {
-          if (sim_time > 0.0)
-            new_xsec[ng] = xsec_init[ng][nmat] + 1e-4;
-          else
-            new_xsec[ng] = xsec_init[ng][nmat];
+          if (xs_pert_name == "sigma_f" or xs_pert_name == "sigma_a")
+            new_xsec[ng] = xsec_init[ng][mat_chan]
+                           + xs_amplitude * sin(2 * M_PI * frequency * sim_time);
+          else if (xs_pert_name == "all")
+            for (unsigned xsec = 0; xsec < 4; xsec++)
+            {
+              new_xsec_all[xsec][ng] = xsec_init_all[xsec][ng][mat_chan]
+                                       + amplitudes[xsec_am] * sin(
+                                           2 * M_PI * frequency * sim_time);
+              xsec_am++;
+            }
         }
       }
-      else if (perturbation_function == "Ramp")
+      */
+    }
+    else if (perturbation_function == "Constant") // FIXME + 1e-4 es Normal?? No seria un Step y com el valor Amplitude
+    {
+      AssertRelease(false, "Constant perturbation not implemented yet");
+      /*
+      for (unsigned int ng = 0; ng < n_groups; ng++)
       {
-        if (group_changing != static_cast<unsigned int>(-1)) // One energy groups is selected
-        {
-          for (unsigned int ng = 0; ng < n_groups; ng++)
-            new_xsec[ng] = xsec_init[ng][nmat];
+        if (sim_time > 0.0)
+          new_xsec[ng] = xsec_init[ng][pert_mat] + 1e-4;
+        else
+          new_xsec[ng] = xsec_init[ng][pert_mat];
+      }
+      */
+    }
+    else if (perturbation_function == "Ramp")
+    {
+      AssertRelease(false, "Ramp perturbation not implemented yet");
+      /*
+      if (group_changing != static_cast<unsigned int>(-1)) // One energy groups is selected
+      {
+        for (unsigned int ng = 0; ng < n_groups; ng++)
+          new_xsec[ng] = xsec_init[ng][pert_mat];
 
+        if (sim_time <= cut_time[nm])
+          new_xsec[group_changing] += xsec_init[group_changing][pert_mat]
+                                      * (slope_up[nm] * sim_time);
+        else
+          new_xsec[group_changing] =
+              xsec_init[group_changing][pert_mat]
+              + xsec_init[group_changing][pert_mat] * slope_up[nm] * cut_time[nm]
+              - xsec_init[group_changing][pert_mat] * slope_down[nm]
+                * (sim_time - cut_time[nm]);
+        //            new_xsec[group_changing] += xsec_init[group_changing][nmat]
+        //                                        * (slope_up[nm] * cut_time[nm])
+        //                                        - (xsec_init[group_changing][nmat]
+        //                                           + xsec_init[group_changing][nmat]
+        //                                             * (slope_down[nm] * cut_time[nm]))
+        //                                          * (slope_down[nm] * (sim_time - cut_time[nm]));
+      }
+      else // All groups changing
+      {
+        //std::cout << " ALL GRUPS " << "mat " << nmat << std::endl;
+        //std::cout << " new_xsec.size() " << new_xsec.size()<< std::endl;
+
+        for (unsigned int ng = 0; ng < n_groups; ng++)
+        {
           if (sim_time <= cut_time[nm])
-            new_xsec[group_changing] += xsec_init[group_changing][nmat]
-                                        * (slope_up[nm] * sim_time);
-          else
-            new_xsec[group_changing] = xsec_init[group_changing][nmat]
-                + xsec_init[group_changing][nmat] * slope_up[nm] * cut_time[nm]
-                                       - xsec_init[group_changing][nmat] * slope_down[nm]
-                                         * (sim_time - cut_time[nm]);
-//            new_xsec[group_changing] += xsec_init[group_changing][nmat]
-//                                        * (slope_up[nm] * cut_time[nm])
-//                                        - (xsec_init[group_changing][nmat]
-//                                           + xsec_init[group_changing][nmat]
-//                                             * (slope_down[nm] * cut_time[nm]))
-//                                          * (slope_down[nm] * (sim_time - cut_time[nm]));
-        }
-        else // All groups changing
-        {
-          //std::cout << " ALL GRUPS " << "mat " << nmat << std::endl;
-          //std::cout << " new_xsec.size() " << new_xsec.size()<< std::endl;
-
-          for (unsigned int ng = 0; ng < n_groups; ng++)
           {
-            if (sim_time <= cut_time[nm])
-            {
-              new_xsec[ng] = xsec_init[ng][nmat]
-                             * (1 + (slope_up[nm] * sim_time));
-            }
-            else  // sim_time > cut_time[nm]
-            {
-              // TODO check
-              new_xsec[ng] = xsec_init[ng][nmat]
-                             + xsec_init[ng][nmat] * slope_up[nm] * cut_time[nm]
-                             - xsec_init[ng][nmat] * slope_down[nm]
-                               * (sim_time - cut_time[nm]);
-//              new_xsec[ng] += xsec_init[ng][nmat]
-//                                          * (slope_up[nm] * cut_time[nm])
-//                                          - (xsec_init[ng][nmat]
-//                                             + xsec_init[ng][nmat]
-//                                               * (slope_down[nm] * cut_time[nm]))
-//                                            * (slope_down[nm] * (sim_time - cut_time[nm]));
-            }
+            new_xsec[ng] = xsec_init[ng][pert_mat]
+                           * (1 + (slope_up[nm] * sim_time));
+          }
+          else // sim_time > cut_time[nm]
+          {
+            // TODO check
+            new_xsec[ng] = xsec_init[ng][pert_mat]
+                           + xsec_init[ng][pert_mat] * slope_up[nm] * cut_time[nm]
+                           - xsec_init[ng][pert_mat] * slope_down[nm]
+                             * (sim_time - cut_time[nm]);
+            //              new_xsec[ng] += xsec_init[ng][nmat]
+            //                                          * (slope_up[nm] * cut_time[nm])
+            //                                          - (xsec_init[ng][nmat]
+            //                                             + xsec_init[ng][nmat]
+            //                                               * (slope_down[nm] * cut_time[nm]))
+            //                                            * (slope_down[nm] * (sim_time - cut_time[nm]));
           }
         }
       }
-      else if (perturbation_function == "Ramp_hex")
-      // Exact values for ...TODO
+      */
+    }
+    else if (perturbation_function == "Ramp_hex")
+    // Exact values for ...TODO
+    {
+      AssertRelease(false, "Ramp_hex perturbation not implemented yet");
+      /*
+      new_xsec[0] = xsec_init[0][pert_mat];
+      if (sim_time <= 1.0)
       {
-        new_xsec[0] = xsec_init[0][nmat];
-        if (sim_time <= 1.0)
-        {
-          new_xsec[1] = 0.118870 * (1 - sim_time) + 0.016917 * sim_time;
-        }
-        else if ((sim_time > 1.0) and sim_time < 2.0)
-        {
-          new_xsec[1] = 0.118870 * (sim_time - 1)
-                        + 0.016917 * (2 - sim_time);
-        }
-        else
-        {
-          new_xsec[1] = 0.118870;
-        }
+        new_xsec[1] = 0.118870 * (1 - sim_time) + 0.016917 * sim_time;
       }
-      else if (perturbation_function == "Noise_7g")
-      // Exact values for the C5G7 Noise Benchmark in Neutron Noise
+      else if ((sim_time > 1.0) and sim_time < 2.0)
       {
-        materials.modify_xsec_7g(xs_pert_name, sim_time, amplitudes, nmat);
+        new_xsec[1] = 0.118870 * (sim_time - 1)
+                      + 0.016917 * (2 - sim_time);
       }
       else
       {
-        AssertRelease(false, "Incorrect Perturbation_Function defined");
+        new_xsec[1] = 0.118870;
       }
-
-      if (xs_pert_name == "sigma_f" or xs_pert_name == "sigma_a")
-        materials.modify_xsec(xs_pert_name, nmat, new_xsec);
-      else if (xs_pert_name == "all")
-        materials.modify_xsec_all(xs_pert_name, nmat, new_xsec_all);
-
+      */
+    }
+    else if (perturbation_function == "Noise_7g")
+    // Exact values for the C5G7 Noise Benchmark in Neutron Noise
+    {
+      for (unsigned int nm = 0; nm < mat_chan.size(); nm++)
+        modify_xsec_C5G7_7g(xs_pert_name, sim_time, amplitudes, mat_chan[nm]);
+    }
+    else if (perturbation_function == "1D_UOX_FA")
+    // Exact values for the 1D_UOX_FA Noise Benchmark
+    {
+      for (unsigned int nm = 0; nm < mat_chan.size(); nm++)
+        perturbe_1D_UOX(sim_time, mat_chan[nm]);
+    }
+    else
+    {
+      AssertRelease(false, "Incorrect Perturbation_Function defined");
     }
 
   }
@@ -925,13 +1153,15 @@ template <int dim>
                              + xs_amplitude * sin(2 * M_PI * frequency * sim_time);
     vib_pos[2 * direction + 1] = vib_pos_static[2 * direction + 1]
                                  + xs_amplitude * sin(2 * M_PI * frequency * sim_time);
-    verbose_cout << "   Vibrating in "
-                 << round(xs_amplitude * sin(2 * M_PI * frequency * sim_time) * 10, 4)
-                 << " mm" << " assembly goes from "
-                 << round(vib_pos[2 * direction], 4)
-                 << " cm to "
-                 << round(vib_pos[2 * direction + 1], 4)
-                 << " cm." << std::endl;
+    cout << "   Assembly displacement:  "
+         << round(xs_amplitude * sin(2 * M_PI * frequency * sim_time), 4)
+         << " at time " << sim_time
+         << " cm"
+         << " assembly goes from "
+         << round(vib_pos[2 * direction], 4)
+         << " cm to "
+         << round(vib_pos[2 * direction + 1], 4)
+         << " cm." << std::endl;
 
     move_volume_homogenized(vib_pos, mat_vib, indices_changed, cells_changed);
     //move_volume_homogenized(vib_pos_min, vib_pos_max, direction, mat_vib);
@@ -957,7 +1187,7 @@ template <int dim>
     unsigned int mat_no_bar;
     ConditionalOStream cell_cout(std::cout, false);
 
-    const unsigned int n_mats = materials.n_mats_init;
+    const unsigned int n_mats = n_mats_init;
     const double eps = 1e-8;
     double frac;
     const int move_dim = 0; // vibration in x direction
@@ -1075,17 +1305,15 @@ template <>
     std::vector<double> maxp(2);
     std::vector<double> minp(2);
     unsigned int mat_no_bar;
-    unsigned int new_mat = materials.n_mats_init;
+    unsigned int new_mat = n_mats_init;
     const double eps = 1e-8;
     double frac;
     unsigned int new_user_id = materials.n_assemblies;
 
     ConditionalOStream cell_cout(std::cout, false);
-    typename DoFHandler<2>::active_cell_iterator cell =
-                                                        dof_handler.begin_active(),
-        endc =
-               dof_handler.end();
-    for (cell = dof_handler.begin_active(); cell != endc; ++cell)
+    //auto cell = dof_handler.begin_active();
+    auto endc = dof_handler.end();
+    for (auto cell = dof_handler.begin_active(); cell != endc; ++cell)
     {
       // plant_bar_pos = cell->user_index() % n_assemblies_per_plane;
       //if (bar_in_position[plant_bar_pos] - 1 == bar)
@@ -1366,11 +1594,11 @@ template void Perturbation<1>::move_volume_homogenized (
   std::vector<unsigned int> &indices_changed,
   std::vector<typename DoFHandler<1>::active_cell_iterator> &cells_changed);
 
-template void Perturbation<2>::move_volume_homogenized (
-  const std::vector<double> &vib_pos,
-  const unsigned int &mat_bar,
-  std::vector<unsigned int> &indices_changed,
-  std::vector<typename DoFHandler<2>::active_cell_iterator> &cells_changed);
+/*template void Perturbation<2>::move_volume_homogenized (
+ const std::vector<double> &vib_pos,
+ const unsigned int &mat_bar,
+ std::vector<unsigned int> &indices_changed,
+ std::vector<typename DoFHandler<2>::active_cell_iterator> &cells_changed);*/
 
 template void Perturbation<3>::move_volume_homogenized (
   const std::vector<double> &vib_pos,
@@ -1503,6 +1731,7 @@ template <int dim>
     unsigned int n_mats;
     XMLInput::InputMat input;
     input.load(xml_file);
+    const unsigned int n_groups = materials.get_n_groups();
     AssertRelease(input.get_n_groups() == n_groups,
       "n_groups in xml file does not match " + num_to_str(n_groups)
       + " vs "
@@ -1640,10 +1869,8 @@ template <int dim>
           materials.set_sigma_tr(sigma_tr2, 1, pert_mat);
           materials.set_sigma_r(sigma_a1 + sigma_12, 0, pert_mat);
           materials.set_sigma_r(sigma_a2, 1, pert_mat);
-          materials.set_nu_sigma_f(nu_sigma_f1 / materials.keff, 0,
-            pert_mat);
-          materials.set_nu_sigma_f(nu_sigma_f2 / materials.keff, 1,
-            pert_mat);
+          materials.set_nu_sigma_f(nu_sigma_f1 / materials.keff, 0, pert_mat);
+          materials.set_nu_sigma_f(nu_sigma_f2 / materials.keff, 1, pert_mat);
           materials.set_sigma_f(sigma_f1, 0, pert_mat);
           materials.set_sigma_f(sigma_f2, 1, pert_mat);
           materials.set_sigma_s(sigma_12, 0, 1, pert_mat);
@@ -1668,15 +1895,15 @@ template <int dim>
       for (unsigned int gr = 0; gr < materials.get_n_groups(); gr++)
       {
 
-        sigma_t = (1.0 - frac) * materials.init_sigma_t[gr][mat]
+        sigma_t = (1.0 - frac) * init_sigma_t[gr][mat]
                   + frac * final_sigma_t[gr][mat];
-        sigma_tr = (1.0 - frac) * materials.init_sigma_tr[gr][mat]
+        sigma_tr = (1.0 - frac) * init_sigma_tr[gr][mat]
                    + frac * final_sigma_tr[gr][mat];
-        sigma_r = (1.0 - frac) * materials.init_sigma_r[gr][mat]
+        sigma_r = (1.0 - frac) * init_sigma_r[gr][mat]
                   + frac * final_sigma_r[gr][mat];
-        sigma_f = (1.0 - frac) * materials.init_sigma_f[gr][mat]
+        sigma_f = (1.0 - frac) * init_sigma_f[gr][mat]
                   + frac * final_sigma_f[gr][mat] / materials.keff;
-        nu_sigma_f = (1.0 - frac) * materials.init_nu_sigma_f[gr][mat]
+        nu_sigma_f = (1.0 - frac) * init_nu_sigma_f[gr][mat]
                      + frac * final_nu_sigma_f[gr][mat] / materials.keff;
 
         materials.set_sigma_tr(sigma_tr, gr, mat);
@@ -1687,7 +1914,7 @@ template <int dim>
 
         for (unsigned int gr2 = 0; gr2 < materials.get_n_groups(); gr2++)
         {
-          sigma_s = (1.0 - frac) * materials.init_sigma_s[gr][gr2][mat]
+          sigma_s = (1.0 - frac) * init_sigma_s[gr][gr2][mat]
                     + frac * final_sigma_s[gr][gr2][mat];
           materials.set_sigma_s(sigma_s, gr, gr2, mat);
         }
@@ -1709,6 +1936,88 @@ template <int dim>
 
     cells_changed.clear();
     indices_changed.clear();
+  }
+
+/**
+ * @brief Exact perturbation for 1D_UOX_FA defined in:
+ *  Carreño, A., Vidal-Ferràndiz, A., Ginestar, D., & Verdú, G. (2022).
+ *  Frequency-domain models in the SPN approximation for neutron noise calculations.
+ *  Progress in Nuclear Energy, 148, 104233.
+ *  https://doi.org/10.1016/j.pnucene.2022.104233
+ */
+template <int dim>
+  void Perturbation<dim>::perturbe_1D_UOX (
+    const double sim_time,
+    const unsigned int pert_mat)
+  {
+
+    /*    cout << "  perturbe 1D_UOX_ex2 at " << sim_time
+     << " s with freq "
+     << frequency
+     << "   pert_mat  "
+     << pert_mat
+     << " materials.keff  "
+     << materials.keff
+     << std::endl;*/
+
+    // Absolute Values of deltaXS
+    // The phase is impose by the sin() -> -1j -> 90 deg
+    //double delta_Sigma_t1 = 1.51160000e-03;
+    //double delta_Sigma_t2 = 2.20256000e-03;
+    double delta_Sigma_t1 = 0.0;
+    double delta_Sigma_t2 = 0.0;
+    double delta_Sigma_a1 = 3.14307000e-04;
+    double delta_Sigma_a2 = 8.67176000e-04;
+    double delta_nuSigma_f1 = 2.98814213e-05;
+    double delta_nuSigma_f2 = 5.50364059e-04;
+    double delta_Sigma_s12 = 2.94001400e-06;
+
+    double delta_Sigma_r1 = delta_Sigma_a1 + delta_Sigma_s12;
+    double delta_Sigma_r2 = delta_Sigma_a2;
+
+    const double sin_t = sin(2 * M_PI * frequency * sim_time);
+
+    // only used in SPN >= 3
+    double sigma_t1 = init_sigma_t[0][pert_mat] + delta_Sigma_t1 * sin_t;
+    materials.set_sigma_t(sigma_t1, 0, pert_mat);
+    double sigma_t2 = init_sigma_t[1][pert_mat] + delta_Sigma_t2 * sin_t;
+    materials.set_sigma_t(sigma_t2, 1, pert_mat);
+
+    double sigma_tr1 = init_sigma_tr[0][pert_mat] + delta_Sigma_t1 * sin_t;
+    materials.set_sigma_tr(sigma_tr1, 0, pert_mat);
+    double sigma_tr2 = init_sigma_tr[1][pert_mat] + delta_Sigma_t2 * sin_t;
+    materials.set_sigma_tr(sigma_tr2, 1, pert_mat);
+
+    double sigma_r1 = init_sigma_r[0][pert_mat] + delta_Sigma_r1 * sin_t;
+    materials.set_sigma_r(sigma_r1, 0, pert_mat);
+    double sigma_r2 = init_sigma_r[1][pert_mat] + delta_Sigma_r2 * sin_t;
+    materials.set_sigma_r(sigma_r2, 1, pert_mat);
+
+    // Before this function sigma_f and nu_sigma_f has been set to critical values
+    // This way, the  amplitude oscillation is also reduced by keff.
+    // We do not change sigma_f, only nu_sigma_f to not change the postprocess in any way.
+    //sigma_f = init_sigma_f[gr][pert_mat]
+    //        + frac_f * sin_t * init_sigma_f[gr][pert_mat];
+    //materials.set_sigma_f(sigma_f, gr, pert_mat);
+    double nu_sigma_f1 = init_nu_sigma_f[0][pert_mat] + delta_nuSigma_f1 * sin_t;
+    materials.set_nu_sigma_f(nu_sigma_f1, 0, pert_mat);
+    double nu_sigma_f2 = init_nu_sigma_f[1][pert_mat] + delta_nuSigma_f2 * sin_t;
+    materials.set_nu_sigma_f(nu_sigma_f2, 1, pert_mat);
+
+    // We only change sigma_s1->2 (the other values of sigma_s are not defined)
+    double sigma_s12 = init_sigma_s[0][1][pert_mat] + delta_Sigma_s12 * sin_t;
+    materials.set_sigma_s(sigma_s12, 0, 1, pert_mat);
+
+    /*
+     std::cout << std::scientific << std::setprecision(7) << std::endl;
+     std::cout << " delta_sigma_t1 " << delta_Sigma_t1 << std::endl;
+     std::cout << " delta_sigma_t2 " << delta_Sigma_t2 << std::endl;
+     std::cout << " delta_sigma_r1 " << delta_Sigma_r1 << std::endl;
+     std::cout << " delta_sigma_r2 " << delta_Sigma_r2 << std::endl;
+     std::cout << " delta_nusigma_f1 " << delta_nuSigma_f1 << std::endl;
+     std::cout << " delta_nusigma_f2 " << delta_nuSigma_f2 << std::endl;
+     std::cout << " delta_sigma_s12 " << delta_Sigma_s12 << std::endl;
+     */
   }
 
 template class Perturbation<1> ;

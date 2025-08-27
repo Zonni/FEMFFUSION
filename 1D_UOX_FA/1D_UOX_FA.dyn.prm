@@ -2,15 +2,15 @@
 # Dynamic Data for 2D_UOX_BENCHMARK
 # --------------------------------
 
-# Frequency of the pertubation and flux  
+# Frequency of the pertubation and flux  (Hz)
 set Frequency            = 1.0
 
 # Per Group neutron Velocity
-set Neutron_Velocities   = 18230400  413067
+set Neutron_Velocities   = 1.82304e7  4.13067e5
 
 # Lambda  effective of neutron precursors 
 set Lambda_eff           = 0.0851
 
 # Beta effective of neutron precursors
-set Beta_eff             = 0.00535
+set Beta_eff             = 535e-5
 

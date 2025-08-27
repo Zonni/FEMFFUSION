@@ -1389,7 +1389,7 @@ template <int dim, int n_fe_degree>
 
     // Get transient options
     bool rom_static = prm.get_bool("ROM_Static");
-    if (!rom_static)
+    if (not rom_static)
     {
       verbose_cout << "Make the reactor critical " << std::endl;
       materials.make_critical(eigenvalues[0]);

@@ -19,7 +19,7 @@ params = {'backend': 'pdf',
           'ytick.labelsize': 13,
           'text.usetex': False,
           'lines.linewidth': 1.2,
-          'lines.markersize': 3,
+          'lines.markersize': 5,
           'lines.markeredgewidth': 1,
           'legend.numpoints': 1, 
           'axes.formatter.useoffset': False,
@@ -52,7 +52,7 @@ for m in m_req:
 fig = plt.figure()
 ax = fig.add_subplot(1, 1, 1)
 ax.semilogy(m_req, mean_keff, 'o-', label='Mean Error')
-ax.semilogy(m_req, max_keff, 'o-', label='Max Error')
+ax.semilogy(m_req, max_keff, 'x-', label='Max Error')
 ax.grid(True)
 ax.legend()
 ax.set_xlabel('Number of modes retained')
@@ -62,11 +62,11 @@ fig.savefig('keff_error_mreq.pdf', format='pdf')
 fig = plt.figure()
 ax = fig.add_subplot(1, 1, 1)
 ax.semilogy(m_req, mean_phi, 'o-', label='Mean RMS Error')
-ax.semilogy(m_req, max_phi, 'o-', label='Max RMS Error')
+ax.semilogy(m_req, max_phi, 'x-', label='Max RMS Error')
 ax.grid(True)
 ax.legend()
 ax.set_xlabel('Number of modes retained')
-ax.set_ylabel('$\phi$ Error (%)')
+ax.set_ylabel('RMS($\Delta\phi$) Error (%)')
 fig.savefig('phi_error_mreq.pdf', format='pdf')
 
 
@@ -103,8 +103,8 @@ for m in m_req:
 fig = plt.figure()
 ax = fig.add_subplot(1, 1, 1)
 ax.loglog(leftout_energy_g1, mean_keff, 'o-',  label='Group 1 - Mean Error')
-ax.loglog(leftout_energy_g1, max_keff, 'o-',   label='Group 1 - Max Error')
-ax.loglog(leftout_energy_g2, mean_keff, 'x--', label='Group 2 - Mean Error')
+ax.loglog(leftout_energy_g1, max_keff, 'x-',   label='Group 1 - Max Error')
+ax.loglog(leftout_energy_g2, mean_keff, 'o--', label='Group 2 - Mean Error')
 ax.loglog(leftout_energy_g2, max_keff, 'x--',  label='Group 2 - Max Error')
 ax.grid(True)
 ax.legend()
@@ -115,12 +115,12 @@ fig.savefig('keff_error_energy.pdf', format='pdf')
 fig = plt.figure()
 ax = fig.add_subplot(1, 1, 1)
 ax.loglog(leftout_energy_g1, mean_phi, 'o-',  label='Group 1 - Mean RMS Error')
-ax.loglog(leftout_energy_g1, max_phi,  'o-',  label='Group 1 - Max RMS Error')
-ax.loglog(leftout_energy_g2, mean_phi, 'x--', label='Group 2 - Mean RMS Error')
+ax.loglog(leftout_energy_g1, max_phi,  'x-',  label='Group 1 - Max RMS Error')
+ax.loglog(leftout_energy_g2, mean_phi, 'o--', label='Group 2 - Mean RMS Error')
 ax.loglog(leftout_energy_g2, max_phi,  'x--', label='Group 2 - Max RMS Error')
 ax.grid(True)
 ax.legend()
 ax.set_xlabel('Energy Fraction Left Out per Group')
-ax.set_ylabel('$\phi$ Error ')
+ax.set_ylabel('RMS($\Delta\phi$) Error (%)')
 fig.savefig('phi_error_energy.pdf', format='pdf')
 

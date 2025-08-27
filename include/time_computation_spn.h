@@ -90,7 +90,6 @@ template <int dim, int n_fe_degree>
     void init_time_computation ();
     void get_parameters_from_command_line ();
 
-    void update_xsec ();
 
     // Matrices
     void assemble_matrices ();

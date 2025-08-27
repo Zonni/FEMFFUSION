@@ -707,26 +707,29 @@ template <int dim, int n_fe_degree>
          << "   Compute POD basis...                CPU Time = "
          << timer.wall_time() << " s." << std::endl;
 
+    std::cout << "n_vertices " << dof_handler.get_triangulation().n_vertices()
+    << std::endl;
+
     if (rom_group_wise == "Monolithic")
     {
       if (LUPOD_type == "LUPOD")
       {
         cout << "   LUPOD ----- MONOLITHIC" << std::endl;
         compute_LUPOD_basis_monolithic(snapshots, epsilon_M, epsilon_N,
-           points_per_block, dim_rom, snap_basis_full, snap_basis_red);
+            points_per_block, dim_rom, snap_basis_full, snap_basis_red);
       }
       else if (LUPOD_type == "LUPOD_ext")
       {
         cout << "   LUPOD EXTENDED  ----- MONOLITHIC" << std::endl;
         cout << "   N_LUPOD_POINTS: " << n_LUPOD_points << std::endl;
         compute_LUPODext_basis_monolithic(snapshots, epsilon_M, M_req, n_LUPOD_points,
-           points_per_block, dim_rom, snap_basis_full, snap_basis_red);
+            points_per_block, dim_rom, snap_basis_full, snap_basis_red);
       }
       else if (LUPOD_type == "POD")
       {
         cout << "   POD ----- MONOLITHIC" << std::endl;
         compute_POD_basis_monolithic(snapshots, epsilon_M, M_req, dim_rom,
-          snap_basis);
+            snap_basis);
       }
     }
     else if (rom_group_wise == "Group_Wise")
@@ -740,31 +743,31 @@ template <int dim, int n_fe_degree>
       {
         cout << "   LUPOD ----- GROUP WISE" << std::endl;
         compute_LUPOD_basis_group_wise(snapshots, epsilon_M, epsilon_N,
-           points_per_block, dim_rom, snap_basis_full, snap_basis_red);
+            points_per_block, dim_rom, snap_basis_full, snap_basis_red);
       }
       else if (LUPOD_type == "LUPOD_ext")
       {
         cout << "   LUPOD EXTENDED----- GROUP WISE" << std::endl;
         cout << "   N_LUPOD_POINTS PER BLOCK: " << n_LUPOD_points << std::endl;
         compute_LUPODext_basis_group_wise(snapshots, epsilon_M, M_req, n_LUPOD_points,
-           points_per_block, dim_rom, snap_basis_full, snap_basis_red);
+            points_per_block, dim_rom, snap_basis_full, snap_basis_red);
       }
       else if (LUPOD_type == "Random")
       {
         cout << "   LUPOD RANDOM ----- GROUP WISE" << std::endl;
         cout << "   N_RANDOM_POINTS: " << n_LUPOD_points << std::endl;
         compute_random_points_group_wise(snapshots, n_LUPOD_points,
-           points_per_block, dim_rom, snap_basis_full, snap_basis_red);
+            points_per_block, dim_rom, snap_basis_full, snap_basis_red);
       }
       else if (LUPOD_type == "FEM1")
       {
         cout << "   LUPOD FEM 1 ----- GROUP WISE" << std::endl;
         compute_points_FEM1<dim>(dof_handler, snapshots, n_LUPOD_points,
-           points_per_block, dim_rom, snap_basis_full, snap_basis_red);
+            points_per_block, dim_rom, snap_basis_full, snap_basis_red);
       }
     }
     else
-      AssertRelease(false, "rom_group_wise must be Monolithic or Group_Wise");
+    AssertRelease(false, "rom_group_wise must be Monolithic or Group_Wise");
 
     double time_get_snap = timer.wall_time();
     cout << "   Time to get and process snapshots: " << time_get_snap << " s."

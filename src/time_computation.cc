@@ -67,7 +67,6 @@
 #include "../include/matrix_operators/matrix_operators_petsc_time.h"
 #include "../include/static_diffusion.h"
 
-
 using namespace dealii;
 
 /**
@@ -130,7 +129,7 @@ template <int dim, int n_fe_degree>
     // 	Time parameters
     type_perturbation = prm.get("Type_Perturbation");
     t_end = prm.get_double("Time_End");
-//	rod_cusping = prm.get("Rod_Cusping_Method");
+    //	rod_cusping = prm.get("Rod_Cusping_Method");
     time_scheme = prm.get("Distributed_Time_Scheme");
     lower_case(time_scheme);
     print_timefile = prm.get_bool("Print_Time_Dependent_Data");
@@ -250,7 +249,7 @@ template <int dim, int n_fe_degree>
 
       }
     }
-    else if (time_scheme == "semi-implicit-euler")// Here begins the important class EigenvalueProblem that defines all the problemlayed_fractions, delayed_decay_constants;
+    else if (time_scheme == "semi-implicit-euler") // Here begins the important class EigenvalueProblem that defines all the problemlayed_fractions, delayed_decay_constants;
     {
 
       // for semi-implicit-euler
@@ -310,70 +309,6 @@ template <int dim, int n_fe_degree>
     get_enum_from_options("-matrixfree_type_time", matrixfree_type_time);
   }
 
-/*
- *
- *
- */
-template <int dim, int n_fe_degree>
-  void TimeNeutronDiffusion<dim, n_fe_degree>::update_xsec ()
-  {
-
-    if (type_perturbation == "Flux_Distributed"
-        or type_perturbation == "Single_Material"
-        or type_perturbation == "Out_Of_Phase"
-        or type_perturbation == "Ramp_Two_Mats")
-    {
-      verbose_cout << "Apply function to perturbed " << std::endl;
-      perturbation.apply_function_to_perturb(sim_time);
-      verbose_cout << " Done!" << std::endl;
-    }
-    else if (type_perturbation == "Rods")
-    {
-      verbose_cout << "Moving rods: time" << sim_time << std::endl;
-      perturbation.move_bars(sim_time);
-      verbose_cout << " Done!" << std::endl;
-    }
-    else if (type_perturbation == "AECL")
-    {
-      verbose_cout << "Perturbed the AECL transient: " << std::endl;
-      perturbation.move_th(sim_time);
-      verbose_cout << " Done!" << std::endl;
-    }
-    else if (type_perturbation == "Step_Change_Material")
-    {
-      verbose_cout << "Perturbed the Step_Change_Material: " << std::endl;
-      perturbation.step_change_material(sim_time);
-      verbose_cout << " Done!" << std::endl;
-    }
-    else if (type_perturbation == "Mechanical_Vibration")
-    {
-      verbose_cout << "   move_vibrating... " << std::flush;
-      perturbation.move_vibrating(sim_time);
-      verbose_cout << " Done!" << std::endl;
-    }
-    else if (type_perturbation == "C5G7-TD1.1")
-    {
-      verbose_cout << "Apply perturbation C5G7-TD1.1: " << std::endl;
-      perturbation.apply_c5G7_perturb(sim_time);
-      verbose_cout << " Done!" << std::endl;
-    }
-    else if (type_perturbation == "Read_XS_File")
-    {
-      verbose_cout << "   move_read_xs_file... " << std::flush;
-      perturbation.move_read_xs_file(sim_time);
-      verbose_cout << " Done!" << std::endl;
-    }
-    else if (type_perturbation == "Read_XML_File")
-    {
-      verbose_cout << "   move_read_XML_file... " << std::flush;
-      perturbation.move_read_xml_file(sim_time, t_end);
-      verbose_cout << " Done!" << std::endl;
-    }
-    else
-    {
-      AssertRelease(false, "Invalid type of perturbation");
-    }
-  }
 
 /*
  * @brief Assemble Time System
@@ -1266,7 +1201,7 @@ template <int dim, int n_fe_degree>
   }
 
 /**
- * @brief postprocess_time_step
+ * @brief
  */
 template <int dim, int n_fe_degree>
   void TimeNeutronDiffusion<dim, n_fe_degree>::setup_preconditioner ()
@@ -1373,6 +1308,8 @@ template <int dim, int n_fe_degree>
     for (unsigned int g = 0; g < n_groups; g++)
       phi_serial.block(g) = phi.block(g);
 
+
+
     if (this_mpi_process == 0)
     {
 
@@ -1433,7 +1370,6 @@ template <int dim, int n_fe_degree>
       }
 
       power_total = norm / volume;
-
       norm /= volume;
 
       // Normalize the values of the power and fluxes per cell
@@ -1460,6 +1396,7 @@ template <int dim, int n_fe_degree>
           true);
       }
 
+      // TODO DOCUMENT ME
       if (dim == 3 and print_timefile)
       {
 
@@ -1920,15 +1857,14 @@ template <int dim, int n_fe_degree>
            << std::endl;
     }
 
-    while (t_end - sim_time > -1e-12)
+    while (t_end - sim_time > -1e-12) // while not over
     {
 
       // ------------------------------------------------------------------------
       // Calculations for the next step:
-
       verbose_cout << "   Update the cross-section...    " << std::endl;
       if (type_perturbation != "Step_Change_Material" or step < 2)
-        update_xsec();
+        perturbation.update_xsec(sim_time);
       //materials.remove_precursors();
       verbose_cout << "                                          CPU Time = "
                    << timer.cpu_time()
@@ -1952,7 +1888,7 @@ template <int dim, int n_fe_degree>
                    << std::endl;
 
       if (type_perturbation == "Mechanical_Vibration")
-        perturbation.restore_indices();
+        perturbation.restore_indices(); // TODO CHECK IT
 
       MPI_Barrier(comm);
       verbose_cout << "   Post-processing time_step...   " << std::flush;
@@ -2040,7 +1976,7 @@ template <int dim, int n_fe_degree>
     if (out_matlab.is_open())
       out_matlab.close();
 
-    verbose_cout << "Total its: " << totalits << ", mean by it:"
+    verbose_cout << "Total its: " << totalits << ", mean by it: "
                  << double(totalits) / step
                  << std::endl;
 

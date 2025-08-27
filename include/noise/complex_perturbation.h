@@ -112,7 +112,7 @@ class ComplexPerturbation
     const unsigned int mat) const;
 
   /**
-   * @brief
+   * @brief TODO Change it to the real get_delta_nu_sigma_f
    */
   std::complex<double> get_delta_sigma_f (
     const unsigned int group_i,
@@ -121,7 +121,7 @@ class ComplexPerturbation
     const unsigned int mat) const;
 
   /**
-   * @brief
+   * @brief TODO Change it to the real get_delta_sigma_tr
    */
   std::complex<double> get_delta_sigma_t (const unsigned int group,
     const unsigned int mat) const;
@@ -179,7 +179,7 @@ class ComplexPerturbation
   // Perturbation of Cross Sections
   // DXS[group][material]
   std::vector<std::vector<std::complex<double>> > delta_sigma_f,
-      delta_sigma_a, delta_sigma_r, delta_sigma_t; // TODO Remove sigma_a (make it local)
+       delta_sigma_r, delta_sigma_t;
   std::vector<std::vector<std::vector<std::complex<double>>>> delta_sigma_s;
 
   // Face Perturbation

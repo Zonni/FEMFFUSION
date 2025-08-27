@@ -19,7 +19,7 @@ params = {'backend': 'pdf',
           'ytick.labelsize': 13,
           'text.usetex': False,
           'lines.linewidth': 1.2,
-          'lines.markersize': 3,
+          'lines.markersize': 5,
           'lines.markeredgewidth': 1,
           'legend.numpoints': 1, 
           'axes.formatter.useoffset': False,
@@ -84,7 +84,7 @@ for e in eps:
 fig = plt.figure()
 ax = fig.add_subplot(1, 1, 1)
 ax.loglog(eps, mean_keff, 'o-', label='Mean Error')
-ax.loglog(eps, max_keff, 'o-', label='Max Error')
+ax.loglog(eps, max_keff, 'x-', label='Max Error')
 ax.grid(True)
 ax.legend()
 ax.set_xlabel('$\epsilon_M$')
@@ -94,10 +94,10 @@ fig.savefig('keff_error_epsilonM.pdf', format='pdf')
 fig = plt.figure()
 ax = fig.add_subplot(1, 1, 1)
 ax.loglog(eps, mean_phi, 'o-', label='Mean RMS Error')
-ax.loglog(eps, max_phi, 'o-', label='Max RMS Error')
+ax.loglog(eps, max_phi, 'x-', label='Max RMS Error')
 ax.grid(True)
 ax.legend()
 ax.set_xlabel('$\epsilon_M$')
-ax.set_ylabel('$\phi$ Error (%)')
+ax.set_ylabel('RMS($\Delta\phi$) Error (%)')
 fig.savefig('phi_error_epsilonM.pdf', format='pdf')
 

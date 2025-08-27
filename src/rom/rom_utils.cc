@@ -1140,22 +1140,18 @@ void get_unique_random_integers (
     throw std::invalid_argument("Cannot choose more unique points than the range size.");
   }
 
+  // Fill with values
   std::vector<unsigned int> values(n_max);
-// Fill the vector with 0 to N-1
-  for (unsigned int i = 0; i < n_max; ++i)
-  {
-    values[i] = i;
-  }
+  std::iota(values.begin(), values.end(), 0); // Fill with 0,1,2,...,n_max-1
 
-// Shuffle the vector
-//int seed = 17;
-//std::mt19937 gen(seed);
+  // Shuffle the vector
+  //const int seed = 19;
+  //std::mt19937 gen(seed);
   std::random_device rd;
-  std::mt19937 gen;
+  std::mt19937 gen(rd());
   std::shuffle(values.begin(), values.end(), gen);
 
-// Take the first n_points elements
-//values.resize(n_points);
+  // Take the first n_points elements
   for (unsigned int p = 0; p < n_points; ++p)
   {
     points[p] = values[p];
@@ -1312,7 +1308,7 @@ template <int dim>
 
     // Now you can copy them to a vector if needed
     n_points = unique_vertex_dofs.size();
-    //std::cout << "   N_FEM1_POINTS: " << n_points << std::endl;
+    std::cout << "   N_FEM1_POINTS: " << n_points << std::endl;
     std::vector<unsigned int> points(unique_vertex_dofs.begin(),
       unique_vertex_dofs.end());
 
