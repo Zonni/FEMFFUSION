@@ -33,6 +33,10 @@ CMakeCache.txt
 cmake_install.cmake
 Makefile
 
+# Do not ignore doc/ files #
+###########################
+!doc/*
+
 # output, figures and executables #
 #####################################
 *.pdf
@@ -63,7 +67,9 @@ rigel_state.sh
 ###################
 test/2D_pin_save_load/mesh.tri
 
-# Do not ignore doc/ files #
-###########################
-!doc/*
+
+
+.vscode/tasks.json
+2D_UOX_FA/*
+
 

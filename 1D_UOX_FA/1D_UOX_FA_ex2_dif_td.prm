@@ -52,11 +52,11 @@ set Output_Filename     = 1D_UOX_FA/time_domain/1D_UOX_FA_ex2_dif_td.out
 set Distributed_Time_Scheme        = Semi-Implicit-Exponential 
 
 # Delta time of the iteration
-set Time_Delta          = 1e-2
-set Time_End            = 3.0
+set Time_Delta          = 1e-3
+set Time_End            = 3.00
 
 ## Every this number of steps we will create a .vtk file
- set Out_Interval        = 1
+ set Out_Interval        = 10
  
 #
 # CROSS SECTION

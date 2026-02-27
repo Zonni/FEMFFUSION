@@ -1072,7 +1072,7 @@ template <int dim, int n_fe_degree>
     for (unsigned int eig = 0; eig < n_eigenvalues; ++eig)
     {
       EPSGetEigenpair(eps, eig, &eigenvalues[eig], NULL,
-        phi_sol[eig], PETSC_NULLPTR);
+        phi_sol[eig], PETSC_NULL);
 
       separate_vectors(dof_handler, dof_handler_system, phi_sol[eig], phi_sep[eig]);
     }
@@ -1155,7 +1155,7 @@ template <int dim, int n_fe_degree>
     for (unsigned int eig = 0; eig < n_eigenvalues; ++eig)
     {
       EPSGetEigenpair(eps, eig, &eigenvalues[eig], NULL,
-        phi_sol[eig], PETSC_NULLPTR);
+        phi_sol[eig], PETSC_NULL);
 
       separate_vectors(dof_handler, dof_handler_system, phi_sol[eig], phi_sep[eig]);
     }

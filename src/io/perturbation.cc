@@ -997,128 +997,128 @@ template <int dim>
     {
       AssertRelease(false, "Sinus perturbation not implemented yet");
       /*
-      if (group_changing != static_cast<unsigned int>(-1)) // One energy groups is selected
-      {
-        AssertRelease(xs_pert_name != "all",
-          "This perturbation is only valid for sigmaf or sigmaa");
-        for (unsigned int nm = 0; nm < mat_chan.size(); nm++)
-        {
-          for (unsigned int ng = 0; ng < n_groups; ng++)
-            new_xsec[ng] = xsec_init[ng][mat_chan[nm]];
+       if (group_changing != static_cast<unsigned int>(-1)) // One energy groups is selected
+       {
+       AssertRelease(xs_pert_name != "all",
+       "This perturbation is only valid for sigmaf or sigmaa");
+       for (unsigned int nm = 0; nm < mat_chan.size(); nm++)
+       {
+       for (unsigned int ng = 0; ng < n_groups; ng++)
+       new_xsec[ng] = xsec_init[ng][mat_chan[nm]];
 
-          new_xsec[group_changing] += xs_amplitude
-                                      * sin(2 * M_PI * frequency * sim_time);
-        }
+       new_xsec[group_changing] += xs_amplitude
+       * sin(2 * M_PI * frequency * sim_time);
+       }
 
-      }
-      else // All energy groups are selected
-      {
-        unsigned int xsec_am = 0;
-        for (unsigned int ng = 0; ng < n_groups; ng++)
-        {
-          if (xs_pert_name == "sigma_f" or xs_pert_name == "sigma_a")
-            new_xsec[ng] = xsec_init[ng][mat_chan]
-                           + xs_amplitude * sin(2 * M_PI * frequency * sim_time);
-          else if (xs_pert_name == "all")
-            for (unsigned xsec = 0; xsec < 4; xsec++)
-            {
-              new_xsec_all[xsec][ng] = xsec_init_all[xsec][ng][mat_chan]
-                                       + amplitudes[xsec_am] * sin(
-                                           2 * M_PI * frequency * sim_time);
-              xsec_am++;
-            }
-        }
-      }
-      */
+       }
+       else // All energy groups are selected
+       {
+       unsigned int xsec_am = 0;
+       for (unsigned int ng = 0; ng < n_groups; ng++)
+       {
+       if (xs_pert_name == "sigma_f" or xs_pert_name == "sigma_a")
+       new_xsec[ng] = xsec_init[ng][mat_chan]
+       + xs_amplitude * sin(2 * M_PI * frequency * sim_time);
+       else if (xs_pert_name == "all")
+       for (unsigned xsec = 0; xsec < 4; xsec++)
+       {
+       new_xsec_all[xsec][ng] = xsec_init_all[xsec][ng][mat_chan]
+       + amplitudes[xsec_am] * sin(
+       2 * M_PI * frequency * sim_time);
+       xsec_am++;
+       }
+       }
+       }
+       */
     }
     else if (perturbation_function == "Constant") // FIXME + 1e-4 es Normal?? No seria un Step y com el valor Amplitude
     {
       AssertRelease(false, "Constant perturbation not implemented yet");
       /*
-      for (unsigned int ng = 0; ng < n_groups; ng++)
-      {
-        if (sim_time > 0.0)
-          new_xsec[ng] = xsec_init[ng][pert_mat] + 1e-4;
-        else
-          new_xsec[ng] = xsec_init[ng][pert_mat];
-      }
-      */
+       for (unsigned int ng = 0; ng < n_groups; ng++)
+       {
+       if (sim_time > 0.0)
+       new_xsec[ng] = xsec_init[ng][pert_mat] + 1e-4;
+       else
+       new_xsec[ng] = xsec_init[ng][pert_mat];
+       }
+       */
     }
     else if (perturbation_function == "Ramp")
     {
       AssertRelease(false, "Ramp perturbation not implemented yet");
       /*
-      if (group_changing != static_cast<unsigned int>(-1)) // One energy groups is selected
-      {
-        for (unsigned int ng = 0; ng < n_groups; ng++)
-          new_xsec[ng] = xsec_init[ng][pert_mat];
+       if (group_changing != static_cast<unsigned int>(-1)) // One energy groups is selected
+       {
+       for (unsigned int ng = 0; ng < n_groups; ng++)
+       new_xsec[ng] = xsec_init[ng][pert_mat];
 
-        if (sim_time <= cut_time[nm])
-          new_xsec[group_changing] += xsec_init[group_changing][pert_mat]
-                                      * (slope_up[nm] * sim_time);
-        else
-          new_xsec[group_changing] =
-              xsec_init[group_changing][pert_mat]
-              + xsec_init[group_changing][pert_mat] * slope_up[nm] * cut_time[nm]
-              - xsec_init[group_changing][pert_mat] * slope_down[nm]
-                * (sim_time - cut_time[nm]);
-        //            new_xsec[group_changing] += xsec_init[group_changing][nmat]
-        //                                        * (slope_up[nm] * cut_time[nm])
-        //                                        - (xsec_init[group_changing][nmat]
-        //                                           + xsec_init[group_changing][nmat]
-        //                                             * (slope_down[nm] * cut_time[nm]))
-        //                                          * (slope_down[nm] * (sim_time - cut_time[nm]));
-      }
-      else // All groups changing
-      {
-        //std::cout << " ALL GRUPS " << "mat " << nmat << std::endl;
-        //std::cout << " new_xsec.size() " << new_xsec.size()<< std::endl;
+       if (sim_time <= cut_time[nm])
+       new_xsec[group_changing] += xsec_init[group_changing][pert_mat]
+       * (slope_up[nm] * sim_time);
+       else
+       new_xsec[group_changing] =
+       xsec_init[group_changing][pert_mat]
+       + xsec_init[group_changing][pert_mat] * slope_up[nm] * cut_time[nm]
+       - xsec_init[group_changing][pert_mat] * slope_down[nm]
+       * (sim_time - cut_time[nm]);
+       //            new_xsec[group_changing] += xsec_init[group_changing][nmat]
+       //                                        * (slope_up[nm] * cut_time[nm])
+       //                                        - (xsec_init[group_changing][nmat]
+       //                                           + xsec_init[group_changing][nmat]
+       //                                             * (slope_down[nm] * cut_time[nm]))
+       //                                          * (slope_down[nm] * (sim_time - cut_time[nm]));
+       }
+       else // All groups changing
+       {
+       //std::cout << " ALL GRUPS " << "mat " << nmat << std::endl;
+       //std::cout << " new_xsec.size() " << new_xsec.size()<< std::endl;
 
-        for (unsigned int ng = 0; ng < n_groups; ng++)
-        {
-          if (sim_time <= cut_time[nm])
-          {
-            new_xsec[ng] = xsec_init[ng][pert_mat]
-                           * (1 + (slope_up[nm] * sim_time));
-          }
-          else // sim_time > cut_time[nm]
-          {
-            // TODO check
-            new_xsec[ng] = xsec_init[ng][pert_mat]
-                           + xsec_init[ng][pert_mat] * slope_up[nm] * cut_time[nm]
-                           - xsec_init[ng][pert_mat] * slope_down[nm]
-                             * (sim_time - cut_time[nm]);
-            //              new_xsec[ng] += xsec_init[ng][nmat]
-            //                                          * (slope_up[nm] * cut_time[nm])
-            //                                          - (xsec_init[ng][nmat]
-            //                                             + xsec_init[ng][nmat]
-            //                                               * (slope_down[nm] * cut_time[nm]))
-            //                                            * (slope_down[nm] * (sim_time - cut_time[nm]));
-          }
-        }
-      }
-      */
+       for (unsigned int ng = 0; ng < n_groups; ng++)
+       {
+       if (sim_time <= cut_time[nm])
+       {
+       new_xsec[ng] = xsec_init[ng][pert_mat]
+       * (1 + (slope_up[nm] * sim_time));
+       }
+       else // sim_time > cut_time[nm]
+       {
+       // TODO check
+       new_xsec[ng] = xsec_init[ng][pert_mat]
+       + xsec_init[ng][pert_mat] * slope_up[nm] * cut_time[nm]
+       - xsec_init[ng][pert_mat] * slope_down[nm]
+       * (sim_time - cut_time[nm]);
+       //              new_xsec[ng] += xsec_init[ng][nmat]
+       //                                          * (slope_up[nm] * cut_time[nm])
+       //                                          - (xsec_init[ng][nmat]
+       //                                             + xsec_init[ng][nmat]
+       //                                               * (slope_down[nm] * cut_time[nm]))
+       //                                            * (slope_down[nm] * (sim_time - cut_time[nm]));
+       }
+       }
+       }
+       */
     }
     else if (perturbation_function == "Ramp_hex")
     // Exact values for ...TODO
     {
       AssertRelease(false, "Ramp_hex perturbation not implemented yet");
       /*
-      new_xsec[0] = xsec_init[0][pert_mat];
-      if (sim_time <= 1.0)
-      {
-        new_xsec[1] = 0.118870 * (1 - sim_time) + 0.016917 * sim_time;
-      }
-      else if ((sim_time > 1.0) and sim_time < 2.0)
-      {
-        new_xsec[1] = 0.118870 * (sim_time - 1)
-                      + 0.016917 * (2 - sim_time);
-      }
-      else
-      {
-        new_xsec[1] = 0.118870;
-      }
-      */
+       new_xsec[0] = xsec_init[0][pert_mat];
+       if (sim_time <= 1.0)
+       {
+       new_xsec[1] = 0.118870 * (1 - sim_time) + 0.016917 * sim_time;
+       }
+       else if ((sim_time > 1.0) and sim_time < 2.0)
+       {
+       new_xsec[1] = 0.118870 * (sim_time - 1)
+       + 0.016917 * (2 - sim_time);
+       }
+       else
+       {
+       new_xsec[1] = 0.118870;
+       }
+       */
     }
     else if (perturbation_function == "Noise_7g")
     // Exact values for the C5G7 Noise Benchmark in Neutron Noise
@@ -1962,15 +1962,24 @@ template <int dim>
 
     // Absolute Values of deltaXS
     // The phase is impose by the sin() -> -1j -> 90 deg
-    //double delta_Sigma_t1 = 1.51160000e-03;
-    //double delta_Sigma_t2 = 2.20256000e-03;
-    double delta_Sigma_t1 = 0.0;
-    double delta_Sigma_t2 = 0.0;
+    //double delta_Sigma_tr1 = 1.51160000e-03;
+    //double delta_Sigma_tr2 = 2.20256000e-03;
+    double delta_Sigma_tr1 = 0.0;
+    double delta_Sigma_tr2 = 0.0;
     double delta_Sigma_a1 = 3.14307000e-04;
     double delta_Sigma_a2 = 8.67176000e-04;
-    double delta_nuSigma_f1 = 2.98814213e-05;
-    double delta_nuSigma_f2 = 5.50364059e-04;
+    double delta_nuSigma_f1 = 2.98814213e-05/ materials.keff;
+    double delta_nuSigma_f2 = 5.50364059e-04/ materials.keff;
     double delta_Sigma_s12 = 2.94001400e-06;
+    //double delta_nuSigma_f2 = 5.50364059e-04/ materials.keff;
+    //double delta_nuSigma_f1 = 0.0/ materials.keff;
+    //double delta_Sigma_t1 = 0.0;
+    //double delta_Sigma_t2 = 0.0;
+    //double delta_Sigma_a1 = 0.0;
+    //double delta_Sigma_a2 = 0.0;
+    //double delta_nuSigma_f1 = 0.0;
+    //double delta_nuSigma_f2 = 0.0;
+    //double delta_Sigma_s12 = 0.0;
 
     double delta_Sigma_r1 = delta_Sigma_a1 + delta_Sigma_s12;
     double delta_Sigma_r2 = delta_Sigma_a2;
@@ -1978,14 +1987,14 @@ template <int dim>
     const double sin_t = sin(2 * M_PI * frequency * sim_time);
 
     // only used in SPN >= 3
-    double sigma_t1 = init_sigma_t[0][pert_mat] + delta_Sigma_t1 * sin_t;
+    double sigma_t1 = init_sigma_t[0][pert_mat] + delta_Sigma_tr1 * sin_t;
     materials.set_sigma_t(sigma_t1, 0, pert_mat);
-    double sigma_t2 = init_sigma_t[1][pert_mat] + delta_Sigma_t2 * sin_t;
+    double sigma_t2 = init_sigma_t[1][pert_mat] + delta_Sigma_tr2 * sin_t;
     materials.set_sigma_t(sigma_t2, 1, pert_mat);
 
-    double sigma_tr1 = init_sigma_tr[0][pert_mat] + delta_Sigma_t1 * sin_t;
+    double sigma_tr1 = init_sigma_tr[0][pert_mat] + delta_Sigma_tr1 * sin_t;
     materials.set_sigma_tr(sigma_tr1, 0, pert_mat);
-    double sigma_tr2 = init_sigma_tr[1][pert_mat] + delta_Sigma_t2 * sin_t;
+    double sigma_tr2 = init_sigma_tr[1][pert_mat] + delta_Sigma_tr2 * sin_t;
     materials.set_sigma_tr(sigma_tr2, 1, pert_mat);
 
     double sigma_r1 = init_sigma_r[0][pert_mat] + delta_Sigma_r1 * sin_t;
@@ -2008,6 +2017,17 @@ template <int dim>
     double sigma_s12 = init_sigma_s[0][1][pert_mat] + delta_Sigma_s12 * sin_t;
     materials.set_sigma_s(sigma_s12, 0, 1, pert_mat);
 
+//    std::cout  << std::scientific << std::setprecision(10)  << std::endl;
+//    std::cout << " delta_sigma_r1 " << delta_Sigma_r1 << std::endl;
+//    std::cout << " sigma_r1 " << sigma_r1 << std::endl;
+//    std::cout << " init_sigma_r[0][pert_mat] " <<     init_sigma_r[0][pert_mat] << std::endl;
+
+
+    //std::cout << " suma " << sigma_s12 +  << std::endl;
+
+    //std::cout << std::setprecision(10) << " init_nu_sigma_f2 "
+    //          << init_nu_sigma_f[1][pert_mat] << std::endl;
+    //std::cout << " delta_nusigma_f2 " << delta_nuSigma_f2 << std::endl;
     /*
      std::cout << std::scientific << std::setprecision(7) << std::endl;
      std::cout << " delta_sigma_t1 " << delta_Sigma_t1 << std::endl;

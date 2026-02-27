@@ -19,6 +19,10 @@ mpirun -n 1 femffusion.exe -f $param_file -n_snap 10  -n_lupod_points 4309 -out_
 mpirun -n 1 femffusion.exe -f $param_file -n_snap 20  -n_lupod_points 4309 -out_file '3D_Langenbuch_static/3D_Langenbuch_LUPODext20_group_wise.out'
 mpirun -n 1 femffusion.exe -f $param_file -n_snap 40  -n_lupod_points 4309 -out_file '3D_Langenbuch_static/3D_Langenbuch_LUPODext40_group_wise.out'
 
+param_file="3D_Langenbuch_static/3D_Langenbuch_SOPT_group_wise.prm"
+mpirun -n 1 femffusion.exe -f $param_file -n_snap 10  -n_lupod_points 4309 -out_file '3D_Langenbuch_static/3D_Langenbuch_SOPT10_group_wise.out'
+mpirun -n 1 femffusion.exe -f $param_file -n_snap 20  -n_lupod_points 4309 -out_file '3D_Langenbuch_static/3D_Langenbuch_SOPT20_group_wise.out'
+mpirun -n 1 femffusion.exe -f $param_file -n_snap 40  -n_lupod_points 4309 -out_file '3D_Langenbuch_static/3D_Langenbuch_SOPT40_group_wise.out'
 
 param_file="3D_Langenbuch_static/3D_Langenbuch_Random_group_wise.prm"
 mpirun -n 1 femffusion.exe -f $param_file -n_snap 10  -n_lupod_points 4309 -out_file '3D_Langenbuch_static/3D_Langenbuch_Random10_group_wise.out'

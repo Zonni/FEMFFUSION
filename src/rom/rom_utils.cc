@@ -200,7 +200,7 @@ void compute_qr (
 }
 
 /**
- *  LUPOD Technology from:
+ * @brief LUPOD algorithm from:
  * ​M. L. Rapún Banzo, F. Terragni, and J. M. Vega de Prada,
  * "LUPOD: Collocation in POD via LU decomposition,"
  * J. Comput. Phys., vol. 335, pp. 1–20, May 2017,
@@ -213,6 +213,7 @@ void compute_qr (
 void LUPOD (
   const LAPACKFullMatrix<double> &S,
   const double epsilon_M,
+  unsigned int M_req,
   const double epsilon_N,
   std::vector<unsigned int> &snaps,
   std::vector<unsigned int> &points,
@@ -311,23 +312,33 @@ void LUPOD (
 
   // std::cout << "   LUPOD Points:  " << std::flush;
   // print_vector (points);
-
-  // Determine the number of modes to retain based on epsilon_M
-  double total_energy = Sigma.l2_norm();
   unsigned int M = 0;
-  for (unsigned int m = 0; m < N; ++m)
+  if (M_req == static_cast<unsigned int>(-1))
   {
-    double leftout_energy = 0.0;
-    for (unsigned int m2 = m + 1; m2 < N; ++m2)
-      leftout_energy += Sigma(m2) * Sigma(m2);
-    leftout_energy = sqrt(leftout_energy);
+    // Determine the number of modes to retain based on epsilon_M
+    double total_energy = Sigma.l2_norm();
 
-    if (leftout_energy / total_energy <= epsilon_M)
+    for (unsigned int m = 0; m < N; ++m)
     {
-      M = m + 1;
-      break;
+      double leftout_energy = 0.0;
+      for (unsigned int m2 = m + 1; m2 < N; ++m2)
+        leftout_energy += Sigma(m2) * Sigma(m2);
+      leftout_energy = sqrt(leftout_energy);
+
+      if (leftout_energy / total_energy <= epsilon_M)
+      {
+        M = m + 1;
+        break;
+      }
     }
   }
+  else
+  {
+    std::cout << "   LUPOD: M_req = " << M_req << " -> Ignoring epsilon_M = "
+    << std::scientific << epsilon_M << std::fixed << std::endl;
+    M=M_req;
+  }
+
 
   // Perform QR decomposition using LAPACK
   LAPACKFullMatrix<double> Q, R, aux(N, N), R_inv;
@@ -529,7 +540,7 @@ void compute_LUPOD_basis_monolithic (
   LAPACKFullMatrix<double> U_red;
   LAPACKFullMatrix<double> U_full;
 
-  LUPOD(S, epsilon_M, epsilon_N, snaps, points, U_full, U_red);
+  //FIXME LUPOD(S, epsilon_M, epsilon_N, snaps, points, U_full, U_red);
 
   points_per_block.resize(n_blocks);
   for (unsigned int i = 0; i < points.size(); i++)
@@ -570,6 +581,7 @@ void compute_LUPOD_basis_monolithic (
 void compute_LUPOD_basis_group_wise (
   std::vector<PETScWrappers::MPI::BlockVector> &snapshots,
   const double epsilon_M,
+  const unsigned int M_req,
   const double epsilon_N,
   std::vector<std::vector<unsigned int> > &points_per_block,
   unsigned int &dim_rom,
@@ -604,7 +616,7 @@ void compute_LUPOD_basis_group_wise (
 
   for (unsigned int b = 0; b < n_blocks; b++)
   {
-    LUPOD(S[b], epsilon_M, epsilon_N, snaps_per_block, points_per_block[b],
+    LUPOD(S[b], epsilon_M, M_req, epsilon_N, snaps_per_block, points_per_block[b],
       U_full[b], U_red[b]);
 
     //std::cout << "points_per_block" << b << std::endl;
@@ -743,6 +755,7 @@ void compute_LUPODext_basis_monolithic (
  *
  */
 void compute_LUPODext_basis_group_wise (
+  const std::string &LUPOD_type,
   std::vector<PETScWrappers::MPI::BlockVector> &S,
   const double epsilon_M,
   const unsigned int M_req,
@@ -821,21 +834,41 @@ void compute_LUPODext_basis_group_wise (
   for (unsigned int dr = 0; dr < dim_rom; dr++)
     snap_basis_red[dr].reinit(n_blocks, n_points_per_block);
 
-  // Loop the bucle
   for (unsigned int b = 0; b < n_blocks; b++)
   {
-    // Get LUPODext Points
-    get_points_LUPOD_extended(S, n_points_per_block, snaps_per_block[b],
-      points_per_block[b], b);
+    if (LUPOD_type == "LUPOD_ext")
+    {
+      // Get LUPODext Points
+      get_points_LUPOD_extended(S, n_points_per_block, snaps_per_block[b],
+        points_per_block[b], b);
+
+      //std::cout << "   LUPOD_ext block " << b << ":  " << std::flush;
+      //print_vector(points_per_block[b]);
+    }
+    else if (LUPOD_type == "SOPT")
+    {
+      // Get SOPT Points
+      S_OPT(S, n_points_per_block, snaps_per_block[b],
+        points_per_block[b], b);
+
+      std::cout << "   SOPT Points block " << b << ":  " << std::flush;
+      print_vector(points_per_block[b]);
+    }
+    else
+    {
+      AssertRelease(false, "You must select LUPOD or SOPT");
+    }
+
+    std::cout << "M_true "   << M_true << std::endl;
 
     // ---------------------------------------
     // Copy snap_basis_red
-    for (unsigned int k = 0; k < K; k++)
+    for (unsigned int k = 0; k < M_true; k++)
     {
       for (unsigned int j = 0; j < n_points_per_block; j++)
       {
-        snap_basis_red[k + b * K].block(b)[j] =
-            snap_basis_ful[k + b * K].block(b)[points_per_block[b][j]];
+        snap_basis_red[k + b * M_true].block(b)[j] =
+            snap_basis_ful[k + b * M_true].block(b)[points_per_block[b][j]];
       }
     }
   }
@@ -1010,7 +1043,7 @@ void petsc_svd (
   // Extract Singular Values
   for (PetscInt k_sv = 0; k_sv < K; k_sv++)
   {
-    SVDGetSingularTriplet(svd, k_sv, &sv, PETSC_NULLPTR, PETSC_NULLPTR);
+    SVDGetSingularTriplet(svd, k_sv, &sv, PETSC_NULL, PETSC_NULL);
     singular_values[k_sv] = sv;
   }
 
@@ -1048,7 +1081,7 @@ void petsc_svd (
 
   for (PetscInt k_sv = 0; k_sv < static_cast<int>(M_true); k_sv++)
   {
-    SVDGetSingularTriplet(svd, k_sv, &sv, u, PETSC_NULLPTR);
+    SVDGetSingularTriplet(svd, k_sv, &sv, u, PETSC_NULL);
     U[k_sv] = u;
   }
   //std::cout << "singular_values" << std::endl;
@@ -1566,7 +1599,7 @@ void test_LUPOD_extended_group_wise ()
   }
 
   // Run the function
-  compute_LUPODext_basis_group_wise(S, epsilon_M, M_req, n_points,
+  compute_LUPODext_basis_group_wise("LUPOD_ext", S, epsilon_M, M_req, n_points,
     points_per_block, dim_rom, U_ful, U_red);
 
   // Check with Reference values
@@ -1616,6 +1649,309 @@ void test_LUPOD_extended_group_wise ()
 }
 
 /**
+ * @brief S-OPT algorithm to select points.
+ */
+void S_OPT (
+  const std::vector<PETScWrappers::MPI::BlockVector> &S,
+  const unsigned int n_points,
+  std::vector<unsigned int> &snaps,
+  std::vector<unsigned int> &points,
+  const unsigned int block) // -1 if yoy want all blocks of S considered
+{
+  AssertRelease(n_points > 0, "n_S_OPT_points must be greater than 0");
+  // Get sizes
+  const unsigned int n_rows =
+                              (block == static_cast<unsigned int>(-1)) ?
+                                  S[0].size() :
+                                  S[0].block(block).size();
+  const unsigned int n_cols = S.size();
+
+  LAPACKFullMatrix<double> Vo(n_rows, n_cols);
+  Vector<double> A(n_rows);
+  LAPACKFullMatrix<double> V1;
+
+  // Snaps are selected as they come
+  snaps.resize(n_cols);
+  for (unsigned int c = 0; c < n_cols; c++)
+    snaps[c] = c;
+
+  points.reserve(n_points);
+
+  // Copy the full or blocked S matrix
+  if (block == static_cast<unsigned int>(-1))
+  {
+    // Copy S to S_mod
+    for (unsigned int j = 0; j < n_rows; j++)
+      for (unsigned int k = 0; k < n_cols; k++)
+        Vo(j, k) = S[k][j];
+  }
+  else
+  {
+    // Copy S to S_mod
+    for (unsigned int j = 0; j < n_rows; j++)
+      for (unsigned int k = 0; k < n_cols; k++)
+        Vo(j, k) = S[k].block(block)[j];
+  }
+
+  // Compute element-wise square (nVo = Vo .* Vo)
+  LAPACKFullMatrix<double> nVo(n_rows, n_cols);
+  for (unsigned int i = 0; i < n_rows; ++i)
+    for (unsigned int j = 0; j < n_cols; ++j)
+      nVo(i, j) = Vo(i, j) * Vo(i, j);
+
+  unsigned int inum = points.size();
+
+  // If points is empty, start with the largest |Vo(:,0)|
+  if (inum == 0)
+  {
+    double max_val = 0.0;
+    unsigned int i_idx = 0;
+    for (unsigned int i = 0; i < n_rows; ++i)
+    {
+      double val = std::abs(Vo(i, 0));
+      if (val > max_val)
+      {
+        max_val = val;
+        i_idx = i;
+      }
+    }
+    points.push_back(i_idx);
+
+    inum++;
+  }
+
+  for (unsigned int i = inum + 1; i <= n_points; ++i)
+  {
+
+    if (i < n_cols + 1)
+    {
+      // V1 = Vo(points, 1:i)
+      const unsigned int cols = i;
+      const unsigned int rows = points.size();
+      V1.reinit(rows, cols);
+      for (unsigned int r = 0; r < rows; ++r)
+        for (unsigned int c = 0; c < cols; ++c)
+          V1(r, c) = Vo(points[r], c);
+
+      // Construct sub-blocks
+      LAPACKFullMatrix<double> A0(i - 1, i - 1);
+      for (unsigned int r = 0; r < i - 1; ++r)
+        for (unsigned int c = 0; c < i - 1; ++c)
+          A0(r, c) = V1(r, c);
+
+      // atA0 = V1(1:i-1, i)' * A0
+      Vector<double> Vi(i - 1);
+      for (unsigned int k = 0; k < i - 1; ++k)
+        Vi[k] = V1(k, i - 1);
+
+      Vector<double> atA0(i - 1);
+      for (unsigned int r = 0; r < i - 1; ++r)
+      {
+        double sum = 0.0;
+        for (unsigned int c = 0; c < i - 1; ++c)
+          sum += Vi[c] * A0(c, r);
+        atA0[r] = sum;
+      }
+
+      double ata = 0.0;
+      for (unsigned int k = 0; k < i - 1; ++k)
+        ata += Vi[k] * Vi[k];
+
+      // bbb = (A0'*A0)\[atA0; Vo(:,1:i-1)]'
+      LAPACKFullMatrix<double> A0TA0(i - 1, i - 1);
+      A0.Tmmult(A0TA0, A0); // ATA = A0' * A0
+
+      LAPACKFullMatrix<double> bbb(i - 1, n_rows + 1);
+      for (unsigned int r = 0; r < i - 1; ++r)
+      {
+        bbb(r, 0) = atA0[r];
+        for (unsigned int c = 0; c < n_rows; ++c)
+          bbb(r, c + 1) = Vo(c, r);
+      }
+
+      A0TA0.compute_lu_factorization();
+      A0TA0.solve(bbb); // now rhs = bbb
+
+      // bbb is (i-1) × (n_cols+1)
+      // Separate its parts: bbb(:,1) → g2, bbb(:,2:end) → c
+      Vector<double> g2(i - 1);
+      for (unsigned int r = 0; r < i - 1; ++r)
+        g2[r] = bbb(r, 0);
+
+      LAPACKFullMatrix<double> c(i - 1, n_rows);
+      for (unsigned int r = 0; r < i - 1; ++r)
+        for (unsigned int col = 0; col < n_rows; ++col)
+          c(r, col) = bbb(r, col + 1);
+
+      // Compute b = 1 + sum(Vo(:,1:i-1) .* c', 2)
+      Vector<double> b(n_rows);
+      b = 1.0;
+      for (unsigned int k = 0; k < n_rows; ++k)
+      {
+        double sum_val = 0.0;
+        for (unsigned int zz = 0; zz < i - 1; ++zz)
+          sum_val += Vo(k, zz) * c(zz, k);
+        b[k] += sum_val;
+      }
+
+      // tt(:,zz) = Vo(:,zz).*Vo(:,i)
+      FullMatrix<double> tt(n_rows, i - 1);
+      for (unsigned int zz = 0; zz < i - 1; ++zz)
+        for (unsigned int r = 0; r < n_rows; ++r)
+          tt(r, zz) = Vo(r, zz) * Vo(r, i - 1);
+
+      // g1 = repmat(atA0,n_cols,1) + tt;
+      // g1 = g1'
+      FullMatrix<double> g1(i - 1, n_rows);
+      for (unsigned int r = 0; r < i - 1; ++r)
+        for (unsigned int k = 0; k < n_rows; ++k)
+          g1(r, k) = atA0[r] + tt(k, r);
+
+      // oneprc = 1 + sum(Vo(:,1:i-1).*c',2)
+      Vector<double> oneprc(n_rows);
+      oneprc = 1.0;
+      for (unsigned int k = 0; k < n_rows; ++k)
+      {
+        double sum_val = 0.0;
+        for (unsigned int zz = 0; zz < i - 1; ++zz)
+          sum_val += Vo(k, zz) * c(zz, k);
+        oneprc[k] += sum_val;
+      }
+
+      // g3 = sum(c'.*g1',2)./oneprc
+      Vector<double> g3(n_rows);
+      for (unsigned int k = 0; k < n_rows; ++k)
+      {
+        double sum_val = 0.0;
+        for (unsigned int zz = 0; zz < i - 1; ++zz)
+          sum_val += c(zz, k) * g1(zz, k);
+        g3[k] = sum_val / oneprc[k];
+      }
+
+      // tt1(zz,:) = c(zz,:).*(Vo(:,i) - g3)'
+      FullMatrix<double> tt1(i - 1, n_rows);
+      for (unsigned int zz = 0; zz < i - 1; ++zz)
+        for (unsigned int k = 0; k < n_rows; ++k)
+          tt1(zz, k) = c(zz, k) * (Vo(k, i - 1) - g3[k]);
+
+      // GG = repmat(g2,1,N_Bm) + tt1;
+      FullMatrix<double> GG(i - 1, n_rows);
+      for (unsigned int zz = 0; zz < i - 1; ++zz)
+        for (unsigned int k = 0; k < n_rows; ++k)
+          GG(zz, k) = g2[zz] + tt1(zz, k);
+
+      // A = ata + Vo(:,i).^2 - sum(g1'.*GG',2)
+      for (unsigned int k = 0; k < n_rows; ++k)
+      {
+        double sum_val = 0.0;
+        for (unsigned int zz = 0; zz < i - 1; ++zz)
+          sum_val += g1(zz, k) * GG(zz, k);
+
+        A[k] = ata + Vo(k, i - 1) * Vo(k, i - 1) - sum_val;
+
+        if (A[k] < 0.0)
+          A[k] = 0.0;
+      }
+
+      // nV = sum(nVo(index,1:i),1)
+      Vector<double> nV(i);
+      nV = 0.0;
+      for (unsigned int cidx = 0; cidx < i; ++cidx)
+      {
+        double sum_val = 0.0;
+        for (unsigned int id : points)
+          sum_val += nVo(id, cidx);
+        nV[cidx] = sum_val;
+      }
+
+      // noM = sum(log(repmat(nV,N_Bm,1) + nVo(:,1:i)),2);
+      Vector<double> noM(n_rows);
+      for (unsigned int k = 0; k < n_rows; ++k)
+      {
+        double sum_val = 0.0;
+        for (unsigned int cidx = 0; cidx < i; ++cidx)
+          sum_val += std::log(nV[cidx] + nVo(k, cidx));
+        noM[k] = sum_val;
+      }
+
+      // A = log(abs(A)) + log(b) - noM;
+      for (unsigned int k = 0; k < n_rows; ++k)
+      {
+        A[k] = std::log(std::abs(A[k])) + std::log(b[k]) - noM[k];
+      }
+    }
+    else
+    {
+      // V1 = Vo(points, :)
+      const unsigned int rows = points.size();
+      V1.reinit(rows, n_cols);
+      for (unsigned int r = 0; r < rows; ++r)
+        for (unsigned int c = 0; c < n_cols; ++c)
+          V1(r, c) = Vo(points[r], c);
+
+      // VTV = V1' * V1
+      LAPACKFullMatrix<double> VTV(n_cols, n_cols);
+      V1.Tmmult(VTV, V1);
+
+      LAPACKFullMatrix<double> VoT(n_cols, n_rows);
+      Vo.transpose(VoT);
+
+      VTV.compute_lu_factorization();
+      VTV.solve(VoT); // b = (V1'*V1)\Vo' -> VoT = b
+
+      // nV = sum(nVo(index,1:i),1)
+      Vector<double> nV(n_cols);
+      for (unsigned int c = 0; c < n_cols; ++c)
+      {
+        for (unsigned int p : points)
+          nV[c] += nVo(p, c);
+      }
+
+      // noM = sum(log(repmat(nV,N_Bm,1) + nVo(:,1:i)),2);
+      Vector<double> noM(n_rows);
+      for (unsigned int k = 0; k < n_rows; ++k)
+      {
+        double sum_val = 0.0;
+        for (unsigned int c = 0; c < n_cols; ++c)
+          sum_val += std::log(nV[c] + nVo(k, c));
+        noM[k] = sum_val;
+      }
+
+      // A = log(1+sum(Vo.*b',2)) - noM;
+      A.reinit(n_rows);
+      for (unsigned int k = 0; k < n_rows; ++k)
+      {
+        double sum_val = 0.0;
+        for (unsigned int c = 0; c < n_cols; ++c)
+          sum_val += Vo(k, c) * VoT(c, k);
+        A[k] = std::log(1.0 + sum_val) - noM[k];
+      }
+    }
+
+    // Exclude existing indices
+    for (unsigned int p = 0; p < points.size(); ++p)
+      A[points[p]] = -std::numeric_limits<double>::infinity();
+
+    // Get max points
+    unsigned int ggg = 0;
+    double max_val = -std::numeric_limits<double>::infinity();
+    for (unsigned int k = 0; k < n_rows; ++k)
+    {
+      if (A[k] > max_val)
+      {
+        max_val = A[k];
+        ggg = k;
+      }
+    }
+
+    points.push_back(ggg);
+  }
+
+  // Sort points
+  std::sort(points.begin(), points.end());
+}
+
+/**
  * Just a test for test_POD_groupwise
  */
 void test_POD_groupwise ()
@@ -1657,7 +1993,7 @@ void test_POD_groupwise ()
                              { 0, 0, 0, +6.2102e-01, -6.5531e-02, +6.6586e-01 },
                          };
 
-  // Resize snapshots
+// Resize snapshots
   snapshots.resize(K);
   for (unsigned int k = 0; k < K; k++)
     snapshots[k].reinit(n_blocks, comm, n_dofs, n_dofs);
@@ -1672,7 +2008,7 @@ void test_POD_groupwise ()
 
   compute_POD_basis_group_wise(snapshots, epsilon_M, M, dim_rom, snap_basis);
 
-  // Test Elements
+// Test Elements
   const double tol = 1e-4;
   for (unsigned int i = 0; i < 8; ++i)
     for (unsigned int j = 0; j < 6; ++j)
@@ -1682,4 +2018,67 @@ void test_POD_groupwise ()
     }
 
   std::cout << "  Done!" << std::endl;
+}
+
+/**
+ * @brief A function to test S_OPT algorithm to select points.
+ */
+void test_SOPT ()
+{
+
+  std::cout << "Testing  S_OPT... " << std::flush;
+
+  std::vector<unsigned int> snaps;
+  std::vector<unsigned int> points;
+
+  const unsigned int K = 3;
+  const unsigned int n_dofs = 5;
+  const unsigned int n_blocks = 2;
+  const unsigned int J = n_dofs * n_blocks;
+  MPI_Comm comm = PETSC_COMM_WORLD;
+
+  double s[J][K] =
+                     {
+                         { 0.7060, 0.4387, 0.2760 },
+                         { 0.0318, 0.3816, 0.6797 },
+                         { 0.2769, 0.7655, 0.6551 },
+                         { 0.0462, 0.7952, 0.1626 },
+                         { 0.0971, 0.1869, 0.1190 },
+                         { 0.8235, 0.4898, 0.4984 },
+                         { 0.6948, 0.4456, 0.9597 },
+                         { 0.3171, 0.6463, 0.3404 },
+                         { 0.9502, 0.7094, 0.5853 },
+                         { 0.0344, 0.7547, 0.2238 }
+                     };
+
+// Resize snapshots
+  std::vector<PETScWrappers::MPI::BlockVector> S;
+  S.resize(K);
+  for (unsigned int k = 0; k < K; k++)
+    S[k].reinit(n_blocks, comm, n_dofs, n_dofs);
+  for (unsigned int k = 0; k < K; k++)
+  {
+    for (unsigned int j = 0; j < J; j++)
+      S[k][j] = s[j][k];
+
+    S[k].compress(VectorOperation::insert);
+  }
+
+  unsigned int n_points = 5;
+  // Run the function
+  S_OPT(S, n_points, snaps, points, -1);
+
+  // Check with Reference values
+  const double tol = 1e-2;
+  std::vector<unsigned int> points_reference =
+    { 1, 3, 4, 8, 9 };
+
+  std::vector<unsigned int> snaps_reference =
+                                                { 0, 1, 2 };
+
+  assert_vectors_similar(snaps, snaps_reference, tol);
+  assert_vectors_similar(points, points_reference, tol);
+
+  std::cout << "  Done!" << std::endl;
+
 }

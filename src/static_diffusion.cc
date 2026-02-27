@@ -993,8 +993,10 @@ template <int dim, int n_fe_degree>
         print_in_file(n_refinements_axial, out, "Axial Refinements: "); // @suppress("Invalid arguments")
       }
       else
-        print_in_file(n_refinements, out, "Global Refinements: "); // @suppress("Invalid arguments")
-
+      {
+        std::string str = "Global Refinements: ";
+        print_in_file(n_refinements, out, str); // @suppress("Invalid arguments")
+      }
       print_in_file(n_fe_degree, out, "Degree of FE: ", 1);
       print_in_file(dof_handler.n_dofs(), out, "DoFs per Group: ", 1);
       print_in_file(dof_handler.n_dofs() * n_groups, out, "Total DoFs: ", 1);

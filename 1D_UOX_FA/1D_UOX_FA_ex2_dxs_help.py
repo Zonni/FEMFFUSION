@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Calculations to match the paper
+Calculations to match the benchmark 2D_UOX
 """
 
 frac_t = 0.004
@@ -9,6 +9,7 @@ frac_f = 0.002
 frac_s = 0.0034
 
 #%% delta_nuSigma_f
+#  The code divides this values by keff
 
 nuSigma_f1 = 0.0057671 * 2.59068
 nuSigma_f2 = 0.1062200  * 2.59068

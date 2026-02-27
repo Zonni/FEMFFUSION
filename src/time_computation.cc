@@ -1588,7 +1588,8 @@ template <int dim, int n_fe_degree>
           noi_file,
           materials,
           "Noise of group " + num_to_str(g + 1) + " time step " + num_to_str(step)
-          + "\n");
+          + "\n", false, 14);
+
       }
       // Add Some blank lines
       std::ofstream out3(noi_file.c_str(), std::ios::app);

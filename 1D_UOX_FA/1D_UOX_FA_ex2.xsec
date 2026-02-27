@@ -2,6 +2,7 @@ Materials
 1   2   2 2 1 1 1 1 2 2   2 2 1 1 1 1 2 2   2 2 1 1 1 1 2 2   2 2 1 1 1 1 2 2   2 2 1 1 1 1 2 2   2 2 1 1 1 1 2 2   2 2 3 3 3 3 2 2   2 2 1 1 1 1 2 2   2 2 1 1 1 1 2 2   2 2 1 1 1 1 2 2   2 2 1 1 1 1 2 2   2 2 1 1 1 1 2 2   2 2 1 1 1 1 2 2   2 2 1 1 1 1 2 2   2 2 1 1 1 1 2 2   2 2 1 1 1 1 2 2   2 2 1 1 1 1 2 2   2 
 #  wp   ---  Pin 1 ----   ---  Pin 2 ----   ---  Pin 2 ----   ---  Pin 4 ----   ---  Pin 5 ----   ---  Pin 6 ----   ---  Pin 7 ----   ---  Pin 8 ----   ---  Pin 9 ----   ---  Pin 10 ---   ---  Pin 11 ---   ---  Pin 12 ---   ---  Pin 13 ---   ---  Pin 14 ---   ---  Pin 15 ---   ---  Pin 16 ---   ---  Pin 17 ---   wp
 
+
 XSecs 3 # Number of materials defined
 #  Sigma_tr1    Sigma_a1     nuSigma_f1     kSigma_f1       Sigma_12
 #  Sigma_tr2    Sigma_a2     nuSigma_f2     kSigma_f2       Sigma_21              

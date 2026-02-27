@@ -118,17 +118,17 @@ ax.set_ylim([1e-1,1e1])
 fig.savefig('phi_error_LUPODPoints.pdf', format='pdf')
 
 #%% ===========================================================================
-# RANDOM POINTS 
+# RANDOM POINTS  
 random_points=[]
 for i in range(1, 51):
     random_points.append(int(10773 * 0.02 * i))  # Varying points per iteration
 random_points = np.array(random_points)
 
 points_percent = random_points/10773 * 100
-max_keff_rand = []
+max_keff_rand  = []
 mean_keff_rand = []
-mean_phi_rand = []
-max_phi_rand = []
+mean_phi_rand  = []
+max_phi_rand   = []
 
 for points in LUPOD_points:
     print('   Parsing RANDOM: ', out_file)
@@ -141,7 +141,30 @@ for points in LUPOD_points:
     mean_phi_rand.append(parse_file_same_line(out_file, begin='Mean RMS Phi (%):')[0])
     max_phi_rand.append(parse_file_same_line(out_file, begin='Max  RMS Phi (%):')[0])
 
-## Plot
+
+#%% ===========================================================================
+# SOPT POINTS
+
+max_keff_sopt  = []
+mean_keff_sopt = []
+mean_phi_sopt  = []
+max_phi_sopt   = []
+
+for points in LUPOD_points:
+    print('   Parsing SOPT: ', out_file)
+    out_file = 'SOPT/3D_Langenbuch_sopt' + str(points) + '_group_wise.out'
+    n_points = parse_file_same_line(out_file, begin='N_LUPOD_Points:')[0]
+    assert(points == n_points)
+    
+    mean_keff_sopt.append(parse_file_same_line(out_file, begin='Mean Delta Keff (pcm):')[0])
+    max_keff_sopt.append(parse_file_same_line(out_file, begin='Max  Delta Keff (pcm):')[0])
+    mean_phi_sopt.append(parse_file_same_line(out_file, begin='Mean RMS Phi (%):')[0])
+    max_phi_sopt.append(parse_file_same_line(out_file, begin='Max  RMS Phi (%):')[0])
+
+
+#%% ===========================================================================
+## PLOTS
+
 fig = plt.figure()
 ax = fig.add_subplot(1, 1, 1)
 
@@ -149,8 +172,11 @@ ax.semilogy(points_percent, mean_keff, 'o-', label='Mean Error LUPODext')
 ax.semilogy(points_percent, max_keff, 'x-', label='Max Error LUPODext')
 ax.semilogy(points_percent, mean_keff_rand, '^--', label='Mean Error Random')
 ax.semilogy(points_percent, max_keff_rand, '*--', label='Max Error Random')
+ax.semilogy(points_percent, mean_keff_sopt, 'v', linestyle='dotted', label='Mean Error S-OPT')
+ax.semilogy(points_percent, max_keff_sopt, 'p', linestyle='dotted',  label='Max Error S-OPT')
 ax.grid(True)
 ax.legend()
+ax.set_ylim([1e1,1e5])
 ax.set_xlabel('% of Collocation Points')
 ax.set_ylabel('$\Delta K$eff Error (pcm)')
 fig.savefig('keff_error_randomPoints.pdf', format='pdf')
@@ -161,10 +187,12 @@ ax.semilogy(points_percent, mean_phi, 'o-', label='Mean RMS Error Ext. LUPOD')
 ax.semilogy(points_percent, max_phi, 'x-', label='Max RMS Error Ext. LUPOD')
 ax.semilogy(points_percent, mean_phi_rand, '^-', label='Mean RMS Error Random')
 ax.semilogy(points_percent, max_phi_rand, '*-', label='Max RMS Error Random')
+ax.semilogy(points_percent, mean_phi_sopt, 'v', linestyle='dotted', label='Mean RMS Error S-OPT')
+ax.semilogy(points_percent, max_phi_sopt, 'p',  linestyle='dotted', label='Max RMS Error S-OPT')
 ax.grid(True)
 ax.legend()
 ax.set_xlabel('% of Collocation Points')
 ax.set_ylabel('RMS($\Delta\phi$) Error (%)')
-ax.set_ylim([1e-1,1e2])
+ax.set_ylim([1e-1,1e3])
 fig.savefig('phi_error_randomPoints.pdf', format='pdf')
 

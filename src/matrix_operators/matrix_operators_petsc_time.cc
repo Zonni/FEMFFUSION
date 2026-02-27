@@ -547,10 +547,9 @@ template <int dim, int n_fe_degree>
         cell->get_dof_indices(local_dof_indices);
         for (unsigned int gi = 0; gi < materials.get_n_groups(); ++gi)
         {
-          double coeff_cell_val = 0.0;
           // Get the material coefficients:
           double D = materials.get_diffusion_coefficient(gi, mat);
-          coeff_cell_val += materials.get_sigma_r(gi, mat);
+          double coeff_cell_val = materials.get_sigma_r(gi, mat);
           coeff_cell_val += 1
                             / (this->delta_t * materials.get_velocity(mat, gi));
           coeff_cell_val += -(1 - materials.get_delayed_fraction_sum(mat))
@@ -558,8 +557,7 @@ template <int dim, int n_fe_degree>
                             * materials.get_nu_sigma_f(gi, mat);
 
           if (this->type_scheme == "implicit-exponential")
-            for (unsigned int np = 0; np < materials.get_n_precursors();
-                np++)
+            for (unsigned int np = 0; np < materials.get_n_precursors(); np++)
             {
               // TODO check to change get_prompt_spectra by get_delayed_spectra
               //					coeff_cell_val += -exp_value[np]

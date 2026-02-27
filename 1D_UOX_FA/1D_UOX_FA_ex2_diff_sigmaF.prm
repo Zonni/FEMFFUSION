@@ -39,7 +39,7 @@ set Print_Grid_Flag     = false
 set Out_Refinements     = 0
 
 # Filename where will be written the output
-set Output_Filename     = 1D_UOX_FA/1D_UOX_FA_ex2_diff.out
+set Output_Filename     = 1D_UOX_FA/1D_UOX_FA_ex2_diff_sigmaF.out
 
 
 # CROSS SECTION
@@ -47,7 +47,7 @@ set Output_Filename     = 1D_UOX_FA/1D_UOX_FA_ex2_diff.out
 set XSECS_Filename      = 1D_UOX_FA/1D_UOX_FA_ex2.xsec
 
 # Filename where it is stored the perturbation data
-set DS_Filename         = 1D_UOX_FA/1D_UOX_FA_ex2.dxs
+set DS_Filename         = 1D_UOX_FA/1D_UOX_FA_ex2_sigmaF.dxs
 
 # Filename where it is stored some dynamic data
 set DYN_Filename        = 1D_UOX_FA/1D_UOX_FA.dyn.prm

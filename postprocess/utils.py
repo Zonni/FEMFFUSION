@@ -8,7 +8,7 @@ from math import sqrt, pi
 from vtk import vtkUnstructuredGridReader
 from vtk.util import numpy_support as VN
 import matplotlib as mpl
-#import pyvista as pv
+import pyvista as pv
 
 numbers = []
 for i in range(10):
@@ -92,6 +92,45 @@ def parse_file(filename, begin='', end='default', n_max_lines=-1):
                             out.append(float(word))
 
     f.close()
+    return out
+
+def parse_file_opt(file_obj, begin='', end='default', n_max_lines=-1):
+    """ 
+    Parse an open file object and return what is below a begin title.
+    """
+    out = []
+    n_lines_readed = 0
+    
+    # Iterate through the file from its CURRENT position
+    for line in file_obj:
+        # Begin Found
+        if line.startswith(begin):
+            
+            # Now read the data lines
+            for data_line in file_obj:
+                if not data_line.startswith('Plane'):
+                    n_lines_readed += 1
+                    
+                    # Parse the words
+                    for word in data_line.split():
+                        # If end is found also terminate
+                        if end != 'default' and word.startswith(end):
+                            return out
+                        
+                        # Append double numbers (retained your logic)
+                        elif len(word) > 3 and word[0] in numbers:
+                            out.append(float(word))
+
+                    # ⚠️ CRITICAL CHANGE: Stop EXACTLY when n_max_lines is reached
+                    # (Your original code read n_max_lines + 1. We have to stop exactly at 
+                    # n_max_lines here, otherwise we accidentally swallow the next header!)
+                    if n_max_lines != -1 and n_lines_readed == n_max_lines:
+                        return out
+                        
+            # If we run out of lines in the file
+            return out
+            
+    # If the begin string is never found
     return out
 
 def parse_time_file(filename):
@@ -1303,21 +1342,48 @@ def  parse_vtk_over_line(file, scalar_name, point_a, point_b, resolution=1000) :
     >>> print(y)
     [14.1851   12.3342    0.970584]
    """
-    print('Not working as pyvista is not installed TODO')
-    return
-    # mesh = pv.read(file)
-    # line = pv.Line(point_a, point_b, resolution=resolution)
-    # line = line.sample(mesh)
+    # print('Not working as pyvista is not installed TODO')
+    # return
+    mesh = pv.read(file)
+    line = pv.Line(point_a, point_b, resolution=resolution)
+    line = line.sample(mesh)
     
-    # # Get x
-    # xa, ya, za = point_a
-    # xb, yb, zb = point_b
-    # distance = np.sqrt((xb - xa)**2 +  (yb - ya)**2 + (zb - zb)**2)
-    # x = np.linspace(0, distance, resolution+1)
+    # Get x
+    xa, ya, za = point_a
+    xb, yb, zb = point_b
+    distance = np.sqrt((xb - xa)**2 +  (yb - ya)**2 + (zb - zb)**2)
+    x = np.linspace(0, distance, resolution+1)
     
-    # return x, np.array(line.get_array(scalar_name))
+    return x, np.array(line.get_array(scalar_name))
+
+import numpy as np
+from scipy.interpolate import RectBivariateSpline
+
+def interpolate2D(x_old, y_old, z_old, x_new, y_new):
+    """ Interpolate a 2D regular mesh to another regular mesh.
+         
+     >>> x_old = np.linspace(0, 1, 5)
+     >>> y_old = np.linspace(0, 1, 5)
+     >>> X_old, Y_old = np.meshgrid(x_old, y_old, indexing='ij')
+     >>> Z_old = np.sin(np.pi * X_old) * np.cos(np.pi * Y_old) 
+     >>> x_new = np.linspace(0, 1, 4)
+     >>> y_new = np.linspace(0, 1, 4)
+     >>> Z_new = interpolate2D(x_old, y_old, Z_old, x_new, y_new)
+     >>> print(Z_new)
+     [[ 1.20492941e-17  8.63470685e-01  8.63470685e-01  1.22464680e-16]
+      [ 2.21816506e-17  4.29121841e-01  4.29121841e-01  6.08616711e-17]
+      [ 7.56630316e-18 -4.29121841e-01 -4.29121841e-01 -6.08616711e-17]
+      [-5.59431511e-18 -8.63470685e-01 -8.63470685e-01 -1.22464680e-16]]
+    """
+    
+    # --- Create cubic spline interpolator ---
+    # kx=3, ky=3 -> cubic interpolation in both directions
+    interp_func = RectBivariateSpline(x_old, y_old, z_old, kx=1, ky=1)
 
 
+    # New mesh
+    Z_new = interp_func(x_new, y_new) 
+    return Z_new.transpose()
 
 if __name__ == "__main__":
     import doctest

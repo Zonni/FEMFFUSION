@@ -49,6 +49,7 @@ int run_tests ()
   test_POD_groupwise();
   test_LUPOD_extended();
   test_LUPOD_extended_group_wise();
+  test_SOPT();
 
   //-----------------------------------------------------------------//
   // TEST 1D_hom_slab_2cm

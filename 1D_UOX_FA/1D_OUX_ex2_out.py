@@ -10,7 +10,7 @@ sys.path.insert(1, '../postprocess/')
 import matplotlib.pyplot as plt
 #import matplotlib.colors
 from matplotlib import rcParams
-from utils import parse_file, parse_file_complex
+from utils import parse_file, parse_file_complex, parse_file_opt
 import numpy as np
 
 plt.close('all')
@@ -39,10 +39,54 @@ colors = [u'#1f77b4', u'#ff7f0e', u'#2ca02c',
 #%% FILES
 
 # Frequency-Domain
-# problem = '1D_UOX_FA_out'
-problem = '1D_UOX_FA_sint'
+# problem = '1D_UOX_FA_SigmaF'
+problem = '1D_UOX_FA_test'
+# problem = '1D_UOX_FA_sint'
 # problem =  '1D_UOX_FA_new'
 looking_freq = 1.0
+
+if (problem == '1D_UOX_FA_SigmaF'):
+    file_1_fd = '1D_UOX_FA_ex2_diff_sigmaF.out'
+    files_fd = [file_1_fd ]
+    labels_fd = ['DSP1']
+    style_fd = ['-']
+    
+    # Time-Domain
+    # file_sta_1 = 'ref_td/1D_UOX_FA_ex2_diffout'  
+    # file_nos_1 = 'ref_td/1D_UOX_FA_ex2_diff.outnos'  
+    # file_sta_1 = 'ref_td/1D_UOX_FA_ex2_diff_sintout'  
+    # file_nos_1 = 'ref_td/1D_UOX_FA_ex2_diff_sint.outnos' 
+    file_sta_1 = 'time_domain/1D_UOX_FA_ex2_dif_td_sigmaF.out'  
+    file_nos_1 = 'time_domain/1D_UOX_FA_ex2_dif_td_sigmaF.out.nos'
+
+    # file_sta_1 = 'time_domain/1D_UOX_FA_ex2_dif_td_time_refined.out'  
+    # file_nos_1 = 'time_domain/1D_UOX_FA_ex2_dif_td_time_refined.out.nos'
+    files_sta_td = [file_sta_1]
+    files_nos_td = [file_nos_1]
+    labels_td = ['DSP1-TD']
+    style_td = ['*']
+
+
+if (problem == '1D_UOX_FA_test'):
+    file_1_fd = '1D_UOX_FA_ex2_diff.out'
+    files_fd = [file_1_fd ]
+    labels_fd = ['DSP1']
+    style_fd = ['-']
+    
+    # Time-Domain
+    # file_sta_1 = 'ref_td/1D_UOX_FA_ex2_diffout'  
+    # file_nos_1 = 'ref_td/1D_UOX_FA_ex2_diff.outnos'  
+    # file_sta_1 = 'ref_td/1D_UOX_FA_ex2_diff_sintout'  
+    # file_nos_1 = 'ref_td/1D_UOX_FA_ex2_diff_sint.outnos' 
+    file_sta_1 = 'time_domain/1D_UOX_FA_ex2_dif_td.out'  
+    file_nos_1 = 'time_domain/1D_UOX_FA_ex2_dif_td.out.nos'
+
+    # file_sta_1 = 'time_domain/1D_UOX_FA_ex2_dif_td_time_refined.out'  
+    # file_nos_1 = 'time_domain/1D_UOX_FA_ex2_dif_td_time_refined.out.nos'
+    files_sta_td = [file_sta_1]
+    files_nos_td = [file_nos_1]
+    labels_td = ['DSP1-TD']
+    style_td = ['*']
 
 if (problem == '1D_UOX_FA_out'):
     file_1_fd = '1D_UOX_FA_ex2_diff.out'
@@ -230,13 +274,21 @@ for i in range(n_files_td):
     
     noise_g1 = np.zeros([n_steps, n_cells])
     noise_g2 = np.zeros([n_steps, n_cells])
-    for st in steps:
-        noise_g1[st] = parse_file(files_nos_td[i],
-                                  'Noise of group 1 time step ' + str(st) ,
-                                   n_max_lines=ny)
-        noise_g2[st] = parse_file(files_nos_td[i],
-                                  'Noise of group 2 time step ' + str(st),
-                                  n_max_lines=ny)
+    # Open the file exactly ONCE
+    with open(files_nos_td[i], 'r') as f:
+        
+        for st in steps:
+            if st % 10000 == 0:
+                print('Step: ', st)
+                
+            # Pass 'f' directly. It will start searching from wherever it left off!
+            noise_g1[st] = parse_file_opt(f, 
+                                      'Noise of group 1 time step ' + str(st), 
+                                      n_max_lines=ny)
+                                      
+            noise_g2[st] = parse_file_opt(f, 
+                                      'Noise of group 2 time step ' + str(st), 
+                                      n_max_lines=ny)
     
     
     
@@ -245,8 +297,8 @@ for i in range(n_files_td):
     noise_g2 = np.transpose(noise_g2) 
     
     freq   = np.fft.rfftfreq(n_steps, d=time_fem[1])
-    fft_g1 = np.fft.rfft(noise_g1) * 2.0/ n_steps * 10
-    fft_g2 = np.fft.rfft(noise_g2) * 2.0/ n_steps * 10
+    fft_g1 = np.fft.rfft(noise_g1) * 2.0/ n_steps 
+    fft_g2 = np.fft.rfft(noise_g2) * 2.0/ n_steps 
     
     # We cut at looking_freq Hz
     cut_freq = int (looking_freq * n_steps * time_fem[1])
