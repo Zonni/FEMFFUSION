@@ -13,7 +13,7 @@ set Noise_Calculation    = true
 
 # REACTOR and MESH DEFINITION
 # Finite element degree
-set FE_Degree            = 4
+set FE_Degree            = 2
  
 # Number of global refinements 
 set N_Refinements        = 0
@@ -39,18 +39,18 @@ set Print_Grid_Flag     = false
 set Out_Refinements     = 0
 
 # Filename where will be written the output
-set Output_Filename     = 1D_UOX_FA/1D_UOX_FA_ex2_diff.out
+set Output_Filename     = 1D_UOX_FA_ROM/1D_UOX_FA_ex2_diff.out
 
 
 # CROSS SECTION
 # Filename where it is stored the material cross section
-set XSECS_Filename      = 1D_UOX_FA/1D_UOX_FA_ex2.xsec
+set XSECS_Filename      = 1D_UOX_FA_ROM/1D_UOX_FA_ex2.xsec
 
 # Filename where it is stored the perturbation data
-set DS_Filename         = 1D_UOX_FA/1D_UOX_FA_ex2.dxs
+set DS_Filename         = 1D_UOX_FA_ROM/1D_UOX_FA_ex2.dxs
 
 # Filename where it is stored some dynamic data
-set DYN_Filename        = 1D_UOX_FA/1D_UOX_FA.dyn.prm
+set DYN_Filename        = 1D_UOX_FA_ROM/1D_UOX_FA.dyn.prm
 
 
 #

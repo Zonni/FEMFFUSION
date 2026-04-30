@@ -991,46 +991,60 @@ template <int dim>
     double sim_time,
     std::vector<unsigned int> mat_chan)
   {
-    //const unsigned int n_groups = materials.get_n_groups();
+    const unsigned int n_groups = materials.get_n_groups();
 
     if (perturbation_function == "Sinus")
     {
-      AssertRelease(false, "Sinus perturbation not implemented yet");
-      /*
-       if (group_changing != static_cast<unsigned int>(-1)) // One energy groups is selected
-       {
-       AssertRelease(xs_pert_name != "all",
-       "This perturbation is only valid for sigmaf or sigmaa");
-       for (unsigned int nm = 0; nm < mat_chan.size(); nm++)
-       {
-       for (unsigned int ng = 0; ng < n_groups; ng++)
-       new_xsec[ng] = xsec_init[ng][mat_chan[nm]];
+      AssertRelease(n_groups == 2, "Sinus Perturbation only implemented for 2 groups");
+      AssertRelease(group_changing == static_cast<unsigned int>(-1),
+        "Sinus Perturbation only implemented for group_changing == -1");
+      AssertRelease(xs_pert_name == "all", "Implemented only for xs_pert_name == all");
+      AssertRelease(mat_chan.size() == 1,
+        "For Sinus perturbation only one material can be selected");
 
-       new_xsec[group_changing] += xs_amplitude
-       * sin(2 * M_PI * frequency * sim_time);
-       }
+      unsigned int pert_mat = mat_chan[0];
 
-       }
-       else // All energy groups are selected
-       {
-       unsigned int xsec_am = 0;
-       for (unsigned int ng = 0; ng < n_groups; ng++)
-       {
-       if (xs_pert_name == "sigma_f" or xs_pert_name == "sigma_a")
-       new_xsec[ng] = xsec_init[ng][mat_chan]
-       + xs_amplitude * sin(2 * M_PI * frequency * sim_time);
-       else if (xs_pert_name == "all")
-       for (unsigned xsec = 0; xsec < 4; xsec++)
-       {
-       new_xsec_all[xsec][ng] = xsec_init_all[xsec][ng][mat_chan]
-       + amplitudes[xsec_am] * sin(
-       2 * M_PI * frequency * sim_time);
-       xsec_am++;
-       }
-       }
-       }
-       */
+      // The order of amplitudes is:
+      //  0             1         2          3           4             5        6
+      // Sigma_tr1   Sigma_a1 nuSigma_f1 Sigma_12     Sigma_tr2    Sigma_a2   nuSigma_f2
+      const double sin_t = sin(2 * M_PI * frequency * sim_time);
+      double delta_Sigma_r1 = amplitudes[1] + amplitudes[3];
+      double delta_Sigma_r2 = amplitudes[5];
+
+      // only used in SPN >= 3
+      double sigma_t1 = init_sigma_t[0][pert_mat] + amplitudes[0] * sin_t;
+      materials.set_sigma_t(sigma_t1, 0, pert_mat);
+      double sigma_tr1 = init_sigma_tr[0][pert_mat] + amplitudes[0] * sin_t;
+      materials.set_sigma_tr(sigma_tr1, 0, pert_mat);
+
+      double sigma_t2 = init_sigma_t[1][pert_mat] + amplitudes[4] * sin_t;
+      materials.set_sigma_t(sigma_t2, 1, pert_mat);
+      double sigma_tr2 = init_sigma_tr[1][pert_mat] + amplitudes[4] * sin_t;
+      materials.set_sigma_tr(sigma_tr2, 1, pert_mat);
+
+      double sigma_r1 = init_sigma_r[0][pert_mat] + delta_Sigma_r1 * sin_t;
+      materials.set_sigma_r(sigma_r1, 0, pert_mat);
+      double sigma_r2 = init_sigma_r[1][pert_mat] + delta_Sigma_r2 * sin_t;
+      materials.set_sigma_r(sigma_r2, 1, pert_mat);
+
+      // Before this function sigma_f and nu_sigma_f has been set to critical values
+      // This way, the  amplitude oscillation is also reduced by keff.
+      // We do not change sigma_f, only nu_sigma_f to not change the postprocess in any way.
+      //sigma_f = init_sigma_f[gr][mat_chan]
+      //        + frac_f * sin_t * init_sigma_f[gr][mat_chan];
+      //materials.set_sigma_f(sigma_f, gr, mat_chan);
+      double nu_sigma_f1 = init_nu_sigma_f[0][pert_mat]
+                           + amplitudes[2] / materials.keff * sin_t;
+      materials.set_nu_sigma_f(nu_sigma_f1, 0, pert_mat);
+      double nu_sigma_f2 = init_nu_sigma_f[1][pert_mat]
+                           + amplitudes[6] / materials.keff * sin_t;
+      materials.set_nu_sigma_f(nu_sigma_f2, 1, pert_mat);
+
+      // We only change sigma_s1->2 (the other values of sigma_s are not defined)
+      double sigma_s12 = init_sigma_s[0][1][pert_mat] + amplitudes[3] * sin_t;
+      materials.set_sigma_s(sigma_s12, 0, 1, pert_mat);
     }
+
     else if (perturbation_function == "Constant") // FIXME + 1e-4 es Normal?? No seria un Step y com el valor Amplitude
     {
       AssertRelease(false, "Constant perturbation not implemented yet");
@@ -1145,10 +1159,10 @@ template <int dim>
 template <int dim>
   void Perturbation<dim>::move_vibrating (double sim_time)
   {
-    //double vib_pos_min, vib_pos_max;
+//double vib_pos_min, vib_pos_max;
     std::vector<double> vib_pos = vib_pos_static;
 
-    // Compute the new position and direction of movement of all the bars.
+// Compute the new position and direction of movement of all the bars.
     vib_pos[2 * direction] = vib_pos_static[2 * direction]
                              + xs_amplitude * sin(2 * M_PI * frequency * sim_time);
     vib_pos[2 * direction + 1] = vib_pos_static[2 * direction + 1]
@@ -1164,9 +1178,9 @@ template <int dim>
          << " cm." << std::endl;
 
     move_volume_homogenized(vib_pos, mat_vib, indices_changed, cells_changed);
-    //move_volume_homogenized(vib_pos_min, vib_pos_max, direction, mat_vib);
-    //std::cout << "materials_vector" << std::endl;
-    //print_vector(materials.get_materials_vector());
+//move_volume_homogenized(vib_pos_min, vib_pos_max, direction, mat_vib);
+//std::cout << "materials_vector" << std::endl;
+//print_vector(materials.get_materials_vector());
   }
 
 /**
@@ -1311,7 +1325,7 @@ template <>
     unsigned int new_user_id = materials.n_assemblies;
 
     ConditionalOStream cell_cout(std::cout, false);
-    //auto cell = dof_handler.begin_active();
+//auto cell = dof_handler.begin_active();
     auto endc = dof_handler.end();
     for (auto cell = dof_handler.begin_active(); cell != endc; ++cell)
     {
@@ -1612,18 +1626,18 @@ template void Perturbation<3>::move_volume_homogenized (
 template <int dim>
   void Perturbation<dim>::get_read_xs_file (const std::string &xs_file)
   {
-    // perturbed_xs
+// perturbed_xs
     Assert(fexists(xs_file), ExcMessage("read_xs_file doesn't exist"));
     std::ifstream input(xs_file.c_str(), std::ios::in);
     std::string str, keyword;
-    // unsigned int mat;
+// unsigned int mat;
 
     unsigned int n_perturbed_materials, n_time_steps;
     double dob;
     unsigned int uint;
     const unsigned int n_xsecs = 9;
 
-    // for every line
+// for every line
     for (std::string line; getline(input, line);)
     {
       std::istringstream iss(line);
@@ -1737,17 +1751,17 @@ template <int dim>
       + " vs "
       + num_to_str(input.get_n_groups()));
 
-    // Resize containers
+// Resize containers
     n_mats = input.get_n_mat();
     verbose_cout << "n_mats: " << n_mats << std::endl;
 
-    // Resize Containers
+// Resize Containers
     final_sigma_t.resize(n_groups, std::vector<double>(n_mats));
     final_sigma_tr.resize(n_groups, std::vector<double>(n_mats));
     final_sigma_s.resize(n_groups,
       std::vector<std::vector<double> >(n_groups,
         std::vector<double>(n_mats)));
-    //chi.resize(n_groups, std::vector<double>(n_mats));
+//chi.resize(n_groups, std::vector<double>(n_mats));
     final_sigma_r.resize(n_groups, std::vector<double>(n_mats));
     final_nu_sigma_f.resize(n_groups, std::vector<double>(n_mats));
     final_sigma_f.resize(n_groups, std::vector<double>(n_mats));
@@ -1960,33 +1974,33 @@ template <int dim>
      << materials.keff
      << std::endl;*/
 
-    // Absolute Values of deltaXS
-    // The phase is impose by the sin() -> -1j -> 90 deg
-    //double delta_Sigma_tr1 = 1.51160000e-03;
-    //double delta_Sigma_tr2 = 2.20256000e-03;
+// Absolute Values of deltaXS
+// The phase is impose by the sin() -> -1j -> 90 deg
+//double delta_Sigma_tr1 = 1.51160000e-03;
+//double delta_Sigma_tr2 = 2.20256000e-03;
     double delta_Sigma_tr1 = 0.0;
     double delta_Sigma_tr2 = 0.0;
     double delta_Sigma_a1 = 3.14307000e-04;
     double delta_Sigma_a2 = 8.67176000e-04;
-    double delta_nuSigma_f1 = 2.98814213e-05/ materials.keff;
-    double delta_nuSigma_f2 = 5.50364059e-04/ materials.keff;
+    double delta_nuSigma_f1 = 2.98814213e-05 / materials.keff;
+    double delta_nuSigma_f2 = 5.50364059e-04 / materials.keff;
     double delta_Sigma_s12 = 2.94001400e-06;
-    //double delta_nuSigma_f2 = 5.50364059e-04/ materials.keff;
-    //double delta_nuSigma_f1 = 0.0/ materials.keff;
-    //double delta_Sigma_t1 = 0.0;
-    //double delta_Sigma_t2 = 0.0;
-    //double delta_Sigma_a1 = 0.0;
-    //double delta_Sigma_a2 = 0.0;
-    //double delta_nuSigma_f1 = 0.0;
-    //double delta_nuSigma_f2 = 0.0;
-    //double delta_Sigma_s12 = 0.0;
+//double delta_nuSigma_f2 = 5.50364059e-04/ materials.keff;
+//double delta_nuSigma_f1 = 0.0/ materials.keff;
+//double delta_Sigma_t1 = 0.0;
+//double delta_Sigma_t2 = 0.0;
+//double delta_Sigma_a1 = 0.0;
+//double delta_Sigma_a2 = 0.0;
+//double delta_nuSigma_f1 = 0.0;
+//double delta_nuSigma_f2 = 0.0;
+//double delta_Sigma_s12 = 0.0;
 
     double delta_Sigma_r1 = delta_Sigma_a1 + delta_Sigma_s12;
     double delta_Sigma_r2 = delta_Sigma_a2;
 
     const double sin_t = sin(2 * M_PI * frequency * sim_time);
 
-    // only used in SPN >= 3
+// only used in SPN >= 3
     double sigma_t1 = init_sigma_t[0][pert_mat] + delta_Sigma_tr1 * sin_t;
     materials.set_sigma_t(sigma_t1, 0, pert_mat);
     double sigma_t2 = init_sigma_t[1][pert_mat] + delta_Sigma_tr2 * sin_t;
@@ -2002,18 +2016,18 @@ template <int dim>
     double sigma_r2 = init_sigma_r[1][pert_mat] + delta_Sigma_r2 * sin_t;
     materials.set_sigma_r(sigma_r2, 1, pert_mat);
 
-    // Before this function sigma_f and nu_sigma_f has been set to critical values
-    // This way, the  amplitude oscillation is also reduced by keff.
-    // We do not change sigma_f, only nu_sigma_f to not change the postprocess in any way.
-    //sigma_f = init_sigma_f[gr][pert_mat]
-    //        + frac_f * sin_t * init_sigma_f[gr][pert_mat];
-    //materials.set_sigma_f(sigma_f, gr, pert_mat);
+// Before this function sigma_f and nu_sigma_f has been set to critical values
+// This way, the  amplitude oscillation is also reduced by keff.
+// We do not change sigma_f, only nu_sigma_f to not change the postprocess in any way.
+//sigma_f = init_sigma_f[gr][pert_mat]
+//        + frac_f * sin_t * init_sigma_f[gr][pert_mat];
+//materials.set_sigma_f(sigma_f, gr, pert_mat);
     double nu_sigma_f1 = init_nu_sigma_f[0][pert_mat] + delta_nuSigma_f1 * sin_t;
     materials.set_nu_sigma_f(nu_sigma_f1, 0, pert_mat);
     double nu_sigma_f2 = init_nu_sigma_f[1][pert_mat] + delta_nuSigma_f2 * sin_t;
     materials.set_nu_sigma_f(nu_sigma_f2, 1, pert_mat);
 
-    // We only change sigma_s1->2 (the other values of sigma_s are not defined)
+// We only change sigma_s1->2 (the other values of sigma_s are not defined)
     double sigma_s12 = init_sigma_s[0][1][pert_mat] + delta_Sigma_s12 * sin_t;
     materials.set_sigma_s(sigma_s12, 0, 1, pert_mat);
 
@@ -2022,12 +2036,11 @@ template <int dim>
 //    std::cout << " sigma_r1 " << sigma_r1 << std::endl;
 //    std::cout << " init_sigma_r[0][pert_mat] " <<     init_sigma_r[0][pert_mat] << std::endl;
 
+//std::cout << " suma " << sigma_s12 +  << std::endl;
 
-    //std::cout << " suma " << sigma_s12 +  << std::endl;
-
-    //std::cout << std::setprecision(10) << " init_nu_sigma_f2 "
-    //          << init_nu_sigma_f[1][pert_mat] << std::endl;
-    //std::cout << " delta_nusigma_f2 " << delta_nuSigma_f2 << std::endl;
+//std::cout << std::setprecision(10) << " init_nu_sigma_f2 "
+//          << init_nu_sigma_f[1][pert_mat] << std::endl;
+//std::cout << " delta_nusigma_f2 " << delta_nuSigma_f2 << std::endl;
     /*
      std::cout << std::scientific << std::setprecision(7) << std::endl;
      std::cout << " delta_sigma_t1 " << delta_Sigma_t1 << std::endl;

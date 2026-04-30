@@ -1,0 +1,119 @@
+# ACP-100 3D REACTOR
+# Data from
+# Assessing the suitability of two-group cross-sections
+# and diffusion coefficients derived from SERPENT-2
+# for small modular reactor ACP-100
+#  Md. Abidur Rahman Ishraq1, Anton Evgenivich Kruglikov1
+#Nuclear Energy and Technology 11(1): 1–12
+# DOI 10.3897/nucet.11.130422
+# ---------------------------------------------------------------------------
+# This data comes from: Benchmark Problem Book, ANL-7416, Suppl. 2, Argonne National Laboratory (1977)
+
+# Dimension of the problem (1, 2 or 3)
+set Dimension           = 3
+
+# Number of eigenvalues required
+set N_Eigenvalues       = 1
+
+# True/false - Activate ROM Calculation
+set ROM_Transient           = true
+
+# True/false - Output static values to noise
+set Output_To_Noise      = true
+
+#
+# REACTOR and MESH DEFINITION
+# Finite element degree
+set FE_Degree           = 2
+
+
+# Global Refinements of the mesh:
+set N_Refinements       = 0
+
+# Number of cells per dimension
+set Mesh_Size           = 11 11 14
+
+# Pitch of the cells
+set Cell_Pitch_x        = 11* 21.504 
+set Cell_Pitch_y        = 11* 21.504 
+set Cell_Pitch_z        = 20.0 4.5 10* 21.500 4.5 20.0
+
+# Set a matrix where, 0 means no materials, 1 nuclear fuel and 2 reflector.
+set Geometry_Matrix =    0 0 0 2 2 2 2 2 0 0 0;   \
+	                     0 0 2 2 1 1 1 2 2 0 0;   \ 
+                         0 2 2 1 1 1 1 1 2 2 0;   \
+                         2 2 1 1 1 1 1 1 1 2 2;   \
+                         2 1 1 1 1 1 1 1 1 1 2;   \
+                         2 1 1 1 1 1 1 1 1 1 2;   \
+                         2 1 1 1 1 1 1 1 1 1 2;   \
+                         2 2 1 1 1 1 1 1 1 2 2;   \
+                         0 2 2 1 1 1 1 1 2 2 0;   \
+                         0 0 2 2 1 1 1 2 2 0 0;   \
+                         0 0 0 2 2 2 2 2 0 0 0;   
+
+
+# Boundary Conditopns (LEFT  RIGHT TOP BOTTOM UP DOWN)  (0 = ZeroFlux) (1  ZeroCurrent) (2 Vaccum) (3 Albedo) 
+set Boundary_Conditions = 2    2   2    2     2   2
+
+
+#
+# OUTPUT OPTIONS
+# Filename where will be written the output
+set Output_Filename     = 3D_ACP100/ACP100_FE2_td_ROM50.out
+
+# True/false - Make a .vtk file with the output
+set Output_Flag         = false
+
+# True/false - Print the grid in .eps
+set Print_Grid_Flag     = false
+
+# Number of Refinements per cell in the .vtk output
+set Out_Refinements     = 0
+
+#
+# CROSS SECTIONS
+# Filename where it is stored the material cross section
+set XSECS_Filename      = 3D_ACP100/ACP100_m1.xsec
+
+# Solver Type (power_it | slepc_2g | bifpam)
+set Solver_Type         = bifpam
+
+
+#
+## TIME PARAMETERS
+set Distributed_Time_Scheme    = Semi-Implicit-Exponential 
+
+
+# Delta time of the iteration
+set Time_Delta          = 1e-3
+set Time_End            = 3.00
+
+## Every this number of steps we will create a .vtk file
+ set Out_Interval        = 1
+ 
+
+
+#
+## VIBRATION
+set Type_Perturbation     = Single_Material
+set Perturbation_Function = Sinus
+set Material_Changing     = 7
+set XS_Name               = All
+
+#Amplitude of sinus poerturbation
+#                  Sigma_tr1   Sigma_a1  nuSigma_f1   Sigma_12   Sigma_tr2    Sigma_a2   nuSigma_f2     
+set Amplitudes =  0.0000000    0.0003      0.0          0.0        0.00        0.0          0.0 
+#  4.0% of sigma_a2 
+
+# Frecuency of the vibration in Hz
+set Frequency             = 1.0
+
+
+########################
+# True/false - Activate ROM Calculation
+set ROM_Transient           = true
+
+# ROM Parameters
+set ROM_Type_Snapshots      = time_dyn
+# Number of snapshots for the ROM method
+set N_Snapshots             = 50

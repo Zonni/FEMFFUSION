@@ -74,8 +74,8 @@ template <int dim, int n_fe_degree>
     C_22 = NULL;
 
     // PC
-    tol_ksp_oneblock = 1e-3;
-    max_iterations_ksp_oneblock = 50;
+    tol_ksp_oneblock = 1e-5;
+    max_iterations_ksp_oneblock = 100;
     //n_ksp_onegroup_its = 0;
 
     pc_complex = "";

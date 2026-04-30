@@ -16,7 +16,7 @@ set Output_To_Noise      = true
 
 # REACTOR and MESH DEFINITION
 # Finite element degree
-set FE_Degree            = 2
+set FE_Degree            = 4
 
 # Transport Approximation used (Diffusion | SPN | Full_SPN)
 set Transport_Appr       = Diffusion

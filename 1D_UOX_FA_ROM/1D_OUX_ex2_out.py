@@ -1,10 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Created on Fri Dec 18 13:03:14 2020
 
-@author: zonni
-"""
 import sys
 sys.path.insert(1, '../postprocess/')
 import matplotlib.pyplot as plt
@@ -39,38 +35,16 @@ colors = [u'#1f77b4', u'#ff7f0e', u'#2ca02c',
 #%% FILES
 
 # Frequency-Domain
-# problem = '1D_UOX_FA_SigmaF'
 problem = '1D_UOX_FA_test'
 # problem = '1D_UOX_FA_sint'
 # problem =  '1D_UOX_FA_new'
 looking_freq = 1.0
 
-if (problem == '1D_UOX_FA_SigmaF'):
-    file_1_fd = '1D_UOX_FA_ex2_diff_sigmaF.out'
-    files_fd = [file_1_fd ]
-    labels_fd = ['DSP1']
-    style_fd = ['-']
-    
-    # Time-Domain
-    # file_sta_1 = 'ref_td/1D_UOX_FA_ex2_diffout'  
-    # file_nos_1 = 'ref_td/1D_UOX_FA_ex2_diff.outnos'  
-    # file_sta_1 = 'ref_td/1D_UOX_FA_ex2_diff_sintout'  
-    # file_nos_1 = 'ref_td/1D_UOX_FA_ex2_diff_sint.outnos' 
-    file_sta_1 = 'time_domain/1D_UOX_FA_ex2_dif_td_sigmaF.out'  
-    file_nos_1 = 'time_domain/1D_UOX_FA_ex2_dif_td_sigmaF.out.nos'
-
-    # file_sta_1 = 'time_domain/1D_UOX_FA_ex2_dif_td_time_refined.out'  
-    # file_nos_1 = 'time_domain/1D_UOX_FA_ex2_dif_td_time_refined.out.nos'
-    files_sta_td = [file_sta_1]
-    files_nos_td = [file_nos_1]
-    labels_td = ['DSP1-TD']
-    style_td = ['*']
-
 
 if (problem == '1D_UOX_FA_test'):
     file_1_fd = '1D_UOX_FA_ex2_diff.out'
     files_fd = [file_1_fd ]
-    labels_fd = ['DSP1']
+    labels_fd = ['FD']
     style_fd = ['-']
     
     # Time-Domain
@@ -78,103 +52,19 @@ if (problem == '1D_UOX_FA_test'):
     # file_nos_1 = 'ref_td/1D_UOX_FA_ex2_diff.outnos'  
     # file_sta_1 = 'ref_td/1D_UOX_FA_ex2_diff_sintout'  
     # file_nos_1 = 'ref_td/1D_UOX_FA_ex2_diff_sint.outnos' 
-    file_sta_1 = 'time_domain/1D_UOX_FA_ex2_dif_td.out'  
-    file_nos_1 = 'time_domain/1D_UOX_FA_ex2_dif_td.out.nos'
+    file_sta_1 = 'time_domain/1D_UOX_FA_ex2_dif_td_FOM.out'  
+    file_nos_1 = 'time_domain/1D_UOX_FA_ex2_dif_td_FOM.out.nos'
+    
+    file_sta_2 = 'time_domain/1D_UOX_FA_ex2_dif_td_ROM10.out'  
+    file_nos_2 = 'time_domain/1D_UOX_FA_ex2_dif_td_ROM10.out.nos'
 
     # file_sta_1 = 'time_domain/1D_UOX_FA_ex2_dif_td_time_refined.out'  
     # file_nos_1 = 'time_domain/1D_UOX_FA_ex2_dif_td_time_refined.out.nos'
-    files_sta_td = [file_sta_1]
-    files_nos_td = [file_nos_1]
-    labels_td = ['DSP1-TD']
-    style_td = ['*']
+    files_sta_td = [file_sta_1, file_sta_2]
+    files_nos_td = [file_nos_1, file_nos_2]
+    labels_td = ['TD-FOM', 'TD-FOM']
+    style_td = ['*', 's']
 
-if (problem == '1D_UOX_FA_out'):
-    file_1_fd = '1D_UOX_FA_ex2_diff.out'
-    file_2_fd = '1D_UOX_FA_ex2_sp3.out'
-    file_3_fd = '1D_UOX_FA_ex2_fsp3.out'
-    
-    files_fd = [file_1_fd, file_2_fd, file_3_fd]
-    labels_fd = ['DSP1', 'DSP3', 'FSP3']
-    style_fd = ['-', '-', '-']
-    
-    # Time-Domain
-   
-    file_sta_1 = 'ref_td/1D_UOX_FA_ex2_diffout'  
-    file_nos_1 = 'ref_td/1D_UOX_FA_ex2_diff.outnos'  
-    file_sta_2 = 'ref_td/1D_UOX_FA_ex2_sp3out'  
-    file_nos_2 = 'ref_td/1D_UOX_FA_ex2_sp3.outnos'  
-    file_sta_3 = 'ref_td/1D_UOX_FA_ex2_fsp3out'  
-    file_nos_3 = 'ref_td/1D_UOX_FA_ex2_fsp3.outnos'  
-    
-    files_sta_td = [file_sta_1, file_sta_2, file_sta_3]
-    files_nos_td = [file_nos_1, file_nos_2, file_nos_3]
-    labels_td = ['DSP1-TD', 'DSP3-TD', 'FSP3-TD']
-    style_td = ['*', 'v', 's']
-    
-    
-elif(problem == "1D_UOX_FA_sint"):
-
-    file_1_fd = '1D_UOX_FA_ex2_diff.out'
-    file_2_fd = '1D_UOX_FA_ex2_sp3.out'
-    file_3_fd = '1D_UOX_FA_ex2_fsp3.out'
-    
-    files_fd = [file_1_fd, file_2_fd, file_3_fd]
-    labels_fd = ['DSP1', 'DSP3', 'FSP3']
-    style_fd = ['-', '-', '-']
-    
-    # Time-Domain   
-    file_sta_1 = 'ref_td/1D_UOX_FA_ex2_diff_sintout'  
-    file_nos_1 = 'ref_td/1D_UOX_FA_ex2_diff_sint.outnos'  
-    file_sta_2 = 'ref_td/1D_UOX_FA_ex2_sp3_sintout'  
-    file_nos_2 = 'ref_td/1D_UOX_FA_ex2_sp3_sint.outnos'  
-    file_sta_3 = 'ref_td/1D_UOX_FA_ex2_fsp3out'  
-    file_nos_3 = 'ref_td/1D_UOX_FA_ex2_fsp3.outnos'  
-    
-    files_sta_td = [file_sta_1, file_sta_2, file_sta_3]
-    files_nos_td = [file_nos_1, file_nos_2, file_nos_3]
-    labels_td = ['DSP1-TD', 'DSP3-TD', 'FSP3-TD']
-    style_td = ['*', 'v', 's']
-    
-if (problem == '1D_UOX_FA_new'):
-    file_1_fd = '1D_UOX_FA_ex2_diff.out'
-    file_2_fd = '1D_UOX_FA_ex2_sp1.out'
-    file_3_fd = '1D_UOX_FA_ex2_sp3.out'
-    
-    files_fd = [file_1_fd, file_2_fd, file_3_fd]
-    labels_fd = ['DIFF',  'DSP1', 'DSP3']
-    style_fd = ['-', '-', '-']
-    
-    # Time-Domain
-    file_sta_1 = 'time_domain/1D_UOX_FA_ex2_dif_td.out'  
-    file_nos_1 =  file_sta_1 + '.nos' 
-    file_sta_2 = 'time_domain/1D_UOX_FA_ex2_sp1_td.out'  
-    file_nos_2 =  file_sta_2 + '.nos' 
-    file_sta_3 = 'time_domain/1D_UOX_FA_ex2_sp1_td.out'   # CUIDADO!!!
-    file_nos_3 =  file_sta_3 + '.nos' 
-    
-    files_sta_td = [file_sta_1, file_sta_2, file_sta_3]
-    files_nos_td = [file_nos_1, file_nos_2, file_nos_3]
-    labels_td = ['DIFF-TD',  'SP1-TD', 'SP3-TD']
-    style_td = ['*', 'v', 's']
-        
-
-if (problem == '1D_UOX_FA_new3'):
-    file_1_fd = '1D_UOX_FA_ex2_diff.out'
-    
-    files_fd = [file_1_fd]
-    labels_fd = ['DIFF-FD']
-    style_fd = ['-', '-']
-    
-    # Time-Domain
-   
-    file_sta_1 = 'time_domain/1D_UOX_FA_ex2_dif_td.out'  
-    file_nos_1 =  file_sta_1 + '.nos' 
-
-
-    files_sta_td = [file_sta_1]
-    files_nos_td = [file_nos_1]
-    labels_td = [r"DIFF-TD 3 Cycles - $\Delta t$= 1e-2s"]
-    style_td = ['*', '^',]     
 
 n_files_fd = len(files_fd)
 n_files_td = len(files_nos_td)
@@ -297,8 +187,8 @@ for i in range(n_files_td):
     noise_g2 = np.transpose(noise_g2) 
     
     freq   = np.fft.rfftfreq(n_steps, d=time_fem[1])
-    fft_g1 = np.fft.rfft(noise_g1) * 2.0/ (n_steps)
-    fft_g2 = np.fft.rfft(noise_g2) * 2.0/ (n_steps) 
+    fft_g1 = np.fft.rfft(noise_g1) * 2.0/ n_steps 
+    fft_g2 = np.fft.rfft(noise_g2) * 2.0/ n_steps 
     
     # We cut at looking_freq Hz
     cut_freq = int (looking_freq * n_steps * time_fem[1])
@@ -329,17 +219,8 @@ for i in range(n_files_td):
 fig1 = plt.figure()
 ax1 = fig1.add_subplot(1, 1, 1)
 for i in range(n_files_fd):
-    ax1.plot(freq, fft_g1[0], style_td[i], label=labels_td[i], color=colors[i])
-ax1.grid(True)
-ax1.legend(loc='best')
-ax1.set_xlabel("FREQ (HZ)")
-ax1.set_ylabel("ESPECTRE")
-
-# Static g1
-fig1 = plt.figure()
-ax1 = fig1.add_subplot(1, 1, 1)
-for i in range(n_files_fd):
     ax1.plot(x, static_g1_line_fd[i], style_fd[i], label=labels_fd[i], color=colors[i])
+for i in range(n_files_td):   
     ax1.plot(x, static_g1_line_td[i], style_td[i], label=labels_td[i], color=colors[i])
 ax1.grid(True)
 ax1.legend(loc='best')
@@ -353,6 +234,7 @@ fig1 = plt.figure()
 ax1 = fig1.add_subplot(1, 1, 1)
 for i in range(n_files_fd):
     ax1.plot(x, static_g2_line_fd[i], style_fd[i], label=labels_fd[i], color=colors[i])
+for i in range(n_files_td):  
     ax1.plot(x, static_g2_line_td[i], style_td[i], label=labels_td[i], color=colors[i])
 ax1.grid(True)
 ax1.legend(loc='best')
@@ -366,6 +248,7 @@ fig1 = plt.figure()
 ax1 = fig1.add_subplot(1, 1, 1)
 for i in range(n_files_fd):
     ax1.plot(x, noise_g1_line_fd[i], style_fd[i], label=labels_fd[i], color=colors[i])
+for i in range(n_files_td):  
     ax1.plot(x, noise_g1_line_td[i], style_td[i], label=labels_td[i], color=colors[i])
 ax1.grid(True)
 ax1.legend(loc='best')
@@ -379,6 +262,7 @@ fig1 = plt.figure()
 ax1 = fig1.add_subplot(1, 1, 1)
 for i in range(n_files_fd):
     ax1.plot(x, noise_g2_line_fd[i], style_fd[i], label=labels_fd[i], color=colors[i])
+for i in range(n_files_td):  
     ax1.plot(x, noise_g2_line_td[i], style_td[i], label=labels_td[i], color=colors[i])
 ax1.grid(True)
 ax1.legend(loc='best')
@@ -392,6 +276,7 @@ fig1 = plt.figure()
 ax1 = fig1.add_subplot(1, 1, 1)
 for i in range(n_files_fd):
     ax1.plot(x, phase_g1_line_fd[i], style_fd[i], label=labels_fd[i], color=colors[i])
+for i in range(n_files_td):  
     ax1.plot(x, phase_g1_line_td[i], style_td[i], label=labels_td[i], color=colors[i])
 ax1.grid(True)
 ax1.legend(loc='best')
@@ -405,6 +290,7 @@ fig1 = plt.figure()
 ax1 = fig1.add_subplot(1, 1, 1)
 for i in range(n_files_fd):
     ax1.plot(x, phase_g2_line_fd[i], style_fd[i], label=labels_fd[i], color=colors[i])
+for i in range(n_files_td):  
     ax1.plot(x, phase_g2_line_td[i], style_td[i], label=labels_td[i], color=colors[i])
 ax1.grid(True)
 ax1.legend(loc='best')

@@ -153,7 +153,7 @@ template <int dim, int n_fe_degree>
     // Solver parameters
     init_delta_t = prm.get_double("Time_Delta");
     get_double_from_options("-init_delta_t", init_delta_t);
-    //tol_time_ksp = static_problem.tol_ksp;
+    tol_time_ksp = 1e-6;
 
     step = 0;
     print_step = 1;
@@ -721,7 +721,7 @@ template <int dim, int n_fe_degree>
     {
       //for each bar bank
       sample_time = (t_end - 0.0) / (init_n_snap - 1) * ns;
-      cout << std::endl;
+
       perturbation.apply_function_to_perturb(sample_time);
       static_problem.cout.set_condition(false);
       static_problem.verbose_cout.set_condition(false);
@@ -1008,16 +1008,14 @@ template <int dim, int n_fe_degree>
     // It is necessary to assemble all matrices even if the operators
     // do not change because the number of material (in rods) can be changed
 
-    verbose_cout << "Assembling V..." << std::endl;
+    verbose_cout << "Assembling matrices..." << std::flush;
     V.reinit(materials, matrixfree_type_time);
-    verbose_cout << "Assembling L..." << std::endl;
     L.reinit(materials, boundary_conditions, albedo_factors, full_allocated);
-    verbose_cout << "Assembling F..." << std::endl;
     F.reinit(materials, matrixfree_type_time);
-    verbose_cout << "Assembling XBF..." << std::flush;
+
     for (unsigned int p = 0; p < n_prec; p++)
       XBF[p].reinit(materials, matrixfree_type_time, p);
-    verbose_cout << "Done" << std::endl;
+    verbose_cout << " Done!" << std::endl;
   }
 
 /*
@@ -1198,7 +1196,6 @@ template <int dim, int n_fe_degree>
 
     //   Set the initial time to start at (this is arbitrary for
     //   steady state problems); and the initial timestep given above
-    //    TSSetTimeStep(ts, 1e-5);
     TSSetTimeStep(ts, init_time_step);
 
     //   Set a large number of timesteps and final duration time
@@ -1206,9 +1203,15 @@ template <int dim, int n_fe_degree>
     TSSetMaxSteps(ts, max_steps);
     //    if (update_modes == true)
     TSSetMaxTime(ts, delta_t);
+
+    TSSetTolerances(ts, PETSC_DETERMINE, NULL, tol_time_ksp, NULL); // FIXME
+    std::cout << "tol_time_ksp " << std::scientific << tol_time_ksp << std::fixed
+              << std::endl;
     //    else
     //      TSSetMaxTime(ts, delta_t_petsc);
-    TSSetExactFinalTime(ts, TS_EXACTFINALTIME_INTERPOLATE);
+    //TSSetExactFinalTime(ts, TS_EXACTFINALTIME_INTERPOLATE);
+    TSSetExactFinalTime(ts, TS_EXACTFINALTIME_MATCHSTEP);
+    // TS_EXACTFINALTIME_MATCHSTEP May be a good option
     TSSetPostStep(ts, PostStep<dim, n_fe_degree>);
 
     TSSetFromOptions(ts);
@@ -1236,6 +1239,8 @@ template <int dim, int n_fe_degree>
     VecRestoreArrayRead(coeffs_n, &narray);
     if (std::abs(time_vect.back() - (time_init_upd + delta_t)) > 1e-12)
     {
+      std::cout << "time  " << time_init_upd + delta_t << std::endl; //FIXME
+
       postprocess_time_step();
       cout << std::setprecision(4) << "   Time:   " << time_init_upd + delta_t
            << " ---> Power:  "
@@ -1289,14 +1294,16 @@ template <int dim, int n_fe_degree>
     TSobject->sim_time = real_time;
     TSobject->perturbation.update_xsec(real_time);
     TSobject->postprocess_time_step();
+    //if (TSobject->noise_flag) // TODO
 
     //    if (real_time < TSobject->t_end_upd)
     if (real_time < TSobject->time_init_upd + TSobject->delta_t)
     {
       // Save data only if the change in the power is larger than 0.1%
-      if (std::abs((TSobject->aux_power - TSobject->power_total) / TSobject->aux_power) > 1e-3)
+      if (std::abs(real_time - TSobject->time_vect.back()) > 1e-4)
       {
         TSobject->step++;
+        TSobject->postprocess_noise();
         TSobject->power_vector.push_back(TSobject->power_total);
         TSobject->time_vect.push_back(real_time);
         TSobject->aux_power = TSobject->power_total;
@@ -1331,7 +1338,6 @@ template <int dim, int n_fe_degree>
 //    PetscPrintf(PETSC_COMM_WORLD,"Estimated Error = %E.\n",err_norm);
 
     return 0;
-
   }
 
 /**
@@ -1414,7 +1420,6 @@ template <int dim, int n_fe_degree>
 
       if (print_timefile and (step % print_step == 0))
       {
-
         std::ofstream out(filename_time.c_str(), std::ios::app);
         out.precision(9);
         out << "Time in step: " << " \n" << step << " " << sim_time
@@ -1545,7 +1550,6 @@ template <int dim, int n_fe_degree>
     phi_norm *= 1.0 / power_total;
 
     MPI_Barrier(comm);
-
   }
 
 /**
@@ -1554,6 +1558,8 @@ template <int dim, int n_fe_degree>
 template <int dim, int n_fe_degree>
   void ROMKinetics<dim, n_fe_degree>::postprocess_noise ()
   {
+    //std::cout << "sim_time: " << sim_time << std::endl;
+    verbose_cout << "Postprocess noise..." << std::endl;
     PETScWrappers::MPI::BlockVector noise = phi;
     noise -= phi_critic;
 
@@ -1565,7 +1571,6 @@ template <int dim, int n_fe_degree>
 
     if (this_mpi_process == 0)
     {
-
       // Initialize all that  is needed to iterate over dofs and cells
       QGauss<dim> quadrature_formula(n_fe_degree + 1);
       FEValues<dim> fe_values(dof_handler.get_fe(), quadrature_formula,
@@ -1610,7 +1615,6 @@ template <int dim, int n_fe_degree>
 
       for (unsigned int g = 0; g < n_groups; ++g)
       {
-
         print_cell_distribution_in_file(dim,
           noise_per_assembly[g],
           assem_per_dim,
@@ -1621,7 +1625,7 @@ template <int dim, int n_fe_degree>
       }
       // Add Some blank lines
       std::ofstream out3(noi_file.c_str(), std::ios::app);
-      out3 << "\n\n";
+      out3 << "\n";
       out3.close();
     }
 
@@ -1635,11 +1639,10 @@ template <int dim, int n_fe_degree>
 template <int dim, int n_fe_degree>
   void ROMKinetics<dim, n_fe_degree>::output_results ()
   {
-
     // Create folder if needed
-//    std::size_t found = out_file.find_last_of("/\\");
-//    std::string path = out_file.substr(0, found);
-//    mkdir(path.c_str(), 0777);
+    // std::size_t found = out_file.find_last_of("/\\");
+    // std::string path = out_file.substr(0, found);
+    // mkdir(path.c_str(), 0777);
 
     PETScWrappers::MPI::BlockVector noise = phi;
     noise -= phi_critic;
@@ -1760,11 +1763,12 @@ template <int dim, int n_fe_degree>
 
       if (rom == 0)
       {
-        verbose_cout << "   Post-processing time_step...   " << std::flush;
+        cout << "   Post-processing time_step...   " << std::flush;
         postprocess_time_step();
-
+        cout << "   SET t=0.0 INICIAL   " << std::endl;
         power_vector.push_back(power_total);
         time_vect.push_back(0.0);
+        postprocess_noise();
         if (out_flag)
           output_results();
       }
@@ -1796,9 +1800,9 @@ template <int dim, int n_fe_degree>
       verbose_cout << "         CPU Time = " << timer.cpu_time() << " s"
                    << std::endl;
 
-      verbose_cout << "      postprocess_noise..." << std::flush;
-      postprocess_noise();
-      verbose_cout << " Done!" << std::endl;
+      //verbose_cout << "   Postprocess_noise..." << std::flush;
+      //postprocess_noise();
+      //verbose_cout << " Done!" << std::endl;
 
     }
 
@@ -1837,13 +1841,12 @@ template <int dim, int n_fe_degree>
     VecGetArrayRead(N, &n);
     VecGetArray(NDOT, &ndot);
 
-    ROMKinetics<dim, n_fe_degree> *TSobject =
-                                              (ROMKinetics<dim, n_fe_degree>*) ctx;
+    ROMKinetics<dim, n_fe_degree> *TSobject = (ROMKinetics<dim, n_fe_degree>*) ctx;
 
     unsigned int n_prec = TSobject->n_prec;
     unsigned int dim_rom = TSobject->dim_rom;
     double real_time = TSobject->time_init_upd + time; //0.0 is the initial time
-//    std::cout<<"real time:"<<real_time<<std::endl;
+    //    std::cout<<"real time:" <<real_time<<std::endl;
 
     if (std::abs(TSobject->sim_time - real_time) > 1e-10)
     {
@@ -1887,7 +1890,7 @@ template <int dim, int n_fe_degree>
 
       // ndot= Lambdainv*lambda^d
       TSobject->rominvV.vmult(ndot_b, n_b);
-//		TSobject->LapackLambda.solve(ndot_sub);
+      //		TSobject->LapackLambda.solve(ndot_sub);
       ndot_b *= TSobject->materials.get_delayed_decay_constant(0, k);
 
       for (unsigned int dr = 0; dr < dim_rom; dr++)
