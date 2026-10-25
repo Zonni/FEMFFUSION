@@ -38,6 +38,16 @@ void test_noise_problem (
   const double ref_l2norm_delta_phi,
   const double tol = 1e-2);
 
+/*
+ *  @brief Test the noise per cell of a diffusion noise problem: in every cell,
+ *  the noise of group g over the static flux of group g must be rho[g].
+ */
+template <int dim, int n_fe_degree>
+  void test_noise_per_cell (
+    const std::string &input_file,
+    const std::vector<std::complex<double> > &rho,
+    const double tol = 1e-6);
+
 /**
  * @brief
  */

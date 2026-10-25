@@ -1,0 +1,10 @@
+Materials
+ 1   1
+
+
+XSecs 1 # N Defined Materials
+#    Sigma_tr1       Sigma_a1     nuSigma_f1    Sigma_f1     Sigma_12
+#    Sigma_tr2       Sigma_a2     nuSigma_f2    Sigma_f2
+#  1 - Homogeneous, same Sigma_tr (same D) in both groups
+1    1.0000    0.0100    0.0050    0.0020    0.0200
+     1.0000    0.0800    0.1350    0.0550

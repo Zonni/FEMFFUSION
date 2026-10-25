@@ -1,0 +1,27 @@
+# TEST 2D Noise -- 2 Groups -- Noise per hexagon
+# ---------------------------------------------------------------------------
+# One homogeneous hexagon made of three quadrilaterals of different areas
+# (inner node off the center), vacuum boundary conditions and a uniform
+# perturbation. Both groups have the same diffusion coefficient, so
+# delta_phi_g = rho_g phi_g everywhere although the flux is not flat.
+
+set Dimension           = 2
+set N_Eigenvalues       = 1
+set Noise_Calculation   = true
+set FE_Degree           = 1
+set N_Refinements       = 0
+set Geometry_Type       = Hexagonal
+set Mesh_Size           = 1 1
+set Mesh_Filename       = test/2D_hex_noise_assembly_average/hex.msh
+set Cell_Pitch_x        = 1* 20.0
+set Cell_Pitch_y        = 1* 20.0
+set Boundary_Conditions = 2 2
+set EPS_Tolerance       = 1e-12
+set KSP_Tolerance       = 1e-12
+set KSP_Noise_Tolerance = 1e-12
+set Output_Flag         = false
+set Print_Grid_Flag     = false
+set XSECS_Filename      = test/2D_hex_noise_assembly_average/2g.xsec
+set DS_Filename         = test/2D_hex_noise_assembly_average/2g.dxs
+set DYN_Filename        = test/2D_hex_noise_assembly_average/2g.dyn.prm
+set Output_Filename     = test/2D_hex_noise_assembly_average/2D_hex_noise.out

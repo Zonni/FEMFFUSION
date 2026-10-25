@@ -1,0 +1,14 @@
+# Dynamic Data
+# --------------------------------
+
+# Frequency of the pertubation and flux
+set Frequency            = 1.0
+
+# Per Group neutron Velocity
+set Neutron_Velocities   = 1.0e+7  2.2e+5
+
+# Lambda  effective of neutron precursors
+set Lambda_eff           = 0.08
+
+# Beta effective of neutron precursors
+set Beta_eff             = 0.0065

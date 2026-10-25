@@ -1,0 +1,7 @@
+dXS
+#  dSigma_t1      dSigma_a1     dSigma_f1    dSigma_12
+#  real  imag     real  imag    real  imag   real  imag
+#  dSigma_t2      dSigma_a2     dSigma_f2
+#  real  imag     real  imag    real  imag
+1  0.000 0.000   0.000 0.000   0.000 0.000   0.000 0.000
+   0.000 0.000   1.0e-3 0.000  0.000 0.000
