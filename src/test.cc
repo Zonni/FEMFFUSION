@@ -389,7 +389,10 @@ int run_tests ()
   test_noise_per_cell<1, 2>(input_file, rho_1d);
 
   // 2D, 2 groups with the same diffusion coefficient, vacuum: one
-  // hexagon made of three quadrilaterals of different areas
+  // hexagon made of three quadrilaterals of different areas. rho_g solves
+  // the 2 x 2 group problem at the discrete buckling of this mesh,
+  // mu = 0.0244487 /cm (k = 0.5665886), assembled with QGauss(FE_Degree + 1):
+  // another quadrature changes it.
   std::vector<std::complex<double> > rho_hex = { { -1.22334901, 0.0610335483 },
                                                   { -1.23290631, 0.0613706681 } };
   input_file = "test/2D_hex_noise_assembly_average/2D_hex_noise.prm";
@@ -1503,6 +1506,9 @@ template <int dim, int n_fe_degree>
     AssertRelease(fexists(input_file),
       "ERROR!: Input File .prm Does NOT exist\n Use -f input_file.rm  option");
     prm.parse_input(input_file);
+    AssertRelease(prm.get_integer("Dimension") == dim
+                  and prm.get_integer("FE_Degree") == n_fe_degree,
+      "Dimension or FE_Degree of " + input_file + " does not match the test");
 
     StaticDiffusion<dim, n_fe_degree> static_prob(prm, input_file, false, true);
     NoiseDiffusion<dim, n_fe_degree> noise_prob(prm, static_prob, false, true);
