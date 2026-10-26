@@ -1,0 +1,4 @@
+dXS
+# MatNum dsigma_t    dnu_sigma_f      dsigma_s
+#       real  imag     real  imag       real  imag
+1        0.001 0.0     0.0   0.0        0.0   0.0

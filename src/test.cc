@@ -357,6 +357,19 @@ int run_tests ()
 
   //
   // --------------------------------------------------------------- //
+  // 1D Noise with Zero Flux Boundary Conditions
+  // --------------------------------------------------------------- //
+  // One group, both faces zero flux, dSigma_r uniform: delta_phi = c phi with
+  // c = -dSigma_r / (i w/v + nuSigma_f/k beta i w/(lambda + i w)), so the
+  // l2 norm is |c| |phi| = 4095.69284 (k = 1.2398027, from an independent
+  // FE solution of the same mesh). Zero current faces for the noise give 11369.3.
+  input_file = "test/1D_noise_zero_flux/zero_flux_diffusion.prm";
+  test_noise_problem(input_file, 4095.69284, 4.0957e-3);
+  input_file = "test/1D_noise_zero_flux/zero_flux_sp1.prm";
+  test_noise_problem(input_file, 4095.69284, 4.0957e-3);
+
+  //
+  // --------------------------------------------------------------- //
   // 1D SPN Noise
   // --------------------------------------------------------------- //
   // Not converged
