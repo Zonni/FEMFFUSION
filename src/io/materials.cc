@@ -2322,7 +2322,7 @@ void Materials::parse_forest_xs (const std::string &xml_file)
         verbose_cout << velocities_vector[mat][from_g] << std::endl;
       }
       // prompt spectra - chi_p
-      if (input.xs[mat].exist_chi_d)
+      if (input.xs[mat].exist_chi)
       {
         verbose_cout << "       prompt_spectra " << from_g + 1 << " = " << std::flush;
         prompt_spectra[mat][from_g] = input.xs[mat].chi_p[from_g];
@@ -2354,7 +2354,7 @@ void Materials::parse_forest_xs (const std::string &xml_file)
       }
 
       // prompt spectra
-      if (input.xs[mat].exist_chi_d)
+      if (input.xs[mat].exist_chi)
       {
         for (unsigned int g = 0; g < n_groups; ++g)
         {
@@ -2376,7 +2376,7 @@ void Materials::parse_forest_xs (const std::string &xml_file)
       for (unsigned int p = 0; p < n_precursors; ++p)
         chi_computed += delayed_spectra[mat][p][g] * delayed_fractions[mat][p];
       chi_computed += prompt_spectra[mat][g] * (1. - delayed_fraction_sum[mat]);
-      AssertRelease(chi_computed - chi[g][mat] < 1e-10,
+      AssertRelease(std::abs(chi_computed - chi[g][mat]) < 1e-10,
         "The relation between the spectral is not satisfied.");
     }
   }
