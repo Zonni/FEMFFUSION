@@ -484,6 +484,33 @@ int run_tests ()
   std::vector<double> power_7_groups_s(power_7_groups_S,
     power_7_groups_S + sizeof(power_7_groups_S) / sizeof(double));
 
+  // Implicit-Exponential scheme with delayed spectra that depend on the
+  // precursor family and no perturbation: the power stays 1 with every time
+  // operator. A -matrixfree_type_time given on the command line is restored
+  // after.
+  input_file = "test/1D_time_delayed_spectrum/1D_C5G7_ix.prm";
+  test_power_evolution(input_file, power_7_groups_s, 1e-8);
+  {
+    std::string matrixfree_type_time = "";
+    get_string_from_options("-matrixfree_type_time", matrixfree_type_time);
+    PetscErrorCode ierr = PetscOptionsSetValue(NULL, "-matrixfree_type_time",
+      "full_allocated");
+    AssertRelease(ierr == 0, "Error setting -matrixfree_type_time");
+    input_file = "test/1D_time_delayed_spectrum/1D_C5G7_ix_full_allocated.prm";
+    test_power_evolution(input_file, power_7_groups_s, 1e-8);
+    ierr = PetscOptionsSetValue(NULL, "-matrixfree_type_time",
+      "full_matrixfree");
+    AssertRelease(ierr == 0, "Error setting -matrixfree_type_time");
+    input_file = "test/1D_time_delayed_spectrum/1D_C5G7_ix_full_matrixfree.prm";
+    test_power_evolution(input_file, power_7_groups_s, 1e-8);
+    if (matrixfree_type_time.empty())
+      ierr = PetscOptionsClearValue(NULL, "-matrixfree_type_time");
+    else
+      ierr = PetscOptionsSetValue(NULL, "-matrixfree_type_time",
+        matrixfree_type_time.c_str());
+    AssertRelease(ierr == 0, "Error restoring -matrixfree_type_time");
+  }
+
   /** FIXME
   //  Static cases:
   input_file = "test/1D_C5G7_3cells/1D_C5G7_all_cte_xsec_static_ix.prm";
