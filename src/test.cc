@@ -802,36 +802,6 @@ void test_power_evolution (const std::string &input_file,
 }
 
 /**
- * @brief Run a 1D SPN time dependent problem (FE_Degree 2) and check the last
- * power.
- */
-void test_power_evolution_spn (const std::string &input_file,
-  const double ref_power,
-  const double tol)
-{
-  std::cout << "Trans SPN ... " << input_file << " " << std::flush;
-  ParameterHandler prm;
-  prm_declare_entries(prm);
-  AssertRelease(fexists(input_file),
-    "ERROR!: Input File .prm Does NOT exist\n Use -f input_file.prm  option");
-  prm.parse_input(input_file);
-  AssertRelease(prm.get_integer("Dimension") == 1
-                and prm.get_integer("FE_Degree") == 2,
-    "Dimension or FE_Degree of " + input_file + " does not match the test");
-
-  StaticSPN<1, 2> static_prob(prm, input_file, false, true);
-  TimeNeutronSPN<1, 2> time_pro(prm, static_prob, false, true);
-  const double last_power = time_pro.power_vector.back();
-
-  std::ostringstream message;
-  message << std::setprecision(12) << "  Error solving test " << input_file
-          << '\n' << "  Last power:  " << last_power << " and it should be "
-          << ref_power << '.';
-  AssertRelease(is_similar(last_power, ref_power, tol), message.str());
-  std::cout << " Passed!" << std::endl;
-}
-
-/**
  * @brief Run an Static test.
  */
 void test_keff_problem (const std::string &input_file,
@@ -1729,6 +1699,52 @@ void run_tests_utils ()
   test_child_pos();
   test_child_at_face();
 
+  std::cout << " Passed!" << std::endl;
+}
+
+/**
+ * @brief Run a 1D SPN time dependent problem (FE_Degree 2) and check the last
+ * power.
+ */
+void test_power_evolution_spn (const std::string &input_file,
+  const double ref_power,
+  const double tol)
+{
+  std::cout << "Trans SPN ... " << input_file << " " << std::flush;
+  ParameterHandler prm;
+  prm_declare_entries(prm);
+  AssertRelease(fexists(input_file),
+    "ERROR!: Input File .prm Does NOT exist\n Use -f input_file.prm  option");
+  prm.parse_input(input_file);
+  AssertRelease(prm.get_integer("Dimension") == 1
+                and prm.get_integer("FE_Degree") == 2,
+    "Dimension or FE_Degree of " + input_file + " does not match the test");
+
+  // TimeNeutronSPN reads print_timefile only from the command line:
+  // set it to false here and restore a value given there
+  std::string print_timefile = "";
+  get_string_from_options("-print_timefile", print_timefile);
+  PetscErrorCode ierr = PetscOptionsSetValue(NULL, "-print_timefile",
+    "false");
+  AssertRelease(ierr == 0, "Error setting -print_timefile");
+  double last_power;
+  {
+    StaticSPN<1, 2> static_prob(prm, input_file, false, true);
+    TimeNeutronSPN<1, 2> time_pro(prm, static_prob, false, true);
+    last_power = time_pro.power_vector.back();
+  }
+  if (print_timefile.empty())
+    ierr = PetscOptionsClearValue(NULL, "-print_timefile");
+  else
+    ierr = PetscOptionsSetValue(NULL, "-print_timefile",
+      print_timefile.c_str());
+  AssertRelease(ierr == 0, "Error restoring -print_timefile");
+
+  std::ostringstream message;
+  message << std::setprecision(12) << "  Error solving test " << input_file
+          << '\n' << "  Last power:  " << last_power << " and it should be "
+          << ref_power << '.';
+  AssertRelease(is_similar(last_power, ref_power, tol), message.str());
   std::cout << " Passed!" << std::endl;
 }
 
