@@ -367,20 +367,10 @@ int run_tests ()
   input_file = "test/1D_noise_SPN_1g/1D_noise_fsp1.prm";
   test_noise_problem(input_file, 28.2524);
 
-  input_file = "test/1D_noise_SPN/1D_noise_diffusion.prm";
-  test_noise_problem(input_file, 0.343722);
-  input_file = "test/1D_noise_SPN/1D_noise_sp3.prm";
-  test_noise_problem(input_file, 0.3433418244);
-  input_file = "test/1D_noise_SPN/1D_noise_fsp3.prm";
-  test_noise_problem(input_file, 0.349394);
-
-  //
-  // --------------------------------------------------------------- //
-  // 1D SP1 Noise with Albedo boundary conditions
-  // --------------------------------------------------------------- //
-  // Albedo_Factors holds one value per set (face code n reads set n - 3), as
-  // in the static SPN problem. Faces 3 3 with the sets 1.0 0.25 read 1.0, the
-  // vacuum term, in both groups, so the noise equals the one with faces 2 2.
+  // SP1 with Albedo boundary conditions. Albedo_Factors holds one value per
+  // set (face code n reads set n - 3), as in the static SPN problem. Faces 3 3
+  // with the sets 1.0 0.25 read 1.0, the vacuum term, in both groups, so the
+  // noise equals the one with faces 2 2.
   input_file = "test/1D_noise_SPN_albedo/1D_noise_sp1_vacuum.prm";
   test_noise_problem(input_file, 0.3437209558, 1e-8);
   input_file = "test/1D_noise_SPN_albedo/1D_noise_sp1_albedo.prm";
@@ -388,7 +378,10 @@ int run_tests ()
   // Faces 3 4 read the sets 0.5 and 0.25
   input_file = "test/1D_noise_SPN_albedo/1D_noise_sp1_albedo_sets.prm";
   test_noise_problem(input_file, 0.3276051877, 1e-8);
-  // The same with the full_allocated noise operator
+  // The same with the full_allocated noise operator; a -matrixfree_type_A
+  // given on the command line is restored after
+  std::string matrixfree_type_A = "";
+  get_string_from_options("-matrixfree_type_A", matrixfree_type_A);
   PetscErrorCode ierr = PetscOptionsSetValue(NULL, "-matrixfree_type_A",
     "full_allocated");
   AssertRelease(ierr == 0, "Error setting -matrixfree_type_A");
@@ -396,8 +389,19 @@ int run_tests ()
   test_noise_problem(input_file, 0.3437209558, 1e-8);
   input_file = "test/1D_noise_SPN_albedo/1D_noise_sp1_albedo_sets.prm";
   test_noise_problem(input_file, 0.3276051877, 1e-8);
-  ierr = PetscOptionsClearValue(NULL, "-matrixfree_type_A");
-  AssertRelease(ierr == 0, "Error clearing -matrixfree_type_A");
+  if (matrixfree_type_A.empty())
+    ierr = PetscOptionsClearValue(NULL, "-matrixfree_type_A");
+  else
+    ierr = PetscOptionsSetValue(NULL, "-matrixfree_type_A",
+      matrixfree_type_A.c_str());
+  AssertRelease(ierr == 0, "Error restoring -matrixfree_type_A");
+
+  input_file = "test/1D_noise_SPN/1D_noise_diffusion.prm";
+  test_noise_problem(input_file, 0.343722);
+  input_file = "test/1D_noise_SPN/1D_noise_sp3.prm";
+  test_noise_problem(input_file, 0.3433418244);
+  input_file = "test/1D_noise_SPN/1D_noise_fsp3.prm";
+  test_noise_problem(input_file, 0.349394);
 
   //
   // --------------------------------------------------------------- //
