@@ -117,6 +117,19 @@ int run_tests ()
 
   //
   //-----------------------------------------------------------------//
+  // TEST 1D_full_spn_vtk_modes
+  // Full SPN .vtk output of every mode and group: with linear elements, the
+  // mean of the two nodal flux values of a cell must be the flux of the cell.
+  // 1 group, vacuum | zero current, first two modes
+  input_file = "test/1D_full_spn_vtk_modes/1D_fsp1_two_modes.prm";
+  test_full_spn_vtk_modes(input_file);
+
+  // 2 groups, vacuum | zero current, first three modes
+  input_file = "test/1D_full_spn_vtk_modes/1D_fsp1_2g_three_modes.prm";
+  test_full_spn_vtk_modes(input_file);
+
+  //
+  //-----------------------------------------------------------------//
   // TEST 2D_hom_slab_2cm
   // pseudo 2D problem -> Must be the same results as 1D_hom_2cm
   input_file = "test/2D_hom_slab_2cm/2D_hom_zerocurrent.prm";
@@ -1110,6 +1123,75 @@ void chek_output_vector (const std::string &out_file,
     vector_correct.size());
 
   assert_vectors_similar(vector_test, vector_correct, tol);
+  std::cout << " Passed!" << std::endl;
+}
+
+/**
+ *  @brief Test the .vtk output of a static 1D Full SPN problem with linear
+ *  elements, unrefined cells and Out_Refinements 1. In every mode and group, the
+ *  mean of the two nodal values of the flux in a cell, phi_g<g>_eig_<m>, must be
+ *  the flux of the cell, phi_assembly_g_<g - 1>_eig<m - 1>.
+ */
+void test_full_spn_vtk_modes (const std::string &input_file,
+  const double tol)
+{
+  std::cout << "Full SPN vtk... " << input_file << std::flush;
+
+  ParameterHandler prm;
+  prm_declare_entries(prm);
+  AssertRelease(fexists(input_file),
+    "ERROR!: Input File .prm Does NOT exist\n Use -f input_file.rm  option");
+  prm.parse_input(input_file);
+  AssertRelease(prm.get_integer("Dimension") == 1
+                and prm.get_integer("FE_Degree") == 1,
+    "Dimension or FE_Degree of " + input_file + " does not match the test");
+
+  StaticFullSPN<1, 1> problem(prm, input_file, false, true);
+  const unsigned int n_cells = problem.tria.n_active_cells();
+  AssertRelease(problem.out_flag and problem.n_out_ref == 1
+                and n_cells == problem.n_assemblies,
+    "The test needs Output_Flag true, Out_Refinements 1 and unrefined cells");
+  const std::string vtk_file = problem.out_file + ".vtk";
+
+  for (unsigned int eig = 0; eig < problem.n_eigenvalues; eig++)
+    for (unsigned int g = 0; g < problem.n_groups; g++)
+    {
+      // Nodal flux v and flux of the cell w, two points per cell
+      const std::string names[2] = {
+          "phi_g" + num_to_str(g + 1) + "_eig_" + num_to_str(eig + 1),
+          "phi_assembly_g_" + num_to_str(g) + "_eig" + num_to_str(eig) };
+      std::vector<double> v(2 * n_cells), w(2 * n_cells);
+      for (unsigned int b = 0; b < 2; b++)
+      {
+        std::vector<double> &values = (b == 0) ? v : w;
+        std::ifstream input(vtk_file.c_str(), std::ios::in);
+        std::string line;
+        while (getline(input, line) and line != "SCALARS " + names[b] + " double 1")
+          continue;
+        getline(input, line); // LOOKUP_TABLE default
+        for (unsigned int i = 0; i < values.size(); i++)
+          input >> values[i];
+        AssertRelease(not input.fail(),
+          "Field " + names[b] + " not found in " + vtk_file + " or too short");
+      }
+
+      double max_w = 0.0;
+      for (unsigned int i = 0; i < w.size(); i++)
+        max_w = std::max(max_w, std::abs(w[i]));
+      AssertRelease(max_w > 0.0, "Zero flux in " + vtk_file);
+
+      for (unsigned int c = 0; c < n_cells; c++)
+      {
+        const double mean = 0.5 * (v[2 * c] + v[2 * c + 1]);
+        AssertRelease(std::abs(mean - w[2 * c]) <= tol * max_w,
+          "  Error solving test " + input_file + '\n'
+          + "  Mode " + num_to_str(eig + 1) + ", group " + num_to_str(g + 1)
+          + ", cell " + num_to_str(c + 1) + ": mean nodal flux "
+          + num_to_str(mean) + " and it should be the cell flux "
+          + num_to_str(w[2 * c]) + '.');
+      }
+    }
+
   std::cout << " Passed!" << std::endl;
 }
 
