@@ -376,6 +376,31 @@ int run_tests ()
 
   //
   // --------------------------------------------------------------- //
+  // 1D SP1 Noise with Albedo boundary conditions
+  // --------------------------------------------------------------- //
+  // Albedo_Factors holds one value per set (face code n reads set n - 3), as
+  // in the static SPN problem. Faces 3 3 with the sets 1.0 0.25 read 1.0, the
+  // vacuum term, in both groups, so the noise equals the one with faces 2 2.
+  input_file = "test/1D_noise_SPN_albedo/1D_noise_sp1_vacuum.prm";
+  test_noise_problem(input_file, 0.3437209558, 1e-8);
+  input_file = "test/1D_noise_SPN_albedo/1D_noise_sp1_albedo.prm";
+  test_noise_problem(input_file, 0.3437209558, 1e-8);
+  // Faces 3 4 read the sets 0.5 and 0.25
+  input_file = "test/1D_noise_SPN_albedo/1D_noise_sp1_albedo_sets.prm";
+  test_noise_problem(input_file, 0.3276051877, 1e-8);
+  // The same with the full_allocated noise operator
+  PetscErrorCode ierr = PetscOptionsSetValue(NULL, "-matrixfree_type_A",
+    "full_allocated");
+  AssertRelease(ierr == 0, "Error setting -matrixfree_type_A");
+  input_file = "test/1D_noise_SPN_albedo/1D_noise_sp1_albedo.prm";
+  test_noise_problem(input_file, 0.3437209558, 1e-8);
+  input_file = "test/1D_noise_SPN_albedo/1D_noise_sp1_albedo_sets.prm";
+  test_noise_problem(input_file, 0.3276051877, 1e-8);
+  ierr = PetscOptionsClearValue(NULL, "-matrixfree_type_A");
+  AssertRelease(ierr == 0, "Error clearing -matrixfree_type_A");
+
+  //
+  // --------------------------------------------------------------- //
   //  TEST MESHES
   // Test rectangular mesh + distributed + Rods:
 
