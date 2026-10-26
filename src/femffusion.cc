@@ -94,10 +94,10 @@ void prm_declare_entries (ParameterHandler &prm)
       "(0 Zero flux) (1 Zero current, symmetry) (2 Vacuum, Marshak)\n"
       " (>= 3 Albedo, set code - 3 of Albedo_Factors)");
   prm.declare_entry("Albedo_Factors", "", Patterns::Anything(),
-    "Albedo factors alpha of the faces with Boundary_Conditions code >= 3, by set\n"
-      " (code 3 is set 0). Diffusion: one value per energy group in each set, and\n"
-      " -D n.grad(phi_g) = alpha phi_g on the face (alpha = 0.5: code 2 vacuum).\n"
-      " SPN, SDPN: alpha scales the code 2 Marshak vacuum terms (alpha = 1: vacuum)");
+    "Albedo factors alpha for faces with Boundary_Conditions code >= 3, as used\n"
+      " by Diffusion (other approximations are not described here): one value per\n"
+      " energy group in each set (code 3 is set 0), and the face condition\n"
+      " -D n.grad(phi_g) = alpha phi_g (alpha = 0.5: code 2 vacuum)");
   prm.declare_entry("Triangulation_Filename", "", Patterns::Anything(),
     "Filename where the triangulation is saved/loaded the output");
   prm.declare_entry("Refinement_Model", "local", Patterns::Anything(),
