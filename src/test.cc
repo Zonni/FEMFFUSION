@@ -113,8 +113,18 @@ int run_tests ()
   input_file = "test/1D_full_spn_assembly_average/1D_fsp1_vacuum.prm";
   test_full_spn_per_cell<1, 2>(input_file);
 
+  // 1 group, zero current | vacuum, first two modes, refined once: the first
+  // cell of the second mode has the sign opposite to its total power
+  input_file = "test/1D_full_spn_assembly_average/1D_fsp1_two_modes_mirror.prm";
+  test_full_spn_per_cell<1, 2>(input_file);
+
   // 1 group, vacuum | zero current, first two modes, refined once
   input_file = "test/1D_full_spn_assembly_average/1D_fsp1_two_modes.prm";
+  test_full_spn_per_cell<1, 2>(input_file);
+
+  // 1 group, vacuum, first two modes, not refined: the second mode is
+  // antisymmetric, its total power is about 0
+  input_file = "test/1D_full_spn_assembly_average/1D_fsp1_vacuum_two_modes.prm";
   test_full_spn_per_cell<1, 2>(input_file);
 
   // 2 groups, zero current, refined twice: flat flux with the infinite
@@ -124,6 +134,15 @@ int run_tests ()
   std::vector<double> flux_2g = { 82.01058201058201, 20.502645502645503 };
   input_file = "test/1D_full_spn_assembly_average/1D_fsp1_2g_zerocurrent.prm";
   test_full_spn_per_cell<1, 1>(input_file, flux_2g);
+
+  //
+  //-----------------------------------------------------------------//
+  // TEST 2D_full_spn_two_modes
+  // 2D Full SP1 (three components), 2 groups, zero current, first two modes,
+  // not refined: the first mode is flat with the flux above, the second
+  // changes sign along x
+  input_file = "test/2D_full_spn_two_modes/2D_fsp1_2g_zerocurrent.prm";
+  test_full_spn_per_cell<2, 2>(input_file, flux_2g);
 
   //
   //-----------------------------------------------------------------//
@@ -1119,8 +1138,12 @@ void test_keff_problem (const std::string &input_file,
 /**
  *  @brief Test the power and the flux per cell of a static Full SPN problem with
  *  one material: in every mode and every cell, sum_g sigma_f,g phi_g must be the
- *  power (sigma_f divided by k, as make_critical leaves it). If flux is not
- *  empty, the flux of group g of the first mode must be flux[g] in every cell.
+ *  power (sigma_f divided by k, as make_critical leaves it). In every mode, the
+ *  first cell with power must be positive, the mean absolute power must be 1,
+ *  the flux of each group and cell must be the mean of the nodal flux over the
+ *  cell, and in 1D SP1 the current must have the sign of its mode. If flux is
+ *  not empty, the flux of group g of the first mode must be flux[g] in every
+ *  cell.
  */
 template <int dim, int n_fe_degree>
   void test_full_spn_per_cell (
@@ -1145,6 +1168,12 @@ template <int dim, int n_fe_degree>
     AssertRelease(flux.empty() or flux.size() == problem.n_groups,
       "Wrong number of flux values");
 
+    QGauss<dim> quadrature(n_fe_degree + 1);
+    FEValues<dim> fe_values(problem.fe, quadrature,
+      update_values | update_gradients | update_JxW_values);
+    std::vector<double> values(quadrature.size());
+    std::vector<Tensor<1, dim> > gradients(quadrature.size());
+
     for (unsigned int eig = 0; eig < problem.n_eigenvalues; eig++)
     {
       const std::vector<double> &power = problem.power_per_assembly[eig];
@@ -1163,6 +1192,90 @@ template <int dim, int n_fe_degree>
           + "  Mode " + num_to_str(eig + 1) + ", cell " + num_to_str(i + 1)
           + ": sum_g sigma_f phi_g " + num_to_str(sigma_f_phi)
           + " and it should be the power " + num_to_str(power[i]) + '.');
+      }
+
+      unsigned int first = 0;
+      while (first + 1 < problem.n_assemblies
+             and std::abs(power[first]) <= 1e-4 * max_power)
+        first++;
+      AssertRelease(power[first] > 0.0,
+        "  Error solving test " + input_file + '\n'
+        + "  Mode " + num_to_str(eig + 1) + ": the power of cell "
+        + num_to_str(first + 1) + " is " + num_to_str(power[first])
+        + " and it should be positive.");
+
+      // Integrals of the nodal flux of the mode over the active cells
+      std::vector<std::vector<double> > phi_int(problem.n_groups,
+        std::vector<double>(problem.n_assemblies, 0.0));
+      std::vector<double> volume(problem.n_assemblies, 0.0);
+      std::vector<double> current(problem.n_groups, 0.0);
+      std::vector<double> gradient(problem.n_groups, 0.0);
+      double abs_power = 0.0, total_volume = 0.0;
+      typename DoFHandler<dim>::active_cell_iterator cell =
+          problem.dof_handler.begin_active(), endc = problem.dof_handler.end();
+      for (; cell != endc; ++cell)
+      {
+        fe_values.reinit(cell);
+        double power_cell = 0.0;
+        for (unsigned int g = 0; g < problem.n_groups; g++)
+        {
+          fe_values.get_function_values(problem.phi[eig][0].block(g), values);
+          double phi_cell = 0.0;
+          for (unsigned int q = 0; q < quadrature.size(); q++)
+            phi_cell += values[q] * fe_values.JxW(q);
+          phi_int[g][cell->user_index()] += phi_cell;
+          power_cell += problem.materials.get_sigma_f(g, 0) * phi_cell;
+
+          // 1D SP1: the second component is the current J_g
+          if (dim == 1 and problem.n_moments == 2)
+          {
+            fe_values.get_function_gradients(problem.phi[eig][0].block(g),
+              gradients);
+            fe_values.get_function_values(problem.phi[eig][1].block(g), values);
+            for (unsigned int q = 0; q < quadrature.size(); q++)
+            {
+              gradient[g] += gradients[q][0] * fe_values.JxW(q);
+              current[g] += values[q] * fe_values.JxW(q);
+            }
+          }
+        }
+        abs_power += std::abs(power_cell);
+        volume[cell->user_index()] += cell->measure();
+        total_volume += cell->measure();
+      }
+
+      AssertRelease(std::abs(abs_power / total_volume - 1.0) <= tol,
+        "  Error solving test " + input_file + '\n'
+        + "  Mode " + num_to_str(eig + 1) + ": mean absolute power "
+        + num_to_str(abs_power / total_volume) + " and it should be 1.");
+
+      for (unsigned int g = 0; g < problem.n_groups; g++)
+      {
+        const std::vector<double> &phi = problem.phi_per_assembly[eig][g];
+        double max_phi = 0.0;
+        for (unsigned int i = 0; i < problem.n_assemblies; i++)
+          max_phi = std::max(max_phi, std::abs(phi[i]));
+
+        for (unsigned int i = 0; i < problem.n_assemblies; i++)
+          AssertRelease(std::abs(phi_int[g][i] / volume[i] - phi[i]) <= tol * max_phi,
+            "  Error solving test " + input_file + '\n'
+            + "  Mode " + num_to_str(eig + 1) + ", group " + num_to_str(g + 1)
+            + ", cell " + num_to_str(i + 1) + ": mean nodal flux "
+            + num_to_str(phi_int[g][i] / volume[i])
+            + " and it should be the flux " + num_to_str(phi[i]) + '.');
+
+        // Fick's law of SP1, sigma_t J_g = -phi_g'/3, integrated over the slab
+        if (dim == 1 and problem.n_moments == 2)
+        {
+          const double balance = problem.materials.get_sigma_t(g, 0) * current[g]
+                                 + gradient[g] / 3.0;
+          AssertRelease(
+            std::abs(balance) <= tol * problem.phi[eig][0].block(g).linfty_norm(),
+            "  Error solving test " + input_file + '\n'
+            + "  Mode " + num_to_str(eig + 1) + ", group " + num_to_str(g + 1)
+            + ": sigma_t int J + (phi(R) - phi(L))/3 is " + num_to_str(balance)
+            + " and it should be 0.");
+        }
       }
     }
 
