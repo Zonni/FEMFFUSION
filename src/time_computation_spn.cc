@@ -126,6 +126,7 @@ template <int dim, int n_fe_degree>
 
     // Solver parameters
     init_delta_t = prm.get_double("Time_Delta");
+    tol_ksp = static_problem.tol_ksp;
 
     step = 0;
     delta_t.push_back(init_delta_t);
