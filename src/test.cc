@@ -470,6 +470,11 @@ int run_tests ()
   input_file = "test/3D_Langenbuch/3D_Langenbuch_ds_reinit_load.prm";
   test_power_evolution(input_file, power_langen_load, 1e-4);
 
+  // Test Read_XS_File with a table of the static cross sections (2 groups)
+  std::vector<double> power_read_xs(11, 1.0);
+  input_file = "test/1D_read_xs_file/1D_read_xs_file.prm";
+  test_power_evolution(input_file, power_read_xs, 1e-6);
+
   //
   // --------------------------------------------------------------- //
   // TEST 1D_C5G7 7 ENERGY GROUPS
