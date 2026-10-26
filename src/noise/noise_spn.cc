@@ -64,6 +64,7 @@ template <int dim, int n_fe_degree>
         static_problem.fe),
       dof_handler_block(static_problem.dof_handler),
       //dof_handler_block(tria),
+      constraints(static_problem.constraints),
       boundary_conditions(static_problem.boundary_conditions),
       albedo_factors(static_problem.albedo_factors),
       A(comm, dof_handler_block, constraints),
@@ -292,6 +293,10 @@ template <int dim, int n_fe_degree>
     cout << "      Complex preconditioner: " << complex_solver.pc_complex << std::endl;
 
     complex_solver.solve(system_rhs, delta_u);
+
+    // Zero flux values of the real and imaginary parts at the zero flux boundaries
+    for (unsigned int b = 0; b < n_blocks; b++)
+      constraints.distribute(delta_u.block(b));
 
     cout << "   Complex system solved. It took " << timer_solve.cpu_time()
     << " s and "
