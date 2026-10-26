@@ -156,6 +156,18 @@ int run_tests ()
 
   //
   //-----------------------------------------------------------------//
+  // TEST 1D_xml_noise_chid
+  // XML noise with one precursor family, with and without ChiD (ChiD = Chi).
+  // Uniform noise on a zero-current slab: delta_phi = c phi with
+  // c = -dSigma_r / (i w/v + nuSigma_f/k beta i w/(lambda + i w)), |c| = 7.4937466,
+  // phi = k/Sigma_f = 125 on 17 dofs: |c| 125 sqrt(17) = 3862.18860
+  input_file = "test/1D_xml_noise_chid/noise_chid.prm";
+  test_noise_problem(input_file, 3862.188597, 3.86e-3);
+  input_file = "test/1D_xml_noise_chid/noise_no_chid.prm";
+  test_noise_problem(input_file, 3862.188597, 3.86e-3);
+
+  //
+  //-----------------------------------------------------------------//
   // TEST   2D_biblis_test
   // Testing degenerated eigenvalues (2 or more equal eigenvalues due to symmetry).
   input_file = "test/2D_biblis_test/biblis_FE3.prm";
