@@ -105,6 +105,28 @@ int run_tests ()
 
   //
   //-----------------------------------------------------------------//
+  // TEST 1D_full_spn_assembly_average
+  // Full SPN power and flux per cell of the input, with the cells refined.
+  // One material: in every mode and every cell, the power must be
+  // sum_g sigma_f,g phi_g, with sigma_f divided by k (make_critical).
+  // 1 group, vacuum, refined once
+  input_file = "test/1D_full_spn_assembly_average/1D_fsp1_vacuum.prm";
+  test_full_spn_per_cell<1, 2>(input_file);
+
+  // 1 group, vacuum | zero current, first two modes, refined once
+  input_file = "test/1D_full_spn_assembly_average/1D_fsp1_two_modes.prm";
+  test_full_spn_per_cell<1, 2>(input_file);
+
+  // 2 groups, zero current, refined twice: flat flux with the infinite
+  // medium spectrum, k = (nuSf1 + nuSf2 S12/Sa2)/(Sa1 + S12) = 31/24, and
+  // with mean power 1, phi1 = k/(Sf1 + Sf2 S12/Sa2) = 15500/189 and
+  // phi2 = phi1 S12/Sa2 = 3875/189
+  std::vector<double> flux_2g = { 82.01058201058201, 20.502645502645503 };
+  input_file = "test/1D_full_spn_assembly_average/1D_fsp1_2g_zerocurrent.prm";
+  test_full_spn_per_cell<1, 1>(input_file, flux_2g);
+
+  //
+  //-----------------------------------------------------------------//
   // TEST 1D_hom_slab_2g_2cm
   input_file = "test/1D_hom_slab_2g_2cm/1D_hom_zerocurrent.prm";
   test_keff_problem(input_file, 2.5);
@@ -1093,6 +1115,70 @@ void test_keff_problem (const std::string &input_file,
 
   std::cout << " Passed!" << std::endl;
 }
+
+/**
+ *  @brief Test the power and the flux per cell of a static Full SPN problem with
+ *  one material: in every mode and every cell, sum_g sigma_f,g phi_g must be the
+ *  power (sigma_f divided by k, as make_critical leaves it). If flux is not
+ *  empty, the flux of group g of the first mode must be flux[g] in every cell.
+ */
+template <int dim, int n_fe_degree>
+  void test_full_spn_per_cell (
+    const std::string &input_file,
+    const std::vector<double> &flux,
+    const double tol)
+  {
+    std::cout << "Full SPN per cell... " << input_file << std::flush;
+
+    ParameterHandler prm;
+    prm_declare_entries(prm);
+    AssertRelease(fexists(input_file),
+      "ERROR!: Input File .prm Does NOT exist\n Use -f input_file.rm  option");
+    prm.parse_input(input_file);
+    AssertRelease(prm.get_integer("Dimension") == dim
+                  and prm.get_integer("FE_Degree") == n_fe_degree,
+      "Dimension or FE_Degree of " + input_file + " does not match the test");
+
+    StaticFullSPN<dim, n_fe_degree> problem(prm, input_file, false, true);
+    AssertRelease(problem.materials.get_n_mats() == 1,
+      "The test needs one material");
+    AssertRelease(flux.empty() or flux.size() == problem.n_groups,
+      "Wrong number of flux values");
+
+    for (unsigned int eig = 0; eig < problem.n_eigenvalues; eig++)
+    {
+      const std::vector<double> &power = problem.power_per_assembly[eig];
+      double max_power = 0.0;
+      for (unsigned int i = 0; i < problem.n_assemblies; i++)
+        max_power = std::max(max_power, std::abs(power[i]));
+
+      for (unsigned int i = 0; i < problem.n_assemblies; i++)
+      {
+        double sigma_f_phi = 0.0;
+        for (unsigned int g = 0; g < problem.n_groups; g++)
+          sigma_f_phi += problem.materials.get_sigma_f(g, 0)
+                         * problem.phi_per_assembly[eig][g][i];
+        AssertRelease(std::abs(sigma_f_phi - power[i]) <= tol * max_power,
+          "  Error solving test " + input_file + '\n'
+          + "  Mode " + num_to_str(eig + 1) + ", cell " + num_to_str(i + 1)
+          + ": sum_g sigma_f phi_g " + num_to_str(sigma_f_phi)
+          + " and it should be the power " + num_to_str(power[i]) + '.');
+      }
+    }
+
+    for (unsigned int g = 0; g < flux.size(); g++)
+      for (unsigned int i = 0; i < problem.n_assemblies; i++)
+      {
+        const double phi = problem.phi_per_assembly[0][g][i];
+        AssertRelease(std::abs(phi - flux[g]) <= tol * std::abs(flux[g]),
+          "  Error solving test " + input_file + '\n'
+          + "  Group " + num_to_str(g + 1) + ", cell " + num_to_str(i + 1)
+          + ": flux " + num_to_str(phi) + " and it should be "
+          + num_to_str(flux[g]) + '.');
+      }
+
+    std::cout << " Passed!" << std::endl;
+  }
 
 /**
  *
