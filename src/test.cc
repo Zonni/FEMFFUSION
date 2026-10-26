@@ -1129,8 +1129,9 @@ void chek_output_vector (const std::string &out_file,
 /**
  *  @brief Test the .vtk output of a static 1D Full SPN problem with linear
  *  elements, unrefined cells and Out_Refinements 1. In every mode and group, the
- *  mean of the two nodal values of the flux in a cell, phi_g<g>_eig_<m>, must be
- *  the flux of the cell, phi_assembly_g_<g - 1>_eig<m - 1>.
+ *  mean of the two nodal values of the flux in a cell, phi_g<g>_eig_<m>, and the
+ *  flux of the cell, phi_assembly_g_<g - 1>_eig<m - 1>, must be the flux of the
+ *  cell computed by the problem. The .vtk file is removed before the run.
  */
 void test_full_spn_vtk_modes (const std::string &input_file,
   const double tol)
@@ -1145,13 +1146,14 @@ void test_full_spn_vtk_modes (const std::string &input_file,
   AssertRelease(prm.get_integer("Dimension") == 1
                 and prm.get_integer("FE_Degree") == 1,
     "Dimension or FE_Degree of " + input_file + " does not match the test");
+  const std::string vtk_file = prm.get("Output_Filename") + ".vtk";
+  std::remove(vtk_file.c_str());
 
   StaticFullSPN<1, 1> problem(prm, input_file, false, true);
   const unsigned int n_cells = problem.tria.n_active_cells();
   AssertRelease(problem.out_flag and problem.n_out_ref == 1
                 and n_cells == problem.n_assemblies,
     "The test needs Output_Flag true, Out_Refinements 1 and unrefined cells");
-  const std::string vtk_file = problem.out_file + ".vtk";
 
   for (unsigned int eig = 0; eig < problem.n_eigenvalues; eig++)
     for (unsigned int g = 0; g < problem.n_groups; g++)
@@ -1175,20 +1177,26 @@ void test_full_spn_vtk_modes (const std::string &input_file,
           "Field " + names[b] + " not found in " + vtk_file + " or too short");
       }
 
-      double max_w = 0.0;
-      for (unsigned int i = 0; i < w.size(); i++)
-        max_w = std::max(max_w, std::abs(w[i]));
-      AssertRelease(max_w > 0.0, "Zero flux in " + vtk_file);
+      const std::vector<double> &phi = problem.phi_per_assembly[eig][g];
+      double max_phi = 0.0;
+      for (unsigned int i = 0; i < phi.size(); i++)
+        max_phi = std::max(max_phi, std::abs(phi[i]));
+      AssertRelease(max_phi > 0.0, "Zero flux in " + input_file);
 
-      for (unsigned int c = 0; c < n_cells; c++)
+      unsigned int c = 0;
+      for (Triangulation<1>::active_cell_iterator cell = problem.tria.begin_active();
+          cell != problem.tria.end(); ++cell, ++c)
       {
-        const double mean = 0.5 * (v[2 * c] + v[2 * c + 1]);
-        AssertRelease(std::abs(mean - w[2 * c]) <= tol * max_w,
-          "  Error solving test " + input_file + '\n'
-          + "  Mode " + num_to_str(eig + 1) + ", group " + num_to_str(g + 1)
-          + ", cell " + num_to_str(c + 1) + ": mean nodal flux "
-          + num_to_str(mean) + " and it should be the cell flux "
-          + num_to_str(w[2 * c]) + '.');
+        const double value[2] = { 0.5 * (v[2 * c] + v[2 * c + 1]), w[2 * c] };
+        for (unsigned int b = 0; b < 2; b++)
+          AssertRelease(
+            std::abs(value[b] - phi[cell->user_index()]) <= tol * max_phi,
+            "  Error solving test " + input_file + '\n'
+            + "  Mode " + num_to_str(eig + 1) + ", group " + num_to_str(g + 1)
+            + ", cell " + num_to_str(c + 1) + ": " + (b == 0 ? "mean of " : "")
+            + names[b] + " "
+            + num_to_str(value[b]) + " and it should be the flux of the cell "
+            + num_to_str(phi[cell->user_index()]) + '.');
       }
     }
 

@@ -51,7 +51,8 @@ void chek_output_vector (
 /**
  *  @brief Test the .vtk output of a static 1D Full SPN problem with linear
  *  elements, unrefined cells and Out_Refinements 1: in every mode and group, the
- *  mean of the two nodal flux values of a cell must be the flux of the cell.
+ *  mean of the two nodal flux values of a cell and the .vtk flux of the cell must
+ *  be the flux of the cell computed by the problem.
  */
 void test_full_spn_vtk_modes (const std::string &input_file,
   const double tol = 1e-4);
