@@ -991,7 +991,7 @@ void test_keff_problem (const std::string &input_file,
   /* ------------------------------------------------------ */
   /* --------------------- FUll  SPN   -------------------- */
   /* ------------------------------------------------------ */
-  else if (transport == "spn")
+  else if (transport == "full_spn")
   {
     if (dim == 1)
     {
