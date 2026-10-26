@@ -175,7 +175,7 @@ template <int dim, int n_fe_degree>
                 np++)
             {
               coeffs[to_g][from_g][mat] += -exp_value[np]
-                                           * materials.get_prompt_spectra(mat, to_g)
+                                           * materials.get_delayed_spectra(mat, np, to_g)
                                            * materials.get_nu_sigma_f(from_g, mat);
             }
 
@@ -282,7 +282,7 @@ template <int dim, int n_fe_degree>
                 np++)
             {
               coeffs[to_g][from_g][mat] += -exp_value[np]
-                                           * materials.get_prompt_spectra(mat, to_g)
+                                           * materials.get_delayed_spectra(mat, np, to_g)
                                            * materials.get_nu_sigma_f(from_g, mat);
             }
 
@@ -307,7 +307,7 @@ template <int dim, int n_fe_degree>
                               * materials.get_nu_sigma_f(g, mat);
         for (unsigned int np = 0; np < materials.get_n_precursors(); np++)
           coeffs_val[g][mat] += -exp_value[np]
-                                * materials.get_prompt_spectra(mat, g)
+                                * materials.get_delayed_spectra(mat, np, g)
                                 * materials.get_nu_sigma_f(g, mat);
 
       }
@@ -559,10 +559,6 @@ template <int dim, int n_fe_degree>
           if (this->type_scheme == "implicit-exponential")
             for (unsigned int np = 0; np < materials.get_n_precursors(); np++)
             {
-              // TODO check to change get_prompt_spectra by get_delayed_spectra
-              //					coeff_cell_val += -exp_value[np]
-              //							* materials.get_prompt_spectra(mat,  gi)
-              //							* materials.get_nu_sigma_f(gi, mat);
               coeff_cell_val += -exp_value[np]
                                 * materials.get_delayed_spectra(mat, np, gi)
                                 * materials.get_nu_sigma_f(gi, mat);
@@ -768,7 +764,7 @@ template <int dim, int n_fe_degree>
               for (unsigned int np = 0;
                   np < materials.get_n_precursors(); np++)
                 coeff_cell_val += -exp_value[np]
-                                  * materials.get_prompt_spectra(mat, gi)
+                                  * materials.get_delayed_spectra(mat, np, gi)
                                   * materials.get_nu_sigma_f(gj, mat);
 
               cell_L.equ(D, cell_grad, coeff_cell_val, cell_val, 1.0,
@@ -787,7 +783,7 @@ template <int dim, int n_fe_degree>
               for (unsigned int np = 0;
                   np < materials.get_n_precursors(); np++)
                 coeff += -exp_value[np]
-                         * materials.get_prompt_spectra(mat, gi)
+                         * materials.get_delayed_spectra(mat, np, gi)
                          * materials.get_nu_sigma_f(gj, mat);
 
               cell_L.equ(coeff, cell_val);
