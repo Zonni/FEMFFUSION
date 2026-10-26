@@ -78,6 +78,15 @@ int run_tests ()
 
   //
   //-----------------------------------------------------------------//
+  // TEST 1D_hom_slab_2cm_full_spn
+  input_file = "test/1D_hom_slab_2cm_full_spn/1D_hom_zerocurrent_fsp1.prm";
+  test_keff_problem(input_file, 2.5);
+
+  input_file = "test/1D_hom_slab_2cm_full_spn/1D_hom_zerocurrent_fsp3.prm";
+  test_keff_problem(input_file, 2.5);
+
+  //
+  //-----------------------------------------------------------------//
   // TEST 1D_hom_slab_10cm
   input_file = "test/1D_hom_slab_10cm/1D_hom_zerocurrent.prm";
   test_keff_problem(input_file, 2.5);
