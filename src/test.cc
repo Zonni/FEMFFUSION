@@ -4,6 +4,8 @@
  */
 #include <deal.II/base/parameter_handler.h>
 #include <math.h>
+#include <iomanip>
+#include <sstream>
 
 #include "../include/test.h"
 #include "../include/utils.h"
@@ -12,6 +14,7 @@
 #include "../include/static_spn.h"
 #include "../include/static_full_spn.h"
 #include "../include/time_computation.h"
+#include "../include/time_computation_spn.h"
 
 #include "../include/noise/noise_diffusion.h"
 #include "../include/noise/noise_spn.h"
@@ -638,6 +641,18 @@ int run_tests ()
   //run_test_static_rom(input_file, 3);
    */
   // ---------------------------------------------------------------------//
+  // SPN transients: the precursors of each step are updated with the flux of
+  // that step. The flux stays flat, so SP1 gives the diffusion values (with
+  // the flux of the previous step: 0.914383632059 and 0.914441783024).
+  input_file = "test/1D_time_spn_precursors/1D_time_sp1.prm";
+  test_power_evolution_spn(input_file, 9.1433148040e-01, 1e-8);
+  input_file = "test/1D_time_spn_precursors/1D_time_sp1_sil.prm";
+  test_power_evolution_spn(input_file, 9.1438968027e-01, 1e-8);
+  // SP3 with vacuum faces and no perturbation: the power stays 1.
+  input_file = "test/1D_time_spn_precursors/1D_time_sp3_static.prm";
+  test_power_evolution_spn(input_file, 1.0, 1e-8);
+
+  // ---------------------------------------------------------------------//
   std::cout << std::endl;
   std::cout << "  ALL TEST PASSED!" << std::endl;
   std::cout << std::endl;
@@ -783,6 +798,36 @@ void test_power_evolution (const std::string &input_file,
     + num_to_str(ref_power[ref_power.size() - 1])
     + '.');
   //  assert_vectors_similar(test_power, ref_power, tol);
+  std::cout << " Passed!" << std::endl;
+}
+
+/**
+ * @brief Run a 1D SPN time dependent problem (FE_Degree 2) and check the last
+ * power.
+ */
+void test_power_evolution_spn (const std::string &input_file,
+  const double ref_power,
+  const double tol)
+{
+  std::cout << "Trans SPN ... " << input_file << " " << std::flush;
+  ParameterHandler prm;
+  prm_declare_entries(prm);
+  AssertRelease(fexists(input_file),
+    "ERROR!: Input File .prm Does NOT exist\n Use -f input_file.prm  option");
+  prm.parse_input(input_file);
+  AssertRelease(prm.get_integer("Dimension") == 1
+                and prm.get_integer("FE_Degree") == 2,
+    "Dimension or FE_Degree of " + input_file + " does not match the test");
+
+  StaticSPN<1, 2> static_prob(prm, input_file, false, true);
+  TimeNeutronSPN<1, 2> time_pro(prm, static_prob, false, true);
+  const double last_power = time_pro.power_vector.back();
+
+  std::ostringstream message;
+  message << std::setprecision(12) << "  Error solving test " << input_file
+          << '\n' << "  Last power:  " << last_power << " and it should be "
+          << ref_power << '.';
+  AssertRelease(is_similar(last_power, ref_power, tol), message.str());
   std::cout << " Passed!" << std::endl;
 }
 

@@ -31,6 +31,15 @@ test_power_evolution (const std::string &input_file,
   const double tol = 1e-4);
 
 /*
+ * @brief Run a 1D SPN time dependent problem (FE_Degree 2), only the last
+ * power is checked.
+ */
+void
+test_power_evolution_spn (const std::string &input_file,
+  const double power,
+  const double tol = 1e-8);
+
+/*
  *  @brief Test noise problem through the mean and the l2 norm of the delta_phi.
  */
 void test_noise_problem (

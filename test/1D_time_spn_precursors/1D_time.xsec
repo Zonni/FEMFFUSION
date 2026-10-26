@@ -1,0 +1,19 @@
+Materials
+ 1    1 1 1 1 1
+
+
+XSecs 1 # N Defined Materials
+# MatNum sigma_tr  chi  nu_sigma_f  sigma_f  sigma_s(g->1)  sigma_s(g->2)
+1   0.25   0.9   0.005   0.002   0.22   0.02
+    0.8   0.1   0.135   0.055   0.0   0.72
+
+# Information about neutron precursors
+Precursors 1
+#    beta    lambda
+1   0.0065    0.08
+
+Velocity
+1.0e+7  2.2e+5
+
+Decay_Spectrum
+0.9  0.1
