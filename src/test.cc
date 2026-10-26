@@ -12,6 +12,7 @@
 #include "../include/static_spn.h"
 #include "../include/static_full_spn.h"
 #include "../include/time_computation.h"
+#include "../include/time_computation_spn.h"
 
 #include "../include/noise/noise_diffusion.h"
 #include "../include/noise/noise_spn.h"
@@ -472,6 +473,24 @@ int run_tests ()
 
   //
   // --------------------------------------------------------------- //
+  // TEST POWER PER ASSEMBLY OF THE LAST TIME STEP
+  // One material and a uniform perturbation keep the static shape, so after
+  // the last step the power of each cell is the cell volume times the static
+  // power density (times the total power for SPN, which does not normalize).
+  // Diffusion (stationary), SP1 (stationary; its time steps keep the shape
+  // to about 1e-9), and in 3D with the flux weighting method diffusion and
+  // ROM with a change of sigma_a.
+  input_file = "test/1D_time_power_assembly/1D_diffusion.prm";
+  test_time_power_per_assembly<1, 2>(input_file, 25.0);
+  input_file = "test/1D_time_power_assembly/1D_sp1.prm";
+  test_time_power_per_assembly<1, 2>(input_file, 25.0, 1e-6);
+  input_file = "test/3D_time_power_assembly/3D_diffusion_fluxwei.prm";
+  test_time_power_per_assembly<3, 1>(input_file, 10000.0);
+  input_file = "test/3D_time_power_assembly/3D_rom_fluxwei.prm";
+  test_time_power_per_assembly<3, 1>(input_file, 10000.0);
+
+  //
+  // --------------------------------------------------------------- //
   // TEST 1D_C5G7 7 ENERGY GROUPS
   // 7 energy group tests. Distributed TS. 1D_C5G7 Benchmark (3 cells)
 
@@ -785,6 +804,132 @@ void test_power_evolution (const std::string &input_file,
   //  assert_vectors_similar(test_power, ref_power, tol);
   std::cout << " Passed!" << std::endl;
 }
+
+/**
+ * @brief Run a time dependent problem (diffusion, SPN or ROM) of one material
+ *  perturbed uniformly and test power_per_assembly after the last time step:
+ *  in every cell it is assembly_volume times the static power density times
+ *  the total power (1 for diffusion and ROM, which normalize it), and its sum
+ *  is the reactor volume times the total power. In 3D with the flux weighting
+ *  method, power_axial must be the power of each plane at that step and
+ *  volume_per_plane the volume of each plane.
+ */
+template <int dim, int n_fe_degree>
+  void test_time_power_per_assembly (const std::string &input_file,
+    const double assembly_volume,
+    const double tol)
+  {
+    std::cout << "Power per assembly... " << input_file << std::flush;
+
+    ParameterHandler prm;
+    prm_declare_entries(prm);
+    AssertRelease(fexists(input_file),
+      "ERROR!: Input File .prm Does NOT exist\n Use -f input_file.prm  option");
+    prm.parse_input(input_file);
+    AssertRelease(prm.get_integer("Dimension") == dim
+                  and prm.get_integer("FE_Degree") == n_fe_degree,
+      "Dimension or FE_Degree of " + input_file + " does not match the test");
+    std::string transport = prm.get("Transport_Appr");
+    lower_case(transport);
+
+    std::vector<std::vector<double> > power;
+    std::vector<double> static_power, power_axial, volume_per_plane;
+    double total_power = 1.0;
+    unsigned int n_planes = 1;
+    if (transport == "spn")
+    {
+      // TimeNeutronSPN reads print_timefile only from the command line:
+      // set it to false here and restore a value given there
+      std::string print_timefile = "";
+      get_string_from_options("-print_timefile", print_timefile);
+      PetscErrorCode ierr = PetscOptionsSetValue(NULL, "-print_timefile",
+        "false");
+      AssertRelease(ierr == 0, "Error setting -print_timefile");
+      {
+        StaticSPN<dim, n_fe_degree> static_prob(prm, input_file, false, true);
+        TimeNeutronSPN<dim, n_fe_degree> time_prob(prm, static_prob, false,
+          true);
+        static_power = static_prob.power_per_assembly[0];
+        power = time_prob.power_per_assembly;
+        total_power = time_prob.power_total;
+      }
+      if (print_timefile.empty())
+        ierr = PetscOptionsClearValue(NULL, "-print_timefile");
+      else
+        ierr = PetscOptionsSetValue(NULL, "-print_timefile",
+          print_timefile.c_str());
+      AssertRelease(ierr == 0, "Error restoring -print_timefile");
+    }
+    else
+    {
+      StaticDiffusion<dim, n_fe_degree> static_prob(prm, input_file, false,
+        true, false);
+      static_power = static_prob.power_per_assembly[0];
+      n_planes = static_prob.assem_per_dim[2];
+      if (prm.get_bool("ROM_Transient"))
+      {
+        ROMKinetics<dim, n_fe_degree> time_prob(prm, static_prob, false, true);
+        power = time_prob.power_per_assembly;
+        power_axial = time_prob.power_axial;
+        volume_per_plane = time_prob.volume_per_plane;
+      }
+      else
+      {
+        TimeNeutronDiffusion<dim, n_fe_degree> time_prob(prm, static_prob,
+          false, true);
+        power = time_prob.power_per_assembly;
+        power_axial = time_prob.power_axial;
+        volume_per_plane = time_prob.volume_per_plane;
+      }
+    }
+
+    const unsigned int n_assemblies = static_power.size();
+    AssertRelease(power.size() == 1 and power[0].size() == n_assemblies,
+      "  Error solving test " + input_file + '\n'
+      + "  power_per_assembly must hold one vector of "
+      + num_to_str(n_assemblies) + " values.");
+    double sum = 0.0;
+    for (unsigned int i = 0; i < n_assemblies; i++)
+    {
+      const double ref = assembly_volume * static_power[i] * total_power;
+      AssertRelease(std::abs(power[0][i] / ref - 1.0) < tol,
+        "  Error solving test " + input_file + '\n' + "  Cell "
+        + num_to_str(i + 1) + ": power " + num_to_str(power[0][i])
+        + " and it should be " + num_to_str(ref) + '.');
+      sum += power[0][i];
+    }
+    const double volume = n_assemblies * assembly_volume;
+    AssertRelease(std::abs(sum / (volume * total_power) - 1.0) < tol,
+      "  Error solving test " + input_file + '\n' + "  Sum of the power: "
+      + num_to_str(sum) + " and it should be "
+      + num_to_str(volume * total_power) + '.');
+
+    if (dim == 3 and prm.get("Rod_Cusping_Method") == "fluxwei")
+    {
+      const unsigned int per_plane = n_assemblies / n_planes;
+      AssertRelease(power_axial.size() == n_planes
+                    and volume_per_plane.size() == n_planes,
+        "  Error solving test " + input_file + '\n'
+        + "  power_axial and volume_per_plane must hold "
+        + num_to_str(n_planes) + " values.");
+      for (unsigned int p = 0; p < n_planes; p++)
+      {
+        double plane_power = 0.0;
+        for (unsigned int i = 0; i < per_plane; i++)
+          plane_power += power[0][p * per_plane + i];
+        AssertRelease(std::abs(power_axial[p] / plane_power - 1.0) < tol
+                      and std::abs(volume_per_plane[p]
+                                   / (per_plane * assembly_volume) - 1.0) < tol,
+          "  Error solving test " + input_file + '\n' + "  Plane "
+          + num_to_str(p + 1) + ": power " + num_to_str(power_axial[p])
+          + " and volume " + num_to_str(volume_per_plane[p])
+          + ", they should be " + num_to_str(plane_power) + " and "
+          + num_to_str(per_plane * assembly_volume) + '.');
+      }
+    }
+
+    std::cout << " Passed!" << std::endl;
+  }
 
 /**
  * @brief Run an Static test.
