@@ -297,11 +297,11 @@ void Materials::set_default_spectra ()
   {
     delayed_spectra[mat].resize(n_precursors);
     for (unsigned int p = 0; p < n_precursors; p++)
-      delayed_spectra[mat][p].resize(n_groups);
+      delayed_spectra[mat][p].assign(n_groups, 0.0);
   }
   prompt_spectra.resize(n_mats);
   for (unsigned int mat = 0; mat < n_mats; mat++)
-    prompt_spectra[mat].resize(n_groups);
+    prompt_spectra[mat].assign(n_groups, 0.0);
 
   // Set it
   for (unsigned int mat = 0; mat < n_mats; mat++)
