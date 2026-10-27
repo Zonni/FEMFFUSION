@@ -496,7 +496,7 @@ int run_tests ()
     PetscErrorCode ierr = PetscOptionsSetValue(NULL, "-matrixfree_type_time",
       "full_allocated");
     AssertRelease(ierr == 0, "Error setting -matrixfree_type_time");
-    input_file = "test/1D_time_delayed_spectrum/1D_C5G7_ix_full_allocated.prm";
+    // The same input file
     test_power_evolution(input_file, power_7_groups_s, 1e-8);
     ierr = PetscOptionsSetValue(NULL, "-matrixfree_type_time",
       "full_matrixfree");
