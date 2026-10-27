@@ -1,9 +1,9 @@
-# TEST 3D ROM -- 1 Group -- Axial power for the flux weighting method
+# TEST 3D ROM -- 2 Groups -- Axial power for the flux weighting method
 # ---------------------------------------------------------------------------
 # Homogeneous column of 4 planes of 20 x 20 x 25 cm, zero current on the
-# sides and vacuum at both ends, with a small sinusoidal change of sigma_a.
-# The flux weighting method of the rods takes the axial power of the last
-# time step (no rod moves here).
+# sides and zero flux at both ends, with a sinusoidal change of the thermal
+# absorption. The flux weighting method of the rods takes the axial power of
+# the last time step (no rod moves here).
 
 # Dimension of the problem (1, 2 or 3)
 set Dimension            = 3
@@ -15,7 +15,7 @@ set N_Eigenvalues        = 1
 set Transport_Appr       = Diffusion
 
 # Energy groups
-set Energy_Groups        = 1
+set Energy_Groups        = 2
 
 # REACTOR and MESH DEFINITION
 # Finite element degree
@@ -33,7 +33,7 @@ set Cell_Pitch_y         = 20.0
 set Cell_Pitch_z         = 4* 25.0
 
 # Boundary Conditions (LEFT RIGHT TOP BOTTOM UP DOWN) (0 ZeroFlux) (1 ZeroCurrent) (2 Vacuum)
-set Boundary_Conditions  = 1 1 1 1 2 2
+set Boundary_Conditions  = 1 1 1 1 0 0
 
 # OUT OPTIONS
 # True/false - Make a .vtk file with the output
@@ -47,9 +47,9 @@ set EPS_Tolerance        = 1e-10
 set KSP_Tolerance        = 1e-12
 
 # Input types
-# XS type file defined (Femfusion | XSEC | XML | Valkin | Coresim)
-set XSEC_Type            = XSEC
-set XSECS_Filename       = test/3D_time_power_assembly/1g.xsec
+# XS type file defined (Femfusion | XSEC | XS2G | XML | Valkin | Coresim)
+set XSEC_Type            = XS2G
+set XSECS_Filename       = test/3D_time_power_assembly/2g.xsec
 
 # Filename where will be written the output.
 set Output_Filename      = test/3D_time_power_assembly/3D_rom_fluxwei.out
@@ -60,12 +60,14 @@ set Time_Delta           = 0.01
 set Time_End             = 0.0525
 
 # PERTURBATION
+# Sinus change of the cross sections of material 1 (Group_Changing 0: all
+# groups); only the sixth amplitude, the thermal absorption, is not zero.
 set Type_Perturbation    = Single_Material
 set Perturbation_Function = Sinus
-set XS_Name              = sigma_a
-set Group_Changing       = 1
+set XS_Name              = all
+set Group_Changing       = 0
 set Material_Changing    = 1
-set Amplitude            = 1.0e-4
+set Amplitudes           = 0 0 0 0 0 1.0e-3 0 0
 set Frequency            = 1.0
 
 # Rod cusping treatment (volhom | fluxwei)

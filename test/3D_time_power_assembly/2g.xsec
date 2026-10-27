@@ -10,8 +10,9 @@ PLANE 4
 
 
 XSecs 1 # N Defined Materials
-# MatNum sigma_t  chi  nu_sigma_f  sigma_f  sigma_s=sigma_t-sigma_a
-1   0.5   1.0   0.025   0.01   0.48
+# MatNum  sigma_tr  sigma_a  nu_sigma_f  sigma_f  sigma_12
+  1       0.25      0.01     0.005       0.002    0.02
+          0.8       0.08     0.135       0.055
 
 # Information about neutron precursors
 Precursors 1
@@ -19,4 +20,4 @@ Precursors 1
 1   0.0065    0.08
 
 Velocity
-2.2e+5
+1.0e+7 2.2e+5

@@ -1,4 +1,4 @@
-# TEST 1D Time -- 1 Group -- Power per assembly after a stationary transient
+# TEST 1D Time -- 2 Groups -- Power per assembly after a stationary transient
 # ---------------------------------------------------------------------------
 # Homogeneous slab of 8 cells of 25 cm with vacuum at both ends, and a
 # perturbation of amplitude zero: the power stays at its static value.
@@ -13,7 +13,7 @@ set N_Eigenvalues        = 1
 set Transport_Appr       = Diffusion
 
 # Energy groups
-set Energy_Groups        = 1
+set Energy_Groups        = 2
 
 # REACTOR and MESH DEFINITION
 # Finite element degree
@@ -43,9 +43,9 @@ set EPS_Tolerance        = 1e-10
 set KSP_Tolerance        = 1e-12
 
 # Input types
-# XS type file defined (Femfusion | XSEC | XML | Valkin | Coresim)
-set XSEC_Type            = XSEC
-set XSECS_Filename       = test/1D_time_power_assembly/1g.xsec
+# XS type file defined (Femfusion | XSEC | XS2G | XML | Valkin | Coresim)
+set XSEC_Type            = XS2G
+set XSECS_Filename       = test/1D_time_power_assembly/2g.xsec
 
 # Filename where will be written the output.
 set Output_Filename      = test/1D_time_power_assembly/1D_diffusion.out
@@ -56,10 +56,12 @@ set Time_Delta           = 0.01
 set Time_End             = 0.0525
 
 # PERTURBATION
+# Sinus change of every cross section of material 1 (Group_Changing 0: all
+# groups); all amplitudes are zero.
 set Type_Perturbation    = Single_Material
 set Perturbation_Function = Sinus
-set XS_Name              = sigma_a
-set Group_Changing       = 1
+set XS_Name              = all
+set Group_Changing       = 0
 set Material_Changing    = 1
-set Amplitude            = 0.0
+set Amplitudes           = 0 0 0 0 0 0 0 0
 set Frequency            = 1.0
