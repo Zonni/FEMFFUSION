@@ -17,6 +17,7 @@
 #include <deal.II/grid/tria.h>
 #include <deal.II/grid/grid_generator.h>
 #include <deal.II/grid/tria_accessor.h>
+#include <deal.II/grid/tria_description.h>
 #include <deal.II/grid/tria_iterator.h>
 #include <deal.II/grid/grid_out.h>
 
@@ -1497,6 +1498,15 @@ template <typename num>
   {
     std::string in = input;
     boost::trim_if(in, boost::is_any_of(";\n "));
+
+    // Empty input -> empty matrix
+    if (in.empty())
+    {
+      AssertRelease(n_rows == 0, "Invalid number of rows");
+      out_matrix.clear();
+      return;
+    }
+
     std::vector<std::string> strs;
     boost::split(strs, in, boost::is_any_of(";\n"), boost::token_compress_on);
 
@@ -2113,8 +2123,8 @@ template <int dim>
       maxp = std::max(maxp, cell->vertex(v)[coord]);
       minp = std::min(minp, cell->vertex(v)[coord]);
     }
-    Assert(maxp >= 0.0, ExcMessage(" "))
-    Assert(minp >= 0.0, ExcMessage(" "))
+    Assert(maxp >= 0.0, ExcMessage(" "));
+    Assert(minp >= 0.0, ExcMessage(" "));
   }
 
 template void getMaxMinVertex (

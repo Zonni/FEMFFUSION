@@ -1,0 +1,25 @@
+# Bank_conf represents the position of the bars
+Bank_Configuration
+1    0 0 0
+2   0 2 3 0
+3  0 1 0 2 0
+4   0 2 3 0
+5    0 0 0 
+
+BarsTopPosition  275.0
+
+Move_Banks  3  # n of moveable Bars defined
+#
+# Sequential three-phase transient with moderate reactivity insertions.
+# Each bank moves over a partial stroke of 75 cm, one at a time.
+#   Phase 1  [0, 2] s : bank 1 (left)      withdrawn  125 -> 200   (positive)
+#   Phase 2  [2, 4] s : bank 3 (right)     inserted   275 -> 200   (negative)
+#   Phase 3  [4, 6] s : bank 2 (symmetric) inserted   225 -> 150   (negative)
+#
+# bar_num   mat_bar   Points_defined    t_0  h_0     t_1  h_1     t_2  h_2     t_3  h_3
+1             2         4               0.0  125     2.0  200     4.0  200     6.0  200
+# bar_num   mat_bar   Points_defined    t_0  h_0     t_1  h_1     t_2  h_2     t_3  h_3
+3             2         4               0.0  275     2.0  275     4.0  200     6.0  200
+# bar_num   mat_bar   Points_defined    t_0  h_0     t_1  h_1     t_2  h_2     t_3  h_3
+2             2         4               0.0  225     2.0  225     4.0  225     6.0  150
+

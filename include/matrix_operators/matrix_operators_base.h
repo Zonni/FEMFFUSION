@@ -32,6 +32,8 @@
 #include <deal.II/lac/petsc_sparse_matrix.h>
 #include <deal.II/lac/petsc_vector.h>
 #include <deal.II/lac/diagonal_matrix.h>
+#include <deal.II/lac/la_parallel_vector.h>
+#include <deal.II/lac/la_parallel_block_vector.h>
 
 #include <deal.II/meshworker/dof_info.h>
 #include <deal.II/meshworker/integration_info.h>
@@ -488,6 +490,9 @@ template <int dim, int n_fe_degree>
      */
     double vmult_dot (PETScWrappers::MPI::BlockVector &dst,
       const PETScWrappers::MPI::BlockVector &src) const;
+
+
+
     /**
      * @brief compute the scalar product.
      * val = src* 1/v * dst
@@ -600,7 +605,7 @@ template <int dim, int n_fe_degree>
       unsigned int dst_row) const;
 
     /**
-     * v1 = v2 + A * v3
+     * v1 = v2 + A(row,col) * v3
      */
     void vmult_add (
       const unsigned int row,
@@ -608,6 +613,14 @@ template <int dim, int n_fe_degree>
       PETScWrappers::MPI::Vector &v1,
       PETScWrappers::MPI::Vector &v2,
       const PETScWrappers::MPI::Vector &v3) const;
+
+    /**
+     * @brief compute the scalar product of one block
+     * val = src * dst
+     */
+    double vmult_dot (const unsigned int row,
+    	    const unsigned int col, PETScWrappers::MPI::Vector &dst,
+      const PETScWrappers::MPI::Vector &src) const;
 
     // ----------------------------------------------------------------- //
     // -------------------- Block Multiplications ---------------------- //

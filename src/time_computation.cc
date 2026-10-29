@@ -294,6 +294,7 @@ template <int dim, int n_fe_degree>
     // Integers
     get_uint_from_options("-n_out_ref", n_out_ref);
     get_uint_from_options("-out_interval", out_interval);
+    get_uint_from_options("-print_step", print_step);
 
     // Reals
     get_double_from_options("-init_delta_t", init_delta_t);
@@ -1326,7 +1327,7 @@ template <int dim, int n_fe_degree>
       double sigma_f;
 
       // Initialize and resize the vectors where it is stored the solution
-      power_per_assembly.resize(1, std::vector<double>(n_cells_out, 0.0));
+      power_per_assembly.assign(1, std::vector<double>(n_cells_out, 0.0));
       std::vector<double> volume_per_assembly(n_cells_out, 0.0);
       std::vector<double> local_phi(n_q_points);
       std::vector<double> radial_power;
@@ -1397,7 +1398,7 @@ template <int dim, int n_fe_degree>
       }
 
       // TODO DOCUMENT ME
-      if (dim == 3 and print_timefile)
+      if (dim == 3 and print_timefile and (step % print_step == 0))
       {
 
         // Calculate the axial power distribution
@@ -1433,58 +1434,6 @@ template <int dim, int n_fe_degree>
           true);
       }
 
-      if (dim == 3)
-      {
-
-        // Normalize the values of the power and flows per cell
-        //      normalize_vector(power_per_assembly[0], norm);
-
-        // Calculate the axial power distribution
-        std::vector<double> power_axial;
-        std::vector<std::vector<double> > phi_axial;
-        unsigned int n_planes = materials.assem_per_dim[2];
-
-        unsigned int n_assemblies_per_plane = n_assemblies / n_planes;
-        Assert(n_assemblies_per_plane > 0,
-          ExcMessage("n_assemblies cannot be 0"));
-        radial_power.resize(n_assemblies_per_plane);
-        std::vector<double> volume_per_axial(n_assemblies_per_plane);
-
-        for (unsigned int i = 0; i < n_assemblies_per_plane; i++)
-        {
-          double sum = 0.0;
-          for (unsigned int plane = 0; plane < n_planes; plane++)
-          {
-            if (std::abs(
-                  power_per_assembly[0][n_assemblies_per_plane * plane
-                                        + i])
-                > 1e-5)
-            {
-              sum += power_per_assembly[0][n_assemblies_per_plane
-                                           * plane
-                                           + i]
-                     * volume_per_assembly[n_assemblies_per_plane
-                                           * plane
-                                           + i];
-              volume_per_axial[i] +=
-                                     volume_per_assembly[n_assemblies_per_plane
-                                                         * plane
-                                                         + i];
-            }
-
-          }
-          if (std::abs(sum) > 0.0)
-            radial_power[i] = sum / n_assemblies_per_plane
-                              / volume_per_axial[i];
-        }
-
-        if (print_timefile)
-          print_vector_in_file(radial_power,
-            filename_time,
-            "Radial power " + Utilities::int_to_string(step) + "\n",
-            true);
-
-      }
 
       // These vectors are necessary to make the approximate
       // flux weighting method

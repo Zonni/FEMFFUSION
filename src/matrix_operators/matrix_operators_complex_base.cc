@@ -1102,8 +1102,8 @@ template <int dim, int n_fe_degree>
       poison_mf_blocks_real[row / 2]->vmult_add(dst, src);
     else // full_allocated
     {
-      PETScWrappers::MPI::Vector dst_vec(comm, dst.size(), dst.local_size());
-      PETScWrappers::MPI::Vector src_vec(comm, src.size(), src.local_size());
+      PETScWrappers::MPI::Vector dst_vec(comm, dst.size(), dst.locally_owned_size());
+      PETScWrappers::MPI::Vector src_vec(comm, src.size(), src.locally_owned_size());
       copy_to_Vector(src_vec, src);
       if (is_block_real(row, col))
       {
@@ -1161,8 +1161,8 @@ template <int dim, int n_fe_degree>
       poison_mf_blocks_real[row / 2]->vmult(dst, src);
     else
     {
-      PETScWrappers::MPI::Vector dst_vec(comm, dst.size(), dst.local_size());
-      PETScWrappers::MPI::Vector src_vec(comm, src.size(), src.local_size());
+      PETScWrappers::MPI::Vector dst_vec(comm, dst.size(), dst.locally_owned_size());
+      PETScWrappers::MPI::Vector src_vec(comm, src.size(), src.locally_owned_size());
       copy_to_Vector(src_vec, src);
       if (is_block_real(row, col))
       {
@@ -1832,8 +1832,8 @@ template <int dim, int n_fe_degree>
     }
     else
     {
-      PETScWrappers::MPI::Vector dst_vec(comm, dst.size(), dst.local_size());
-      PETScWrappers::MPI::Vector src_vec(comm, src.size(), src.local_size());
+      PETScWrappers::MPI::Vector dst_vec(comm, dst.size(), dst.locally_owned_size());
+      PETScWrappers::MPI::Vector src_vec(comm, src.size(), src.locally_owned_size());
       copy_to_Vector(src_vec, src);
       if (is_block_real(row, col))
       {
@@ -1888,8 +1888,8 @@ template <int dim, int n_fe_degree>
     }
     else
     {
-      PETScWrappers::MPI::Vector dst_vec(comm, dst.size(), dst.local_size());
-      PETScWrappers::MPI::Vector src_vec(comm, src.size(), src.local_size());
+      PETScWrappers::MPI::Vector dst_vec(comm, dst.size(), dst.locally_owned_size());
+      PETScWrappers::MPI::Vector src_vec(comm, src.size(), src.locally_owned_size());
       copy_to_Vector(src_vec, src);
 
       if (is_block_real(row, col))

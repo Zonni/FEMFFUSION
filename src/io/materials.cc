@@ -1826,7 +1826,7 @@ void Materials::parse_xsec (const std::string &xsec_file,
     }
     else
       // Error
-      Assert(false, ExcMessage("Invalid Header in XSEC_file: " + word))
+      Assert(false, ExcMessage("Invalid Header in XSEC_file: " + word));
 
   }
 
@@ -2163,7 +2163,7 @@ void Materials::parse_precursors_file (const std::string &prec_file)
     }
     else
       // Error
-      Assert(false, ExcMessage("Invalid Header in XSEC_file: " + word))
+      Assert(false, ExcMessage("Invalid Header in XSEC_file: " + word));
   }
 
   delayed_fraction_sum.resize(n_mats);

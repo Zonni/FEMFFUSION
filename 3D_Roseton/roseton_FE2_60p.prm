@@ -57,6 +57,8 @@ set Output_Flag           = false
 # Filename where will be written the output
 set Output_Filename       = 3D_Roseton/roseton_FE2_60p.out
 
+# True/false - Print the .time with the solutions by time-step
+set Print_Time_Dependent_Data = true
 
 # TIME PARAMETERS
 set Transient           = true

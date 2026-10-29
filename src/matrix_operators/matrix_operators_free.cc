@@ -208,7 +208,7 @@ template <int dim, int n_fe_degree, typename number>
       fe_eval.read_dof_values(src);
 
       // Compute only unit cell values  (not gradients or hessians)
-      fe_eval.evaluate(true, false, false);
+      fe_eval.evaluate(EvaluationFlags::values | EvaluationFlags::gradients);
 
       // Jacobi transformation:
       //  alpha * values(in real space) * JxW
@@ -219,7 +219,7 @@ template <int dim, int n_fe_degree, typename number>
 
       // Summation over all quadrature points in the cell.
       // Only integrate the values, not the gradients
-      fe_eval.integrate(true, false);
+      fe_eval.integrate(EvaluationFlags::values);
 
       // Distribute the local values in the global vector
       fe_eval.distribute_local_to_global(dst);
@@ -286,7 +286,7 @@ template <int dim, int n_fe_degree, typename number>
         fe_eval.read_dof_values(src);
 
         // Compute only unit cell values  (not gradients or hessians)
-        fe_eval.evaluate(true, false, false);
+        fe_eval.evaluate(EvaluationFlags::values | EvaluationFlags::gradients);
 
         // Jacobi transformation:
         //  alpha * values(in real space) * JxW
@@ -297,7 +297,7 @@ template <int dim, int n_fe_degree, typename number>
 
         // Summation over all quadrature points in the cell.
         // Only integrate the values, not the gradients
-        fe_eval.integrate(true, false);
+        fe_eval.integrate(EvaluationFlags::values);
 
         // Distribute the local values in the global vector
         fe_eval.distribute_local_to_global(dst);
@@ -348,7 +348,7 @@ template <int dim, int n_fe_degree, typename number>
       face_eval.reinit(face);
 
       // Compute only unit cell values not gradients
-      face_eval.gather_evaluate(src, true, false);
+      face_eval.gather_evaluate(src, EvaluationFlags::values);
 
       // Jacobi transformation:
       //  alpha * values(in real space) * JxW
@@ -834,13 +834,13 @@ template <int dim, int n_fe_degree, typename number>
           fe_eval.submit_dof_value(VectorizedArray<number>(), j);
         fe_eval.submit_dof_value(make_vectorized_array<number>(1.), i);
 
-        fe_eval.evaluate(true, true);
+        fe_eval.integrate(EvaluationFlags::values | EvaluationFlags::gradients);
         for (unsigned int q = 0; q < fe_eval.n_q_points; ++q)
         {
           fe_eval.submit_value(sigma_va * fe_eval.get_value(q), q);
           fe_eval.submit_gradient(D_va * fe_eval.get_gradient(q), q);
         }
-        fe_eval.integrate(true, true);
+        fe_eval.integrate(EvaluationFlags::values | EvaluationFlags::gradients);
         diagonal[i] = fe_eval.get_dof_value(i);
       }
       for (unsigned int i = 0; i < fe_eval.dofs_per_cell; ++i)
@@ -889,7 +889,7 @@ template <int dim, int n_fe_degree, typename number>
       fe_eval.read_dof_values(src);
 
       // Compute only unit cell values and gradients (not hessians)
-      fe_eval.evaluate(true, true, false);
+      fe_eval.evaluate(EvaluationFlags::values | EvaluationFlags::gradients);
 
       // Jacobi transformation:
       //  alpha * values(in real space) * JxW
@@ -903,7 +903,7 @@ template <int dim, int n_fe_degree, typename number>
 
       // Summation over all quadrature points in the cell.
       // Only integrate the values and gradients
-      fe_eval.integrate(true, true);
+      fe_eval.integrate(EvaluationFlags::values | EvaluationFlags::gradients);
 
       // Distribute the local values in the global vector
       fe_eval.distribute_local_to_global(dst);
@@ -950,7 +950,7 @@ template <int dim, int n_fe_degree, typename number>
       fe_eval.read_dof_values(src);
 
       // Compute only unit cell values and gradients (not hessians)
-      fe_eval.evaluate(true, true, false);
+      fe_eval.evaluate(EvaluationFlags::values | EvaluationFlags::gradients);
 
       // Jacobi transformation:
       //  alpha * values(in real space) * JxW
@@ -964,7 +964,7 @@ template <int dim, int n_fe_degree, typename number>
 
       // Summation over all quadrature points in the cell.
       // Only integrate the values and gradients
-      fe_eval.integrate(true, true);
+      fe_eval.integrate(EvaluationFlags::values | EvaluationFlags::gradients);
 
       // Distribute the local values in the global vector
       fe_eval.distribute_local_to_global(dst);
@@ -1016,7 +1016,7 @@ template <int dim, int n_fe_degree, typename number>
       face_eval.reinit(face);
 
       // Compute only unit cell values not gradients
-      face_eval.gather_evaluate(src, true, false);
+      face_eval.gather_evaluate(src, EvaluationFlags::values);
 
       // Jacobi transformation:
       //  alpha * values(in real space) * JxW

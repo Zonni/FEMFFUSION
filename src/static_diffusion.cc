@@ -9,6 +9,7 @@
 #include <deal.II/grid/grid_in.h>
 #include <deal.II/dofs/dof_accessor.h>
 #include <deal.II/fe/fe_tools.h>
+#include <deal.II/grid/tria_description.h>
 #include <filesystem>
 
 #include "../include/femffusion.h"
@@ -1008,8 +1009,7 @@ template <int dim, int n_fe_degree>
 
       std::vector<IndexSet> locally_relevant_dofs(n_groups);
       for (unsigned int g = 0; g < n_groups; ++g)
-        DoFTools::extract_locally_relevant_dofs(dof_handler,
-          locally_relevant_dofs[g]);
+    	  locally_relevant_dofs[g]=DoFTools::extract_locally_relevant_dofs(dof_handler);
 
       // Initialize all that  is needed to iterate over dofs and cells
       QGauss<dim> quadrature_formula(n_fe_degree + 1);

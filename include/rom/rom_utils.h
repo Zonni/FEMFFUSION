@@ -121,11 +121,30 @@ void compute_POD_basis_group_wise (
 /**
  * @brief
  */
+void compute_time_POD_basis_group_wise (
+  std::vector<PETScWrappers::MPI::BlockVector> &snapshots,
+  const double epsilon_M,
+  const unsigned int M_req,
+  unsigned int &dim_rom,
+  std::vector<PETScWrappers::MPI::BlockVector> &snap_basis);
+
+/**
+ * @brief
+ */
 void petsc_svd (
   Mat &Mat_snap,
   const double epsilon_M,
   const unsigned int M_req,
   std::vector<PETScWrappers::MPI::Vector> &snap_basis);
+
+/**
+ * @brief
+ */
+void petsc_svd_group_wise (
+  Mat &Mat_snap,
+  const double epsilon_M,
+  const unsigned int M_req,
+  std::vector<PETScWrappers::MPI::Vector> &snap_basis, unsigned int &M_true);
 
 /**
  *  @brief

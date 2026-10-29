@@ -1271,7 +1271,7 @@ template <int dim, int n_fe_degree>
 
     for (auto cell : dof_handler.cell_iterators_on_level(0))
     {
-      unsigned int n_active_children = cell->number_of_children();
+      unsigned int n_active_children = cell->n_active_descendants();
       auto active_cells = GridTools::get_active_child_cells<DoFHandler<dim> >(cell);
       if (active_cells.size() == 0) /* get_active_child_cells only selects children */
       {
@@ -1377,7 +1377,7 @@ template <int dim, int n_fe_degree>
     // -------------------------------------------------------------------------- //
     for (auto cell : dof_handler.cell_iterators_on_level(0))
     {
-      unsigned int n_active_children = cell->number_of_children();
+      unsigned int n_active_children = cell->n_active_descendants();
       auto active_cells = GridTools::get_active_child_cells<DoFHandler<dim> >(cell);
       if (active_cells.size() == 0) /* get_active_child_cells only selects children */
       {

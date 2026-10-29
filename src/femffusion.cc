@@ -22,6 +22,7 @@
 #include "../include/rom/rom_kinetics.h"
 #include "../include/rom/rom_static.h"
 
+#include <cstdlib>
 #include <omp.h>
 
 /**
@@ -296,6 +297,11 @@ void prm_declare_entries (ParameterHandler &prm)
   prm.declare_entry("ROM_Group_Wise", "Monolithic",
     Patterns::Selection("Group_Wise | Monolithic"),
     "Type of Snapshots used in ROM calculation");
+  prm.declare_entry("ROM_Banks", "", Patterns::Anything(),
+                    "Rod banks for snapshots bank_swept separated by ';'.");
+  prm.declare_entry("Delta_Time_Ts_Solver", "0.01", Patterns::Double(),
+    "Delta time of the ROM TS time integration");
+
 
   // LUPOD
   prm.declare_entry("LUPOD_Type", "POD",
@@ -336,6 +342,10 @@ int main (int argc,
     using namespace dealii;
     deallog.depth_console(0);
 
+    // Disable hwloc's OpenGL plugin: it tries to open an X display during
+    // MPI_Init and can hang on Wayland-only sessions (e.g. Ubuntu 26.04).
+    setenv("HWLOC_COMPONENTS", "-gl", 0);
+
     bool verbose = false;
     bool silent = false;
 
@@ -365,6 +375,11 @@ int main (int argc,
       {
         Utilities::MPI::MPI_InitFinalize mpi_initialization(argc, argv, 1);
         {
+		// Mark -t/--test as used so PETSc does not warn about unused options.
+		  PetscBool flg;
+		  PetscOptionsHasName(NULL, NULL, "-t", &flg);
+		  PetscOptionsHasName(NULL, NULL, "--test", &flg);
+
           run_tests();
           return 0;
         }

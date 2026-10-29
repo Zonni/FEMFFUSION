@@ -16,7 +16,6 @@
 #include <deal.II/grid/manifold_lib.h>
 
 #include <deal.II/grid/grid_tools.h>
-#include <deal.II/grid/grid_reordering.h>
 
 #include <deal.II/dofs/dof_handler.h>
 #include <deal.II/numerics/data_out.h>

@@ -18,7 +18,7 @@
 #include <deal.II/lac/solver_cg.h>
 #include <deal.II/lac/solver_gmres.h>
 #include <deal.II/lac/vector_memory.h>
-#include <deal.II/lac/la_vector.h>
+#include <deal.II/lac/la_parallel_vector.h>
 
 #include <deal.II/dofs/dof_handler.h>
 

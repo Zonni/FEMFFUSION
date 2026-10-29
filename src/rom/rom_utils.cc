@@ -788,7 +788,7 @@ void compute_LUPODext_basis_group_wise (
     idm[j] = j;
   MatCreateSeqDense(comm, J, K, NULL, &S_svd);
 
-  unsigned int M_true;
+  unsigned int M_true=0;
   // Loop the bucle
   for (unsigned int b = 0; b < n_blocks; b++)
   {
@@ -859,7 +859,7 @@ void compute_LUPODext_basis_group_wise (
       AssertRelease(false, "You must select LUPOD or SOPT");
     }
 
-    std::cout << "M_true "   << M_true << std::endl;
+//    std::cout << "M_true "   << M_true << std::endl;
 
     // ---------------------------------------
     // Copy snap_basis_red
@@ -1069,7 +1069,7 @@ void petsc_svd (
       }
     }
   }
-  //std::cout << " M_true " << M_true << std::endl;
+//  std::cout << " M_true " << M_true << std::endl;
 
   // Resize Singular Vectors
   U.resize(M_true);
@@ -1084,9 +1084,100 @@ void petsc_svd (
     SVDGetSingularTriplet(svd, k_sv, &sv, u, PETSC_NULL);
     U[k_sv] = u;
   }
-  //std::cout << "singular_values" << std::endl;
-  //singular_values.print(std::cout);
-  //std::cout << std::endl;
+//  std::cout << "singular_values" << std::endl;
+//  singular_values.print(std::cout);
+//  std::cout << std::endl;
+
+  SVDDestroy(&svd);
+}
+
+/*
+ * @brief Perform a SVD decomposition of Matrix Mat_snap with SLEPC.
+ */
+void petsc_svd_group_wise (
+  Mat &Mat_snap,
+  const double epsilon_M,
+  const unsigned int M_req,
+  std::vector<PETScWrappers::MPI::Vector> &U,unsigned int &M_true)
+{
+  //const unsigned int J = n_dofs; // Number of rows
+  PetscInt K, J;
+  MatGetSize(Mat_snap, &J, &K);
+  MPI_Comm comm = PETSC_COMM_WORLD;
+
+  // Singular Values vector
+  Vector<double> singular_values(K);
+
+
+  // Configure SVD
+  SVD svd;
+  SVDCreate(comm, &svd);
+  SVDSetOperators(svd, Mat_snap, NULL);
+  SVDSetDimensions(svd, K, 2 * K, K);
+  SVDSetProblemType(svd, SVD_STANDARD);
+  SVDSetType(svd, SVDTRLANCZOS);
+  //SVDSetFromOptions(svd);
+
+  SVDSolve(svd);
+
+  double sv;
+
+  // Extract Singular Values
+  for (PetscInt k_sv = 0; k_sv < K; k_sv++)
+  {
+    SVDGetSingularTriplet(svd, k_sv, &sv, PETSC_NULL, PETSC_NULL);
+    singular_values[k_sv] = sv;
+  }
+
+//  get_uint_from_options("-m_req", M_req);
+//  std::cout << "M_req leido: " << M_req << std::endl;
+
+  if (M_req != 0) // Determine the number of modes to retain based on M
+  {
+    M_true = M_req;
+  }
+  else if (epsilon_M == 0.0)
+    M_true = K;
+  else // Determine the number of modes to retain based on epsilon_M
+  {
+//    double total_energy = singular_values.l2_norm();
+//    double kept_energy = 0.0;
+//    for (int m = 0; m < K; ++m)
+//    {
+//      kept_energy += singular_values(m) * singular_values(m);
+//
+//      if (sqrt(kept_energy) / total_energy >= (1 - epsilon_M))
+//      {
+//        M_true = m + 1;
+//        break;
+//      }
+//    }
+	  double total_energy = 0.0;
+	  for (int m = 0; m < K; ++m) total_energy += singular_values(m)*singular_values(m);
+	  double kept = 0.0;
+	  for (int m = 0; m < K; ++m) {
+	      kept += singular_values(m)*singular_values(m);
+	      if (kept / total_energy > (1.0 - epsilon_M)) { M_true = m + 1; break; }
+	  }
+  }
+//  std::cout << " M_true " << M_true << std::endl;
+
+  // Resize Singular Vectors
+  U.resize(K);
+  for (PetscInt m = 0; m < static_cast<int>(K); m++)
+    U[m].reinit(comm, J, J);
+
+  PETScWrappers::MPI::Vector u;
+  u.reinit(comm, J, J);
+
+  for (PetscInt k_sv = 0; k_sv < K ; k_sv++)
+  {
+    SVDGetSingularTriplet(svd, k_sv, &sv, u, PETSC_NULL);
+    U[k_sv] = u;
+  }
+//  std::cout << "singular_values" << std::endl;
+//  singular_values.print(std::cout);
+//  std::cout << std::endl;
 
   SVDDestroy(&svd);
 }
@@ -1158,6 +1249,73 @@ void compute_POD_basis_group_wise (
   }
 
   MatDestroy(&Mat_snap);
+
+}
+
+/**
+ *
+ */
+void compute_time_POD_basis_group_wise (
+  std::vector<PETScWrappers::MPI::BlockVector> &snapshots,
+  const double epsilon_M,
+  const unsigned int M_req,
+  unsigned int &dim_rom,
+  std::vector<PETScWrappers::MPI::BlockVector> &snap_basis)
+{
+  const unsigned int n_blocks = snapshots[0].n_blocks();
+  const unsigned int J = snapshots[0].block(0).size();   // n_dofs per block
+  const unsigned int K = snapshots.size();
+
+  std::vector<PetscInt> idm(J);
+  for (unsigned int j = 0; j < J; j++) idm[j] = j;
+  std::vector<PetscScalar> values_snap(J);
+
+  MPI_Comm comm(snapshots[0].get_mpi_communicator());
+
+  // 1) POD modes of each block (group) separately
+  std::vector<std::vector<PETScWrappers::MPI::Vector>> U(n_blocks);
+  std::vector<unsigned int> M_grp(n_blocks);
+
+  Mat Mat_snap;
+  MatCreateSeqDense(comm, J, K, NULL, &Mat_snap);
+  MatSetOption(Mat_snap, MAT_ROW_ORIENTED, PETSC_FALSE);
+
+  for (unsigned int b = 0; b < n_blocks; b++)
+  {
+    for (PetscInt k_snap = 0; k_snap < static_cast<int>(K); ++k_snap)
+    {
+      for (unsigned int j = 0; j < J; j++)
+        values_snap[j] = snapshots[k_snap].block(b)[j];
+      MatSetValues(Mat_snap, J, idm.data(), 1, &k_snap, values_snap.data(),
+                   INSERT_VALUES);
+    }
+    MatAssemblyBegin(Mat_snap, MAT_FINAL_ASSEMBLY);
+    MatAssemblyEnd(Mat_snap, MAT_FINAL_ASSEMBLY);
+
+    std::cout << "Energy Group: " << b << std::endl;
+    petsc_svd_group_wise(Mat_snap, epsilon_M, M_req, U[b], M_grp[b]);  // save K, return M_grp[b]
+  }
+  MatDestroy(&Mat_snap);
+
+  // common number of modes equal to the maximum
+  dim_rom = M_grp[0];
+  for (unsigned int b = 1; b < n_blocks; b++)
+    dim_rom = std::max<unsigned int>(dim_rom, M_grp[b]);
+
+  // snap_basis with the first dim_rom-th modes
+  snap_basis.resize(dim_rom);
+  for (unsigned int k = 0; k < dim_rom; ++k)
+  {
+    snap_basis[k].reinit(snapshots[0]);
+    for (unsigned int b = 0; b < n_blocks; ++b)
+      snap_basis[k].block(b) = U[b][k];
+    snap_basis[k].compress(VectorOperation::insert);
+  }
+
+
+  	 for (unsigned int b = 0; b < n_blocks; ++b)
+		U[b].clear();
+
 }
 
 /**

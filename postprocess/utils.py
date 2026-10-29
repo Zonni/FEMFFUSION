@@ -7,6 +7,7 @@ from numpy import mean, square
 from math import sqrt, pi
 from vtk import vtkUnstructuredGridReader
 from vtk.util import numpy_support as VN
+from scipy.interpolate import CubicSpline
 import matplotlib as mpl
 import pyvista as pv
 
@@ -717,7 +718,130 @@ def collapse(points, flux):
 #    fl = [f for _,f in sorted(values.items())]
 #    return x, fl
 
+def power_errors(t_fom, P_fom, t_rom, P_rom):
+    """
+    Relative error metrics of a ROM power curve against the FOM reference.
+    e(t)      : instantaneous relative error, |P - P_FOM| / P_FOM
+    e_mean    : mean relative error, (1/T) * integral_0^T e(t) dt   (trapezoidal)
+    e_inf     : maximum relative error, max_t e(t)
+    e_rms     : root mean square of the relative error, sqrt((1/T) * integral e(t)^2 dt)
+    The ROM curve is interpolated onto the FOM time grid before comparing,
+    so both are evaluated at the same instants.
+    """
+    t_fom = np.asarray(t_fom, dtype=float)
+    P_fom = np.asarray(P_fom, dtype=float)
 
+    # Interpolate the ROM power onto the FOM time grid.
+    P_rom_i = np.interp(t_fom, np.asarray(t_rom, dtype=float),
+                                np.asarray(P_rom, dtype=float))
+
+    # Restrict to the overlap of both time spans to avoid extrapolation.
+    t_min = max(t_fom[0],  t_rom[0])
+    t_max = min(t_fom[-1], t_rom[-1])
+    mask = (t_fom >= t_min) & (t_fom <= t_max)
+    t = t_fom[mask]
+    e = np.abs(P_fom[mask] - P_rom_i[mask]) / np.abs(P_fom[mask])
+
+    T = t[-1] - t[0]
+    e_mean = np.trapz(e, t) / T          # (1/T) * integral e(t) dt
+    e_inf  = np.max(e)
+    e_rms  = np.sqrt(np.trapz(e**2, t) / T)
+    return t, e, e_mean, e_inf, e_rms
+
+def spatial_L2_error(p_rom, p_fom, V=None):
+    """
+    Relative L2 error of the power-density distribution at a fixed time.
+    p_rom, p_fom : per-cell power density (arrays of length n_cells)
+    V            : per-cell volume (array of length n_cells)
+    """
+    p_rom = np.asarray(p_rom, dtype=float)
+    p_fom = np.asarray(p_fom, dtype=float)
+    V = np.ones_like(p_fom) if V is None else np.asarray(V, dtype=float)
+    num = np.sqrt(np.sum((p_rom - p_fom)**2 * V))
+    den = np.sqrt(np.sum(p_fom**2 * V))
+    return num / den
+
+def spatial_L2_error_timeavg(t_fom, lp_fom, t_rom, lp_rom, V=None):
+    """
+    Error L2 espacial a lo largo del transitorio.
+    """
+    t_fom  = np.asarray(t_fom,  dtype=float)
+    lp_fom = np.asarray(lp_fom, dtype=float)      # (n_time_fom, n_cells)
+    t_rom  = np.asarray(t_rom,  dtype=float)
+    lp_rom = np.asarray(lp_rom, dtype=float)      # (n_time_rom, n_cells)
+
+    # --- comprobacion de dimensiones (causa mas probable del bug) ---
+    if lp_fom.ndim != 2 or lp_rom.ndim != 2:
+        raise ValueError(f"lp_fom {lp_fom.shape} y lp_rom {lp_rom.shape} deben ser 2D (n_time, n_cells)")
+    if lp_fom.shape[1] != lp_rom.shape[1]:
+        raise ValueError(
+            f"Numero de celdas distinto: FOM={lp_fom.shape[1]}, ROM={lp_rom.shape[1]}. "
+            "El error L2 espacial requiere la misma malla de celdas.")
+
+    n_cells = lp_fom.shape[1]
+    V = np.ones(n_cells) if V is None else np.asarray(V, dtype=float)
+
+    # restringir al solapamiento temporal
+    t_min = max(t_fom[0], t_rom[0])
+    t_max = min(t_fom[-1], t_rom[-1])
+    mask  = (t_fom >= t_min) & (t_fom <= t_max)
+    t_common = t_fom[mask]
+
+    # interpolar la distribucion del ROM a los instantes comunes (celda a celda)
+    lp_rom_i = np.zeros((t_common.size, n_cells))     # zeros, NO empty
+    for c in range(n_cells):
+        lp_rom_i[:, c] = np.interp(t_common, t_rom, lp_rom[:, c])
+
+    lp_fom_c = lp_fom[mask]
+
+    # normalizar por la suma total de cada instante para comparar
+    # solo la forma espacial, eliminando diferencias de escala FOM vs ROM
+    fom_sum = lp_fom_c.sum(axis=1, keepdims=True)
+    rom_sum = lp_rom_i.sum(axis=1, keepdims=True)
+    fom_sum = np.where(fom_sum > 1e-30, fom_sum, 1.0)
+    rom_sum = np.where(rom_sum > 1e-30, rom_sum, 1.0)
+    lp_fom_n = lp_fom_c / fom_sum
+    lp_rom_n = lp_rom_i / rom_sum
+
+    # error L2 espacial en cada instante (sobre distribuciones normalizadas)
+    num = np.sqrt(np.sum((lp_rom_n - lp_fom_n)**2 * V, axis=1))
+    den = np.sqrt(np.sum(lp_fom_n**2 * V, axis=1))
+
+    # proteger instantes con norma nula (p.ej. arranque con distribucion cero)
+    good = den > 1e-30
+    if not np.any(good):
+        raise ValueError("Denominador nulo en todos los instantes: revisa el parseo de lp_fom.")
+    eL2_t    = np.full(t_common.shape, np.nan)
+    eL2_t[good] = num[good] / den[good]
+
+    # promedios solo sobre instantes validos
+    t_g  = t_common[good]
+    e_g  = eL2_t[good]
+    T    = t_g[-1] - t_g[0]
+    e_bar_L2 = np.trapz(e_g, t_g) / T
+    e_max_L2 = np.max(e_g)
+
+    return t_common, eL2_t, e_bar_L2, e_max_L2
+
+def power_at_time(t_array, local_pow, t_star, method='linear'):
+    """
+    Distribución de potencia por celda interpolada en el instante t_star.
+    t_array   : tiempos guardados (longitud n_time)
+    local_pow : (n_time, n_cells), local_pow[t] = potencia por celda en t_array[t]
+    Devuelve un vector de longitud n_cells.
+    """
+    t_array = np.asarray(t_array, dtype=float)
+    P = np.asarray(local_pow, dtype=float)        # (n_time, n_cells)
+
+    if method == 'cubic':
+        # un solo spline vectorizado sobre el eje tiempo (axis=0)
+        spl = CubicSpline(t_array, P, axis=0)
+        return spl(t_star)                        # (n_cells,)
+    else:
+        # interpolación lineal celda a celda, vectorizada
+        # np.interp no admite 2D, así que interpolamos cada columna
+        return np.array([np.interp(t_star, t_array, P[:, c])
+                         for c in range(P.shape[1])])
 
 def parse_fluxes_parcs_out_1D(fileout):
     """ """

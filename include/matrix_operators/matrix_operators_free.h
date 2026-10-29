@@ -17,6 +17,8 @@
 #include <deal.II/lac/affine_constraints.h>
 #include <deal.II/lac/block_vector.h>
 #include <deal.II/lac/petsc_vector.h>
+#include <deal.II/lac/la_parallel_vector.h>
+#include <deal.II/lac/la_parallel_block_vector.h>
 
 #include <deal.II/meshworker/dof_info.h>
 #include <deal.II/meshworker/integration_info.h>

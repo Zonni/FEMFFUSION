@@ -40,6 +40,9 @@ set Output_Flag         = false
 # True/false - Print the grid in .eps
 set Print_Grid_Flag     = false
 
+# True/false - Print the .time with the solutions by time-step
+set Print_Time_Dependent_Data = true
+
 # Number of Refinements per cell in the .vtk output
 set Out_Refinements     = 0
 
@@ -53,7 +56,7 @@ set XSECS_Filename      = 3D_Langenbuch/3D_Langenbuch.xsec
 
 
 # Filename where will be written the output
-set Output_Filename     = 3D_Langenbuch/3D_Langenbuch_ds_bars_fe3.out
+set Output_Filename     = 3D_Langenbuch/3D_Langenbuch_ds_fe3.out
 
 # Filename where it is defined the movement of the banks
 set Bar_Filename     = 3D_Langenbuch/3D_Langenbuch.bar

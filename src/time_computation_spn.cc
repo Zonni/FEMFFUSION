@@ -1157,7 +1157,7 @@ template <int dim, int n_fe_degree>
     double sigma_f;
 
 // Initialize and resize the vectors where it is stored the solution
-    power_per_assembly.resize(1, std::vector<double>(n_cells_out, 0.0));
+    power_per_assembly.assign(1, std::vector<double>(n_cells_out, 0.0));
     std::vector<double> volume_per_assembly(n_cells_out, 0.0);
     std::vector<double> local_phi(n_q_points);
     std::vector<double> radial_power;

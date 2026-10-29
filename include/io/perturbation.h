@@ -148,6 +148,8 @@ template <int dim>
 
     void restore_indices ();
 
+    void apply_xs_amplitude (double alpha);
+
     private:
 
     /**

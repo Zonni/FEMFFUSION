@@ -7,6 +7,7 @@
 
 #include <deal.II/dofs/dof_handler.h>
 #include <deal.II/dofs/dof_iterator_selector.h>
+#include <deal.II/grid/tria_description.h>
 
 #include <deal.II/fe/fe_q.h>
 #include <deal.II/fe/fe_dgq.h>
@@ -116,8 +117,7 @@ template <int dim, int n_fe_degree>
     const std::vector<double> &albedo_factors)
   {
     this->locally_owned_dofs = dof_handler.locally_owned_dofs();
-    DoFTools::extract_locally_relevant_dofs(dof_handler,
-      this->locally_relevant_dofs);
+    this->locally_relevant_dofs=DoFTools::extract_locally_relevant_dofs(dof_handler);
 
     // Build Transport mass coefficients
     coeffs_L.resize(n_groups,
@@ -226,8 +226,7 @@ template <int dim, int n_fe_degree>
   {
 
     this->locally_owned_dofs = dof_handler.locally_owned_dofs();
-    DoFTools::extract_locally_relevant_dofs(dof_handler,
-      this->locally_relevant_dofs);
+    this->locally_relevant_dofs = DoFTools::extract_locally_relevant_dofs(dof_handler);
 
     // Build Transport mass coefficients
     coeffs_L.resize(n_groups,

@@ -15,6 +15,7 @@
 *.tar
 *.zip
 *.npz
+*.time
 
 
 # Eclipse and cache files and folders #

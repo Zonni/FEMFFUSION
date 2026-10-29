@@ -595,7 +595,7 @@ template <int dim>
     {
       for (unsigned int p = 1; p < bar_points[bar].size(); p++)
       {
-        if (bar_points[bar][p].first - sim_time > -1e-8)
+        if (bar_points[bar][p].first - sim_time > -1e-14)
         {
           AssertRelease(
             bar_points[bar][p].first - bar_points[bar][p - 1].first
@@ -2052,6 +2052,49 @@ template <int dim>
      std::cout << " delta_sigma_s12 " << delta_Sigma_s12 << std::endl;
      */
   }
+
+/**
+ * @brief Apply XS perturbation for a given amplitude factor alpha in [-range, range].
+ *        Equivalent to modify_xsec (Sinus) with sin_t = alpha.
+ *        Used for parametric snapshot generation without time integration.
+ */
+template <int dim>
+void Perturbation<dim>::apply_xs_amplitude (double alpha)
+{
+  AssertRelease(mat_changing.size() == 1,
+    "apply_xs_amplitude: only one perturbed material supported");
+  AssertRelease(materials.get_n_groups() == 2,
+    "apply_xs_amplitude: only implemented for 2 energy groups");
+  AssertRelease(xs_pert_name == "all",
+    "apply_xs_amplitude: only implemented for xs_pert_name == all");
+
+  const unsigned int pert_mat = mat_changing[0];
+
+  // Same amplitude decomposition as modify_xsec / Sinus
+  const double delta_Sigma_r1 = amplitudes[1] + amplitudes[3];
+  const double delta_Sigma_r2 = amplitudes[5];
+
+  // --- Group 1 (fast) ---
+  materials.set_sigma_t (init_sigma_t [0][pert_mat] + amplitudes[0] * alpha, 0, pert_mat);
+  materials.set_sigma_tr(init_sigma_tr[0][pert_mat] + amplitudes[0] * alpha, 0, pert_mat);
+  materials.set_sigma_r (init_sigma_r [0][pert_mat] + delta_Sigma_r1 * alpha, 0, pert_mat);
+  materials.set_nu_sigma_f(init_nu_sigma_f[0][pert_mat]
+                           + amplitudes[2] / materials.keff * alpha, 0, pert_mat);
+
+  // --- Group 2 (thermal) ---
+  materials.set_sigma_t (init_sigma_t [1][pert_mat] + amplitudes[4] * alpha, 1, pert_mat);
+  materials.set_sigma_tr(init_sigma_tr[1][pert_mat] + amplitudes[4] * alpha, 1, pert_mat);
+  materials.set_sigma_r (init_sigma_r [1][pert_mat] + delta_Sigma_r2 * alpha, 1, pert_mat);
+  materials.set_nu_sigma_f(init_nu_sigma_f[1][pert_mat]
+                           + amplitudes[6] / materials.keff * alpha, 1, pert_mat);
+
+  // --- Scattering group 1 -> 2 ---
+  materials.set_sigma_s(init_sigma_s[0][1][pert_mat]
+                        + amplitudes[3] * alpha, 0, 1, pert_mat);
+}
+
+// Explicit instantiations (al final del fichero, junto a las demás)
+// template class Perturbation<1>; etc. ya están
 
 template class Perturbation<1> ;
 template class Perturbation<2> ;

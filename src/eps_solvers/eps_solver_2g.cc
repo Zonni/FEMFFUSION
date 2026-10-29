@@ -573,11 +573,11 @@ template <int dim, int n_fe_degree>
     for (unsigned int i = 0; i < n_eigenvalues; ++i)
     {
       VecDot(phi[i], phi[i], &s);
-      Assert(abs(s-1.0)<1e-15, ExcMessage("Error in gram-schmidt."))
+      Assert(abs(s-1.0)<1e-15, ExcMessage("Error in gram-schmidt."));
       for (unsigned int j = i + 1; j < n_eigenvalues; ++j)
       {
         VecDot(phi[i], phi[j], &s);
-        Assert(abs(s-0.0)<1e-15, ExcMessage("Error in gram-schmidt."))
+        Assert(abs(s-0.0)<1e-15, ExcMessage("Error in gram-schmidt."));
       }
 
     }

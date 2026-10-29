@@ -427,14 +427,14 @@ template <int dim, int n_fe_degree>
       mass_mf[row][col]->vmult_add(dst, src);
     else
     {
-      PETScWrappers::MPI::Vector dst_vec(comm, dst.size(), dst.local_size());
-      PETScWrappers::MPI::Vector src_vec(comm, src.size(), src.local_size());
+      PETScWrappers::MPI::Vector dst_vec(comm, dst.size(), dst.locally_owned_size());
+      PETScWrappers::MPI::Vector src_vec(comm, src.size(), src.locally_owned_size());
       copy_to_Vector(src_vec, src);
       matrix_csr[row][col]->vmult_add(dst_vec, src_vec);
       // dst = dst_vec;
       LinearAlgebra::ReadWriteVector<double> rwv(dst_vec.locally_owned_elements());
-      rwv.import(dst_vec, VectorOperation::insert);
-      dst.import(rwv, VectorOperation::insert);
+      rwv.import_elements(dst_vec, VectorOperation::insert);
+      dst.import_elements(rwv, VectorOperation::insert);
 
     }
   }
@@ -456,15 +456,15 @@ template <int dim, int n_fe_degree>
       mass_mf[row][col]->vmult(dst, src);
     else
     {
-      PETScWrappers::MPI::Vector dst_vec(comm, dst.size(), dst.local_size());
-      PETScWrappers::MPI::Vector src_vec(comm, src.size(), src.local_size());
+      PETScWrappers::MPI::Vector dst_vec(comm, dst.size(), dst.locally_owned_size());
+      PETScWrappers::MPI::Vector src_vec(comm, src.size(), src.locally_owned_size());
       copy_to_Vector(src_vec, src);
       matrix_csr[row][col]->vmult(dst_vec, src_vec);
       // dst = dst_vec;
 
       LinearAlgebra::ReadWriteVector<double> rwv(dst_vec.locally_owned_elements());
-      rwv.import(dst_vec, VectorOperation::insert);
-      dst.import(rwv, VectorOperation::insert);
+      rwv.import_elements(dst_vec, VectorOperation::insert);
+      dst.import_elements(rwv, VectorOperation::insert);
     }
   }
 

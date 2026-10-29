@@ -49,17 +49,30 @@ if (problem == '3D_ACP'):
     # file_nos_1 = 'ref_td/1D_UOX_FA_ex2_diff.outnos'  
     # file_sta_1 = 'ref_td/1D_UOX_FA_ex2_diff_sintout'  
     # file_nos_1 = 'ref_td/1D_UOX_FA_ex2_diff_sint.outnos' 
-    file_sta_1 = 'ACP100_FE2_td_FOM.out'  
-    file_nos_1 = 'ACP100_FE2_td_FOM.out.nos'
+    # file_sta_1 = 'ACP100_FE2_td_1cell_FOM.out'  
+    # file_nos_1 = 'ACP100_FE2_td_1cell_FOM.out.nos'
     
-    file_sta_2 = 'ACP100_FE2_td_ROM5.out'  
-    file_nos_2 = 'ACP100_FE2_td_ROM5.out.nos'
-    file_sta_3 = 'ACP100_FE2_td_ROM10.out'  
-    file_nos_3 = 'ACP100_FE2_td_ROM10.out.nos'
-    file_sta_4 = 'ACP100_FE2_td_ROM50.out'  
-    file_nos_4 = 'ACP100_FE2_td_ROM50.out.nos'
-    file_sta_5 = 'ACP100_FE2_td_ROM100.out'  
-    file_nos_5 = 'ACP100_FE2_td_ROM100.out.nos'
+    file_sta_1 = 'ACP100_FE2_td_XSS_FOM.out'  
+    file_nos_1 = 'ACP100_FE2_td_XSS_FOM.out.nos'
+    file_sta_2 = 'ACP100_FE2_td_XSS_rom_static_xs_sampled.out'  
+    file_nos_2 = 'ACP100_FE2_td_XSS_rom_static_xs_sampled.out.nos'
+    
+    # file_sta_2 = 'ACP100_FE2_td_1cell_rom_dynamic_3.out'  
+    # file_nos_2 = 'ACP100_FE2_td_1cell_rom_dynamic_3.out.nos'
+    # file_sta_3 = 'ACP100_FE2_td_1cell_rom_dynamic_5.out'  
+    # file_nos_3 = 'ACP100_FE2_td_1cell_rom_dynamic_5.out.nos'
+    # file_sta_4 = 'ACP100_FE2_td_1cell_rom_dynamic_8.out'  
+    # file_nos_4 = 'ACP100_FE2_td_1cell_rom_dynamic_8.out.nos'
+    # file_sta_5 = 'ACP100_FE2_td_1cell_rom_dynamic_10.out'  
+    # file_nos_5 = 'ACP100_FE2_td_1cell_rom_dynamic_10.out.nos'
+    
+    # file_sta_2 = 'ACP100_FE2_td_1cell_rom_dynamic.out'  
+    # file_nos_2 = 'ACP100_FE2_td_1cell_rom_dynamic.out.nos'
+    # file_sta_3 = 'ACP100_FE2_td_1cell_rom_static_time_sampled.out'  
+    # file_nos_3 = 'ACP100_FE2_td_1cell_rom_static_time_sampled.out.nos'
+    # file_sta_4 = 'ACP100_FE2_td_1cell_rom_static_xs_sampled.out'  
+    # file_nos_4 = 'ACP100_FE2_td_1cell_rom_static_xs_sampled.out.nos'
+
     
     # files_sta_td = [file_sta_3]
     # files_nos_td = [file_nos_3]
@@ -67,16 +80,21 @@ if (problem == '3D_ACP'):
     # style_td = ['-', '--', '.-', '--', '.-']
     
     
-    # files_sta_td = [file_sta_1, file_sta_3]
-    # files_nos_td = [file_nos_1, file_nos_3]
-    # labels_td = ['TD-FOM', 'TD-ROM-10']
+    files_sta_td = [file_sta_1, file_sta_2]
+    files_nos_td = [file_nos_1, file_nos_2]
+    labels_td = ['TD-FOM', 'TD-ROM']
+    style_td = ['-', '--', '.-', '--', '.-']
+    
+    
+    # files_sta_td = [file_sta_1,  file_sta_3, file_sta_4, file_sta_5]
+    # files_nos_td = [file_nos_1,  file_nos_3, file_nos_4, file_nos_5]
+    # labels_td = ['TD-FOM', 'TD-ROM-10',  'TD-ROM-50', 'TD-ROM-100']
     # style_td = ['-', '--', '.-', '--', '.-']
     
-    
-    files_sta_td = [file_sta_1,  file_sta_3, file_sta_4, file_sta_5]
-    files_nos_td = [file_nos_1,  file_nos_3, file_nos_4, file_nos_5]
-    labels_td = ['TD-FOM', 'TD-ROM-10',  'TD-ROM-50', 'TD-ROM-100']
-    style_td = ['-', '--', '.-', '--', '.-']
+    # files_sta_td = [file_sta_1, file_sta_2,  file_sta_3, file_sta_4]
+    # files_nos_td = [file_nos_1, file_nos_2,  file_nos_3, file_nos_4]
+    # labels_td = ['TD-FOM', 'TD-ROM-dynamic',  'TD-ROM-static_time_sampled', 'TD-ROM-static_xs_sampled']
+    # style_td = ['-', '--', '.-', '--', '.-']
 
 # n_files_fd = len(files_fd)
 n_files_td = len(files_nos_td)
@@ -255,15 +273,86 @@ for i in range(n_files_td):
 #  ERRORS
 for i in range(n_files_td):
     # Formula: RMS = sqrt(mean((y1 - y2)^2))
-    errors_g1 = (noise_interp_g1[i] - noise_interp_g1[0]) /np.max(noise_interp_g1[0])
+    errors_g1 = (noise_interp_g1[i] - noise_interp_g1[0]) \
+            / np.max(np.abs(noise_interp_g1[0]))
     rms_error_g1 = np.sqrt(np.mean(errors_g1**2)) * 100
     
-    errors_g2 = (noise_interp_g2[i] - noise_interp_g2[0]) / np.max(noise_interp_g2[0])
+    errors_g2 = (noise_interp_g2[i] - noise_interp_g2[0]) \
+            / np.max(np.abs(noise_interp_g2[0]))
     rms_error_g2 = np.sqrt(np.mean(errors_g2**2)) * 100
     
     # Using f-strings to format to 2 decimal places
     print(f"{i}  RMS ERROR G1: {rms_error_g1:.2f}  RMS ERROR G2: {rms_error_g2:.2f}")
-    
+
+
+#%% ---------------------------------------------------------------------------
+#  L2 SPATIAL ERROR OF THE NOISE FIELD (time-averaged, robust normalisation)
+
+n_cells_per_plane = n_cells // nz  # = 97
+
+print("\n--- Noise L2 spatial error ---")
+eL2_noise_g1 = []
+eL2_noise_g2 = []
+
+for i in range(n_files_td):
+    diff_g1 = noise_interp_g1[i] - noise_interp_g1[0]  # (n_cells, n_steps)
+    diff_g2 = noise_interp_g2[i] - noise_interp_g2[0]
+
+    # Normalise by global max of FOM noise (avoids division by ~0 at t=0,1,2,3)
+    global_max_g1 = np.max(np.abs(noise_interp_g1[0]))
+    global_max_g2 = np.max(np.abs(noise_interp_g2[0]))
+
+    # L2 norm over cells at each time step
+    eL2_t_g1 = np.sqrt(np.mean(diff_g1**2, axis=0)) / global_max_g1
+    eL2_t_g2 = np.sqrt(np.mean(diff_g2**2, axis=0)) / global_max_g2
+
+    ebar_g1 = np.mean(eL2_t_g1) * 100
+    ebar_g2 = np.mean(eL2_t_g2) * 100
+    emax_g1 = np.max(eL2_t_g1) * 100
+    emax_g2 = np.max(eL2_t_g2) * 100
+
+    eL2_noise_g1.append(ebar_g1)
+    eL2_noise_g2.append(ebar_g2)
+
+    print(f"{labels_td[i]:<35s}  "
+          f"G1: ebar={ebar_g1:.3f}%  emax={emax_g1:.3f}%  |  "
+          f"G2: ebar={ebar_g2:.3f}%  emax={emax_g2:.3f}%")
+
+#%% ---------------------------------------------------------------------------
+#  SPATIAL ERROR MAP --- RMS per cell, plane 7 (perturbation plane)
+
+perturbed_plane = 6  # 0-indexed (plane 7 in 1-indexed)
+
+fig, axes = plt.subplots(1, 2, figsize=(10, 4))
+
+for g, (ax, noise_interp, label_g) in enumerate(
+        zip(axes,
+            [noise_interp_g1, noise_interp_g2],
+            ['Group 1 (fast)', 'Group 2 (thermal)'])):
+
+    for i in range(1, n_files_td):
+        diff = noise_interp[i] - noise_interp[0]  # (n_cells, n_steps)
+
+        # RMS over time for each cell, normalised by global max of FOM noise
+        global_max = np.max(np.abs(noise_interp[0]))
+        rms_per_cell = np.sqrt(np.mean(diff**2, axis=1)) / global_max * 100
+
+        # Extract perturbed plane
+        idx0 = perturbed_plane * n_cells_per_plane
+        idx1 = idx0 + n_cells_per_plane
+        rms_plane = rms_per_cell[idx0:idx1]
+
+        ax.plot(np.arange(n_cells_per_plane), rms_plane,
+                label=labels_td[i])
+
+    ax.set_xlabel('Cell index (plane 7)')
+    ax.set_ylabel('RMS noise error (\%)')
+    ax.set_title(label_g)
+    ax.legend(fontsize=9)
+    ax.grid(True)
+
+fig.tight_layout()
+fig.savefig(problem + '_noise_spatial_error.pdf', format='pdf')    
 #%% ---------------------------------------------------------------------------
 #  PLOTS
 
@@ -271,7 +360,10 @@ for i in range(n_files_td):
 # plane = 8 # 7th plane 
 # n_cells_per_plane = 97
 
-middle_cell_idx = int((8*97+97/2) / 2)   
+n_cells_per_plane = n_cells // nz  # = 97
+middle_cell_idx = perturbed_plane * n_cells_per_plane + n_cells_per_plane // 2
+
+# middle_cell_idx = int((8*97+97/2) / 2)   
 # 
 # middle_cell_idx = int(n_cells/2) # cell 679 
 #  Noise 1
@@ -309,5 +401,57 @@ ax1.grid(True)
 ax1.set_xlabel("Time (s)")
 ax1.set_ylabel("Time domain Noise, $\delta\phi_1$")
 fig1.savefig(problem + "_td_g1.png", format='png')
+
+#%% ---------------------------------------------------------------------------
+#  PLOT: RMS spatial error over time, per group
+
+global_max_g1 = np.max(np.abs(noise_interp_g1[0]))
+global_max_g2 = np.max(np.abs(noise_interp_g2[0]))
+
+fig, axes = plt.subplots(1, 2, figsize=(10, 4), sharey=False)
+
+for i in range(1, n_files_td):
+    diff_g1 = noise_interp_g1[i] - noise_interp_g1[0]  # (n_cells, n_steps)
+    diff_g2 = noise_interp_g2[i] - noise_interp_g2[0]
+
+    # RMS over cells at each time step
+    eRMS_t_g1 = np.sqrt(np.mean(diff_g1**2, axis=0)) / global_max_g1 * 100
+    eRMS_t_g2 = np.sqrt(np.mean(diff_g2**2, axis=0)) / global_max_g2 * 100
+
+    axes[0].plot(sim_time[0], eRMS_t_g1,
+                 label=labels_td[i], color=colors[i])
+    # axes[1].plot(sim_time[0], eRMS_t_g2,
+    #               label=labels_td[i], color=colors[i])
+
+for ax, g in zip(axes, ['Group 1 (fast)', 'Group 2 (thermal)']):
+    ax.set_xlabel('Time (s)')
+    ax.set_ylabel(r'RMS noise error (\%)')
+    ax.set_title(g)
+    ax.legend(fontsize=9)
+    ax.grid(True)
+
+fig.tight_layout()
+fig.savefig(problem + '_noise_rms_error_time_g1.pdf', format='pdf')
+
+#%% ---------------------------------------------------------------------------
+#  PLOT: RMS spatial error over time, per group
+
+fig, ax = plt.subplots(figsize=(7, 4))
+
+global_max_g1 = np.max(np.abs(noise_interp_g1[0]))
+
+for i in range(1, n_files_td):
+    diff_g1 = noise_interp_g1[i] - noise_interp_g1[0]
+    eRMS_t_g1 = np.sqrt(np.mean(diff_g1**2, axis=0)) / global_max_g1 * 100
+    ax.plot(sim_time[0], eRMS_t_g1,
+            label=labels_td[i], color=colors[i])
+
+ax.set_xlabel('Time (s)')
+ax.set_ylabel(r'RMS noise error (\%)')
+ax.set_title('Group 1 (fast)')
+ax.legend(fontsize=10)
+ax.grid(True)
+fig.tight_layout()
+fig.savefig(problem + '_noise_rms_error_time_g1.pdf', format='pdf')
 
 

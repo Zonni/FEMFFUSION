@@ -17,7 +17,7 @@
 #include <deal.II/grid/grid_out.h>
 #include <deal.II/grid/manifold_lib.h>
 #include <deal.II/grid/grid_tools.h>
-#include <deal.II/grid/grid_reordering.h>
+
 
 #include <deal.II/dofs/dof_handler.h>
 #include <deal.II/numerics/data_out.h>
@@ -112,7 +112,7 @@ template <int dim, int spacedim>
 
     // reorder the cells to ensure that they satisfy the convention for
     // edge and face directions
-    GridReordering<dim, spacedim>::reorder_cells(cells, true);
+    GridTools::consistently_order_cells(cells);
     result.clear();
     result.create_triangulation(vertices, cells, subcell_data);
 
@@ -871,7 +871,7 @@ template <int dim>
             }
             default:
               {
-              Assert(false, ExcNotImplemented())
+              Assert(false, ExcNotImplemented());
               break;
             }
           }

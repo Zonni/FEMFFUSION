@@ -102,7 +102,8 @@ template <int dim, int n_fe_degree>
       materials(static_problem.materials),
       perturbation(static_problem.perturbation),
       V(comm, dof_handler, constraints),
-      F(comm, dof_handler, constraints),
+      BF(comm, dof_handler, constraints),
+	  F(comm, dof_handler, constraints),
       L(comm, dof_handler, constraints),
       XBF(n_prec, SpectraBetaFission<dim, n_fe_degree>(comm, dof_handler, constraints)),
       assem_per_dim(materials.assem_per_dim)
@@ -133,7 +134,7 @@ template <int dim, int n_fe_degree>
 
     std::string geo_type = prm.get("Geometry_Type");
 
-    matrixfree_type_time = full_allocated; // FIXME
+    matrixfree_type_time = full_matrixfree; // FIXME
     get_enum_from_options("-matrixfree_type_time", matrixfree_type_time);
     //matrixfree_type = static_problem.matrixfree_type;
 
@@ -153,7 +154,10 @@ template <int dim, int n_fe_degree>
     // Solver parameters
     init_delta_t = prm.get_double("Time_Delta");
     get_double_from_options("-init_delta_t", init_delta_t);
-    tol_time_ksp = 1e-6;
+    delta_time_ts_solver=prm.get_double("Delta_Time_Ts_Solver");
+	get_double_from_options("-delta_time_ts_solver", delta_time_ts_solver);
+    tol_time_ksp = 1e-11;
+    last_dt = 1e-3;
 
     step = 0;
     print_step = 1;
@@ -161,6 +165,7 @@ template <int dim, int n_fe_degree>
     power_total = 0.0;
     aux_power = 1.0;
     step_rom = 0;
+    total_its_solver=0;
 
     verbose_cout << "Initialize the perturbation class in ROMKinetics" << std::endl;
 
@@ -183,12 +188,25 @@ template <int dim, int n_fe_degree>
     parse_vector(prm.get("ROM_Type_Snapshots"), type_snapshots);
     n_sets_snap = type_snapshots.size();
 
+    // For static_bank_swept bars
+    parse_matrix(prm.get("ROM_Banks"), banks_per_set, 0, 0);
+    std::cout<<"hola"<<std::endl;
+    if (!banks_per_set.empty()){
+    unsigned int max_bank = 0;
+        for (const auto &grupo : banks_per_set)
+          for (unsigned int b : grupo)
+            max_bank = std::max(max_bank, b);
+
+    sweep_cache.assign(max_bank + 1, std::vector<PETScWrappers::MPI::BlockVector>(init_n_snap));
+    sweep_done.assign (max_bank + 1, std::vector<bool>(init_n_snap, false));
+    }
+
     // Get snapshots
     snapshots.resize(n_sets_snap);
     for (unsigned int ns = 0; ns < type_snapshots.size(); ns++)
     {
       cout << "   Snapshots type " << type_snapshots[ns] << std::endl;
-      get_snapshots(prm, static_problem, snapshots[ns], type_snapshots[ns]);
+      get_snapshots(prm, static_problem, snapshots[ns], type_snapshots[ns],ns);
       //std::cout << "snapshots size: " << ns << ": " << snapshots[ns].size() << std::endl;
     }
 
@@ -208,6 +226,11 @@ template <int dim, int n_fe_degree>
 
     rom_group_wise = prm.get("ROM_Group_Wise");
     get_string_from_options("-rom_group_wise", rom_group_wise);
+    if (rom_group_wise == "Group_Wise")
+    AssertRelease(n_groups==2,"Group Wise POD is only implemented for two energy groups.");
+
+    n_blocks_amplitudes = (rom_group_wise == "Group_Wise") ? n_groups : 1;
+
 
     // Remove precursors
     if (prec_flag == false)
@@ -226,86 +249,35 @@ template <int dim, int n_fe_degree>
       this->run();
   }
 
-/**
- *
- */
+
 template <int dim, int n_fe_degree>
   void ROMKinetics<dim, n_fe_degree>::get_snapshots (
     ParameterHandler &prm,
     StaticDiffusion<dim, n_fe_degree> &static_problem,
     std::vector<PETScWrappers::MPI::BlockVector> &_snapshots,
-    std::string t_snap)
+    std::string t_snap, unsigned int set_idx)
   {
 
-    if (t_snap == "modes")
-      get_snapshots_modes(static_problem, _snapshots);
-    else if (t_snap == "bank1")
-    {
-      get_snapshots_bar(static_problem, _snapshots, 1);
+    if (t_snap == "static_bank_swept") {
+      AssertRelease(set_idx < banks_per_set.size() && !banks_per_set[set_idx].empty(),
+        "ROM_Banks does not have banks for static_bank_swept.");
+      for (unsigned int bank : banks_per_set[set_idx])
+        get_snapshots_static_bank_swept(static_problem, _snapshots, bank);
     }
-    else if (t_snap == "bank2")
-    {
-      get_snapshots_bar(static_problem, _snapshots, 2);
-    }
-    else if (t_snap == "bank12")
-    {
-      Timer _time_bank12;
-      _time_bank12.start();
-      get_snapshots_bar(static_problem, _snapshots, 1);
-      get_snapshots_bar(static_problem, _snapshots, 2);
-      std::cout << "Time bank 12: " << _time_bank12.cpu_time() << std::endl;
-    }
-    else if (t_snap == "bank6")
-    {
-      get_snapshots_bar(static_problem, _snapshots, 6);
-    }
-    else if (t_snap == "bank135")
-    {
-      get_snapshots_bar(static_problem, _snapshots, 1);
-      get_snapshots_bar(static_problem, _snapshots, 3);
-      get_snapshots_bar(static_problem, _snapshots, 5);
-    }
-    else if (t_snap == "bank123")
-    {
-      get_snapshots_bar(static_problem, _snapshots, 1);
-      get_snapshots_bar(static_problem, _snapshots, 2);
-      get_snapshots_bar(static_problem, _snapshots, 3);
-    }
-    else if (t_snap == "bank1356")
-    {
-      get_snapshots_bar(static_problem, _snapshots, 1);
-      get_snapshots_bar(static_problem, _snapshots, 3);
-      get_snapshots_bar(static_problem, _snapshots, 5);
-      get_snapshots_bar(static_problem, _snapshots, 6);
-    }
-    else if (t_snap == "bank123456")
-    {
-      get_snapshots_bar(static_problem, _snapshots, 1);
-      get_snapshots_bar(static_problem, _snapshots, 2);
-      get_snapshots_bar(static_problem, _snapshots, 3);
-      get_snapshots_bar(static_problem, _snapshots, 4);
-      get_snapshots_bar(static_problem, _snapshots, 5);
-      get_snapshots_bar(static_problem, _snapshots, 6);
-    }
-    else if (t_snap == "bank12_ihs")
-    {
-      get_snapshots_bar_ihs(static_problem, _snapshots);
-    }
-    else if (t_snap == "bank12_time")
-    {
-      // Solve static problems each time step
-      get_snapshots_bar_time_variation(static_problem, _snapshots);
-    }
+    else if (t_snap == "static_time_sampled")
+      get_snapshots_static_time_sampled(static_problem, _snapshots);
+    else if (t_snap == "static_bank_ihs")
+      get_snapshots_static_bank_ihs(static_problem, _snapshots);
+    else if (t_snap == "dynamic")
+      get_snapshots_dynamic(prm, static_problem, _snapshots);
+    else if (t_snap == "modes")
+      get_snapshots_static_modes(static_problem, _snapshots);
+    else if (t_snap == "static_xs_sampled")
+      get_snapshots_static_xs_sampled(static_problem, _snapshots);
+
+    // FIXME
     else if (t_snap == "static_time")
-    {
-      // Solve static problems with large time-steps for ramps
-      get_snapshots_static_time(static_problem, _snapshots);
-    }
-    else if (t_snap == "time_dyn")
-    {
-      // Solve the time dependent problem with large time-steps
-      get_snapshots_time_dyn(prm, static_problem, _snapshots);
-    }
+    	get_snapshots_static_time_function(static_problem, _snapshots);
     else if (t_snap == "ramp_time_mat1")
     {
       // Static Snapshots moving the Material_Changing[0] from 0s to Cut_Time
@@ -338,16 +310,14 @@ template <int dim, int n_fe_degree>
         perturbation.mat_changing[1], 1);
     }
     else
-    {
-      AssertRelease(false, "Invalid type of Snapshots");
-    }
+      AssertRelease(false, "Invalid type of Snapshots: " + t_snap);
   }
 
 /**
  *
  */
 template <int dim, int n_fe_degree>
-  void ROMKinetics<dim, n_fe_degree>::get_snapshots_modes (
+  void ROMKinetics<dim, n_fe_degree>::get_snapshots_static_modes (
     StaticDiffusion<dim, n_fe_degree> &static_problem,
     std::vector<PETScWrappers::MPI::BlockVector> &_snapshots)
   {
@@ -365,148 +335,182 @@ template <int dim, int n_fe_degree>
     }
   }
 
-/**
- *
- */
 template <int dim, int n_fe_degree>
-  void ROMKinetics<dim, n_fe_degree>::get_snapshots_bar (
+  unsigned int ROMKinetics<dim, n_fe_degree>::reserve_snapshots (
+    std::vector<PETScWrappers::MPI::BlockVector> &_snapshots,
+    unsigned int n_new)
+  {
+    const unsigned int min_s = _snapshots.size();
+    _snapshots.resize(min_s + n_new);
+    for (unsigned int ns = min_s; ns < min_s + n_new; ns++)
+      _snapshots[ns].reinit(local_dofs_vector, comm);
+    return min_s;                       // index where the new snaps start
+  }
+
+template <int dim, int n_fe_degree>
+  void ROMKinetics<dim, n_fe_degree>::solve_and_store_snapshot (
+    StaticDiffusion<dim, n_fe_degree> &static_problem,
+    std::vector<PETScWrappers::MPI::BlockVector> &_snapshots,
+    unsigned int ns)
+  {
+    static_problem.cout.set_condition(false);
+    static_problem.show_eps_convergence = false;
+    static_problem.assemble_system_lambda();
+    static_problem.solve_eps();
+    static_problem.phi[0].compress(VectorOperation::insert);
+    _snapshots[ns] = static_problem.phi[0];
+    cout << "     Step " << ns << ", Eigenvalue: "<<std::setprecision(12)
+         << static_problem.eigenvalues[0] << std::endl;
+  }
+
+
+
+template <int dim, int n_fe_degree>
+  void ROMKinetics<dim, n_fe_degree>::get_snapshots_static_bank_swept (
     StaticDiffusion<dim, n_fe_degree> &static_problem,
     std::vector<PETScWrappers::MPI::BlockVector> &_snapshots,
     unsigned int bar_bank)
   {
-    unsigned int min_s_snap = _snapshots.size();
-    unsigned int max_s_snap = _snapshots.size() + init_n_snap;
-
-    _snapshots.resize(max_s_snap);
-    for (unsigned int ns = min_s_snap; ns < max_s_snap; ns++)
-      _snapshots[ns].reinit(local_dofs_vector, comm);
-
-    double bars_bottom_pos = 0.0;
     AssertRelease(init_n_snap > 1, "The number of snapshots must be greater than 1");
-    double step_bar = (perturbation.bars_top_pos - bars_bottom_pos)
-                      / (init_n_snap - 1);
+    const double bars_bottom_pos = 0.0;
+    const double step_bar = (perturbation.bars_top_pos - bars_bottom_pos)
+                            / (init_n_snap - 1);
+    const unsigned int bar_material = perturbation.bar_materials[bar_bank - 1];
 
-    unsigned int bar_material = perturbation.bar_materials[bar_bank - 1];
+    const unsigned int min_s = reserve_snapshots(_snapshots, init_n_snap);
 
-    for (unsigned int ns = min_s_snap; ns < max_s_snap; ns++)
+    for (unsigned int i = 0; i < init_n_snap; i++)
     {
+      const unsigned int ns = min_s + i;
 
-      unsigned int bar_pos_z = (ns - min_s_snap) * step_bar + bars_bottom_pos;
-      for (unsigned int plant_pos = 0;
-          plant_pos < perturbation.bars_position.size(); ++plant_pos)
+      if (sweep_done[bar_bank][i])
       {
-        if (perturbation.bars_position[plant_pos] == bar_bank)
-        {
-          perturbation.move_bar_volume_homogenized(plant_pos, bar_pos_z,
-            bar_material, bar_bank - 1);
-        }
+        // ya calculado en un bloque anterior -> reutilizar
+        _snapshots[ns] = sweep_cache[bar_bank][i];
+        cout << "     Step " << ns << ", Bank " << bar_bank
+             << " pos " << i << " (cacheado)" << std::endl;
       }
+      else
+      {
+        // calcular: mover banco, resolver estatico, guardar
+        unsigned int bar_pos_z = i * step_bar + bars_bottom_pos;   // unsigned, igual que antes
+        for (unsigned int plant_pos = 0;
+             plant_pos < perturbation.bars_position.size(); ++plant_pos)
+          if (perturbation.bars_position[plant_pos] == bar_bank)
+            perturbation.move_bar_volume_homogenized(plant_pos, bar_pos_z,
+              bar_material, bar_bank - 1);
 
-      static_problem.cout.set_condition(false);
-      static_problem.show_eps_convergence = false;
-      static_problem.assemble_system_lambda();
-      static_problem.solve_eps();
-      static_problem.phi[0].compress(VectorOperation::insert);
-      _snapshots[ns] = static_problem.phi[0];
-      cout << "     Step " << ns << ", Bar Position: " << bar_pos_z
-      << ", Eigenvalue: "
-      << static_problem.eigenvalues[0]
-      << std::endl;
+        solve_and_store_snapshot(static_problem, _snapshots, ns);
+
+        // guardar en cache para futuros bloques
+        sweep_cache[bar_bank][i] = _snapshots[ns];
+        sweep_done[bar_bank][i]  = true;
+      }
     }
-
-    n_snap = max_s_snap;
+    n_snap = _snapshots.size();
   }
 
-/**
- *
- */
 template <int dim, int n_fe_degree>
-  void ROMKinetics<dim, n_fe_degree>::get_snapshots_bar_ihs (
+  void ROMKinetics<dim, n_fe_degree>::get_snapshots_static_bank_ihs (
     StaticDiffusion<dim, n_fe_degree> &static_problem,
     std::vector<PETScWrappers::MPI::BlockVector> &_snapshots)
   {
-
     int n_bars = 2;
-    // IHS
     int duplication = 5;
     int seed = 17;
-    int *x;
     std::vector<std::vector<double>> sample_pos(n_bars,
       std::vector<double>(init_n_snap));
 
-    //
-    //  Get the points.
-    //
-    x = ihs(n_bars, init_n_snap, duplication, seed);
+    // Puntos IHS
+    int *x = ihs(n_bars, init_n_snap, duplication, seed);
     for (int d = 0; d < n_bars; d++)
       for (unsigned int i = 0; i < init_n_snap; i++)
-      {
         sample_pos[d][i] = static_cast<double>(x[n_bars * i + d]) / init_n_snap;
-      }
-
     delete[] x;
 
-    // Compute Snapshots
-    unsigned int min_s_snap = _snapshots.size();
-    unsigned int max_s_snap = _snapshots.size() + init_n_snap;
+    const unsigned int min_s = reserve_snapshots(_snapshots, init_n_snap);
 
-    _snapshots.resize(max_s_snap);
-    for (unsigned int ns = min_s_snap; ns < max_s_snap; ns++)
-      _snapshots[ns].reinit(local_dofs_vector, comm);
-
-    // for each snapshot
-    for (unsigned int ns = min_s_snap; ns < max_s_snap; ns++)
+    for (unsigned int ns = min_s; ns < min_s + init_n_snap; ns++)
     {
-      //for each bar bank
+      // ----
       for (unsigned int nb = 1; nb < static_cast<unsigned int>(n_bars) + 1; nb++)
       {
-
-        double bars_bottom_pos = 0.0;
-        unsigned int bar_material = perturbation.bar_materials[nb - 1];
-
-        unsigned int bar_pos_z = sample_pos[nb - 1][ns]
-                                 * (perturbation.bars_top_pos - bars_bottom_pos);
-
+        const double bars_bottom_pos = 0.0;
+        const unsigned int bar_material = perturbation.bar_materials[nb - 1];
+        unsigned int bar_pos_z = sample_pos[nb - 1][ns - min_s]
+                                         * (perturbation.bars_top_pos - bars_bottom_pos);
         std::cout << "bank_bar" << nb << "bar_pos: " << bar_pos_z << std::endl;
-
         for (unsigned int plant_pos = 0;
-            plant_pos < perturbation.bars_position.size(); ++plant_pos)
-        {
+             plant_pos < perturbation.bars_position.size(); ++plant_pos)
           if (perturbation.bars_position[plant_pos] == nb)
-          {
-            perturbation.move_bar_volume_homogenized(plant_pos,
-              bar_pos_z, bar_material, nb - 1);
-          }
-        }
+            perturbation.move_bar_volume_homogenized(plant_pos, bar_pos_z,
+              bar_material, nb - 1);
       }
+      // --------------------------------------------------------
 
-      static_problem.cout.set_condition(false);
-      static_problem.show_eps_convergence = false;
-      static_problem.assemble_system_lambda();
-      static_problem.solve_eps();
-      static_problem.phi[0].compress(VectorOperation::insert);
-      _snapshots[ns] = static_problem.phi[0];
-      cout << "     Step " << ns
-      << ", Eigenvalue: "
-      << static_problem.eigenvalues[0]
-      << std::endl;
-
+      solve_and_store_snapshot(static_problem, _snapshots, ns);
     }
-    n_snap = max_s_snap;
-
+    n_snap = _snapshots.size();
   }
 
 /**
  *
  */
 template <int dim, int n_fe_degree>
-  void ROMKinetics<dim, n_fe_degree>::get_snapshots_bar_time_variation (
+  void ROMKinetics<dim, n_fe_degree>::get_snapshots_static_time_sampled (
+    StaticDiffusion<dim, n_fe_degree> &static_problem,
+    std::vector<PETScWrappers::MPI::BlockVector> &_snapshots)
+  {
+    AssertRelease(init_n_snap > 1, "The number of snapshots must be greater than 1");
+
+    const unsigned int min_s = reserve_snapshots(_snapshots, init_n_snap);
+
+    for (unsigned int ns = min_s; ns < min_s + init_n_snap; ns++)
+    {
+      const double sample_time = (t_end - 0.0) / (init_n_snap - 1) * ns;
+//      perturbation.move_bars(sample_time);
+      perturbation.update_xsec(sample_time);
+      solve_and_store_snapshot(static_problem, _snapshots, ns);
+    }
+    n_snap = _snapshots.size();
+  }
+
+/*
+ *
+ */
+template <int dim, int n_fe_degree>
+  void ROMKinetics<dim, n_fe_degree>::get_snapshots_static_time_function (
+    StaticDiffusion<dim, n_fe_degree> &static_problem,
+    std::vector<PETScWrappers::MPI::BlockVector> &_snapshots)
+  {
+    AssertRelease(init_n_snap > 1, "The number of snapshots must be greater than 1");
+
+    const unsigned int min_s = reserve_snapshots(_snapshots, init_n_snap);
+
+    for (unsigned int ns = min_s; ns < min_s + init_n_snap; ns++)
+    {
+      const double sample_time = (t_end - 0.0) / (init_n_snap - 1) * ns;  // ns global, igual que el original
+      perturbation.apply_function_to_perturb(sample_time);
+//      static_problem.verbose_cout.set_condition(false);   //
+      solve_and_store_snapshot(static_problem, _snapshots, ns);
+    }
+    n_snap = _snapshots.size();
+  }
+
+/**
+ *
+ *
+ */
+template <int dim, int n_fe_degree>
+  void ROMKinetics<dim, n_fe_degree>::get_snapshots_dynamic (
+    ParameterHandler &prm,
     StaticDiffusion<dim, n_fe_degree> &static_problem,
     std::vector<PETScWrappers::MPI::BlockVector> &_snapshots)
   {
 
-    AssertRelease(init_n_snap > 1, "The number of snapshots must be greater than 1");
-    double sample_time;
+    AssertRelease(init_n_snap > 1,
+      "The number of snapshots must be greater than 1");
+    double sample_time_step;
 
     // Compute Snapshots
     unsigned int min_s_snap = _snapshots.size();
@@ -516,24 +520,34 @@ template <int dim, int n_fe_degree>
     for (unsigned int ns = min_s_snap; ns < max_s_snap; ns++)
       _snapshots[ns].reinit(local_dofs_vector, comm);
 
-    // for each snapshot
-    for (unsigned int ns = min_s_snap; ns < max_s_snap; ns++)
-    {
-      //for each bar bank
-      sample_time = (t_end - 0.0) / (init_n_snap - 1) * ns;
-      perturbation.move_bars(sample_time);
+    TimeNeutronDiffusion<dim, n_fe_degree> time_pro(prm, static_problem,
+      false, true, false);
 
-      static_problem.cout.set_condition(false);
-      static_problem.show_eps_convergence = false;
-      static_problem.assemble_system_lambda();
-      static_problem.solve_eps();
-      static_problem.phi[0].compress(VectorOperation::insert);
-      _snapshots[ns] = static_problem.phi[0];
-      cout << "     Step " << ns
-      << ", Eigenvalue: "
-      << static_problem.eigenvalues[0]
+    //for each bar bank
+    sample_time_step = (t_end - 0.0) / (init_n_snap - 1);
+    //std::cout << "sample time: " << sample_time_step << std::endl;
+    time_pro.init_delta_t = sample_time_step;
+    time_pro.delta_t.reserve(t_end / time_pro.init_delta_t);
+    time_pro.delta_t[0] = init_delta_t;
+    time_pro.init_time_computation();
+
+    while (time_pro.t_end - time_pro.sim_time > -1e-12)
+    {
+      time_pro.perturbation.update_xsec(time_pro.sim_time);
+      time_pro.assemble_matrices();
+      time_pro.compute_RHS();
+      time_pro.solve_LHS();
+      time_pro.phi.compress(VectorOperation::insert);
+      _snapshots[time_pro.step] = time_pro.phi;
+
+      cout << "      Snapshot " << time_pro.step << " at time: " << time_pro.sim_time
       << std::endl;
+
+      time_pro.step++;
+      time_pro.delta_t.push_back(time_pro.init_delta_t);
+      time_pro.sim_time += time_pro.delta_t[time_pro.step];
     }
+
     n_snap = max_s_snap;
 
   }
@@ -697,106 +711,64 @@ template <int dim, int n_fe_degree>
   }
 
 /**
- *
+ * @brief Parametric snapshots: solve N_s static eigenvalue problems
+ *        with the absorption XS sampled uniformly in the perturbation range.
+ *        alpha_k in [-xs_sample_range, +xs_sample_range], k=0,...,N_s-1.
+ *        Does NOT require any transient FOM run.
  */
 template <int dim, int n_fe_degree>
-  void ROMKinetics<dim, n_fe_degree>::get_snapshots_static_time (
-    StaticDiffusion<dim, n_fe_degree> &static_problem,
-    std::vector<PETScWrappers::MPI::BlockVector> &_snapshots)
+void ROMKinetics<dim, n_fe_degree>::get_snapshots_static_xs_sampled (
+  StaticDiffusion<dim, n_fe_degree> &static_problem,
+  std::vector<PETScWrappers::MPI::BlockVector> &_snapshots)
+{
+  AssertRelease(init_n_snap > 1,
+    "N_Snapshots must be > 1 for static_xs_sampled");
+
+  // Optional range scale: sample alpha in [-xs_sample_range, +xs_sample_range]
+  // Default 1.0 -> covers exactly the amplitude defined in Amplitudes.
+  // Set > 1 in the .prm (ROM_XS_Sample_Range) for a conservative wider basis.
+  double xs_sample_range = 1.0;
+  get_double_from_options("-xs_sample_range", xs_sample_range);
+  AssertRelease(xs_sample_range > 0.0, "ROM_XS_Sample_Range must be positive");
+
+  cout << "   Parametric XS snapshots: N_s = " << init_n_snap
+       << ",  alpha in [-" << xs_sample_range
+       << ", +" << xs_sample_range << "]" << std::endl;
+
+  const unsigned int min_s = reserve_snapshots(_snapshots, init_n_snap);
+
+  for (unsigned int i = 0; i < init_n_snap; i++)
   {
+    const unsigned int ns = min_s + i;
 
-    AssertRelease(init_n_snap > 1, "The number of snapshots must be greater than 1");
-    double sample_time;
+    // Uniform sampling: alpha_k = -range + 2*range * k/(N_s-1)
+    const double alpha = -xs_sample_range
+                         + 2.0 * xs_sample_range
+                           * static_cast<double>(i) / (init_n_snap - 1);
 
-    // Compute Snapshots
-    unsigned int min_s_snap = _snapshots.size();
-    unsigned int max_s_snap = _snapshots.size() + init_n_snap;
+//    const double alpha = -xs_sample_range
+//                         * cos(M_PI * (2.0*i + 1.0) / (2.0*init_n_snap));
 
-    _snapshots.resize(max_s_snap);
-    for (unsigned int ns = min_s_snap; ns < max_s_snap; ns++)
-      _snapshots[ns].reinit(local_dofs_vector, comm);
+    cout << "     XS snapshot " << i + 1 << "/" << init_n_snap
+         << "   alpha = " << std::fixed << std::setprecision(4) << alpha
+         << std::endl;
 
-    // for each snapshot
-    for (unsigned int ns = min_s_snap; ns < max_s_snap; ns++)
-    {
-      //for each bar bank
-      sample_time = (t_end - 0.0) / (init_n_snap - 1) * ns;
-
-      perturbation.apply_function_to_perturb(sample_time);
-      static_problem.cout.set_condition(false);
-      static_problem.verbose_cout.set_condition(false);
-      static_problem.show_eps_convergence = false;
-      static_problem.assemble_system_lambda();
-      static_problem.solve_eps();
-      static_problem.phi[0].compress(VectorOperation::insert);
-      _snapshots[ns] = static_problem.phi[0];
-      cout << "Step " << ns << "  sample time: " << sample_time << "s  keff: "
-      << static_problem.eigenvalues[0]
-      << std::endl;
-    }
-    n_snap = max_s_snap;
-
+    perturbation.apply_xs_amplitude(alpha);
+    solve_and_store_snapshot(static_problem, _snapshots, ns);
   }
 
-/**
- *
- *
- */
-template <int dim, int n_fe_degree>
-  void ROMKinetics<dim, n_fe_degree>::get_snapshots_time_dyn (
-    ParameterHandler &prm,
-    StaticDiffusion<dim, n_fe_degree> &static_problem,
-    std::vector<PETScWrappers::MPI::BlockVector> &_snapshots)
-  {
+  // Restore unperturbed state (alpha = 0)
+  perturbation.apply_xs_amplitude(0.0);
 
-    AssertRelease(init_n_snap > 1,
-      "The number of snapshots must be greater than 1");
-    double sample_time_step;
+  n_snap = _snapshots.size();
+}
 
-    // Compute Snapshots
-    unsigned int min_s_snap = _snapshots.size();
-    unsigned int max_s_snap = _snapshots.size() + init_n_snap;
-
-    _snapshots.resize(max_s_snap);
-    for (unsigned int ns = min_s_snap; ns < max_s_snap; ns++)
-      _snapshots[ns].reinit(local_dofs_vector, comm);
-
-    TimeNeutronDiffusion<dim, n_fe_degree> time_pro(prm, static_problem,
-      false, true, false);
-
-    //for each bar bank
-    sample_time_step = (t_end - 0.0) / (init_n_snap - 1);
-    //std::cout << "sample time: " << sample_time_step << std::endl;
-    time_pro.init_delta_t = sample_time_step;
-    time_pro.delta_t.reserve(t_end / time_pro.init_delta_t);
-    time_pro.delta_t[0] = init_delta_t;
-    time_pro.init_time_computation();
-
-    while (time_pro.t_end - time_pro.sim_time > -1e-12)
-    {
-      time_pro.perturbation.update_xsec(sim_time);
-      time_pro.assemble_matrices();
-      time_pro.compute_RHS();
-      time_pro.solve_LHS();
-      time_pro.phi.compress(VectorOperation::insert);
-      _snapshots[time_pro.step] = time_pro.phi;
-      cout << "      Snapshot " << time_pro.step << " at time: " << time_pro.sim_time
-      << std::endl;
-
-      time_pro.step++;
-      time_pro.delta_t.push_back(time_pro.init_delta_t);
-      time_pro.sim_time += time_pro.delta_t[time_pro.step];
-    }
-
-    n_snap = max_s_snap;
-
-  }
 
 /**
  *
  */
 template <int dim, int n_fe_degree>
-  void ROMKinetics<dim, n_fe_degree>::init_time_computation ()
+  void ROMKinetics<dim, n_fe_degree>::init_time_computation_monolithic ()
   {
     verbose_cout << "Assemble XBF..." << std::endl;
     for (unsigned int p = 0; p < n_prec; p++)
@@ -812,8 +784,7 @@ template <int dim, int n_fe_degree>
       for (unsigned int nb = 0; nb < dim_rom; nb++)
       {
         N[nb] = snap_basis[nb] * phi / (snap_basis[nb] * snap_basis[nb]);
-        // Las bases son ortogonales por que es inecesario en  / (snap_basis[nb] * snap_basis[nb])
-        //std::cout << " (snap_basis[nb] * snap_basis[nb]) "<< (snap_basis[nb] * snap_basis[nb])  << std::endl;
+        // Bases are orthogonal
       }
 
       // Compute c[0]=(c11,...,cq1,...,c1k,...,cqk)
@@ -845,8 +816,6 @@ template <int dim, int n_fe_degree>
           {
             ajm[j][m] = (snap_basis_old[m] * snap_basis[j])
                         / (snap_basis_old[m] * snap_basis_old[m]);
-
-            //std::cout << "a_" << j << m << ", value:" << ajm[j][m] << std::endl;
           }
         }
 
@@ -894,11 +863,8 @@ template <int dim, int n_fe_degree>
 
       // Compute N[0]=(n_1,n_2,...,n_m)
       for (unsigned int nb = 0; nb < dim_rom; nb++)
-      {
         N[nb] = snap_basis_red[nb] * phi_red / (snap_basis_red[nb] * snap_basis_red[nb]);
-        // Las bases son ortogonales por que es inecesario en  / (snap_basis_red[nb] * snap_basis_red[nb])
-        //std::cout << " (snap_basis_red[nb] * snap_basis_red[nb]) "<< (snap_basis_red[nb] * snap_basis_red[nb])  << std::endl;
-      }
+
 
       // Compute c[0]=(c11,...,cq1,...,c1k,...,cqk)
       std::vector<std::vector<double>> cjk(dim_rom, std::vector<double>(n_prec));
@@ -933,6 +899,100 @@ template <int dim, int n_fe_degree>
     for (unsigned int k = 0; k < n_prec; k++)
       XBF[k].clear();
   }
+
+
+/**
+ *
+ */
+template <int dim, int n_fe_degree>
+  void ROMKinetics<dim, n_fe_degree>::init_time_computation_group_wise ()
+  {
+
+	// This type is only for 2 energy groups where precursors data is constant.
+    verbose_cout << "Assemble XBF..." << std::endl;
+    for (unsigned int p = 0; p < n_prec; p++)
+      XBF[p].reinit(materials, matrixfree_type_time, p);
+
+
+    VecCreateSeq(PETSC_COMM_SELF, (n_prec + n_groups) * dim_rom, &coeffs_n);
+    PetscScalar *N;
+    VecGetArray(coeffs_n, &N);
+
+    if (LUPOD_type == "POD")
+    {
+      // Compute N[0]=(n_1,n_2,...,n_m)
+      for (unsigned int nb = 0; nb < dim_rom; nb++)
+    	  for (unsigned int g = 0; g < n_groups; g++)
+      {
+    	AssertRelease(std::abs(snap_basis[nb].block(g) * snap_basis[nb].block(g)-1)<1e-12,"Snap basis is not orthonormal");
+        N[dim_rom*g+nb] = snap_basis[nb].block(g) * phi.block(g) ; // Orthonormal basis
+      }
+
+      // Compute c[0]=(c11,...,cq1,...,c1k,...,cqk)
+      std::vector<std::vector<double>> cjk(dim_rom, std::vector<double>(n_prec));
+      PETScWrappers::MPI::BlockVector aux(snap_basis[0]);
+
+		if (step_rom == 0) {
+			for (unsigned int dr = 0; dr < dim_rom; dr++)
+				for (unsigned int p = 0; p < n_prec; p++) {
+					AssertRelease(
+							materials.get_delayed_decay_constant(0, p) > 0.0,
+							"Delayed decay constant must be greater than 0.");
+					cjk[dr][p] = 1.0
+							/ (materials.get_delayed_decay_constant(0, p))
+							* XBF[p].vmult_dot(snap_basis[dr], phi);
+				}
+		} else  // step_rom > 0
+		{
+			const unsigned int n_old = snap_basis_old.size();
+
+			// Change-of-basis coefficients on the FAST-group block
+			//   a_{j,m} = <psi_new[j].block(0), psi_old[m].block(0)> / ||psi_old[m].block(0)||^2
+			std::vector<std::vector<double>> ajm(dim_rom,
+					std::vector<double>(n_old));
+			for (unsigned int j = 0; j < dim_rom; j++)
+				for (unsigned int m = 0; m < n_old; m++)
+					ajm[j][m] = (snap_basis_old[m].block(0)
+							* snap_basis[j].block(0))
+							/ (snap_basis_old[m].block(0)
+									* snap_basis_old[m].block(0));
+
+			// check how well the new fast basis is spanned by the old one
+			PETScWrappers::MPI::Vector aux(snap_basis[0].block(0));
+			PETScWrappers::MPI::Vector erroraux(snap_basis[0].block(0));
+			for (unsigned int j = 0; j < dim_rom; j++) {
+				aux = 0.0;
+				erroraux = 0.0;
+				for (unsigned int m = 0; m < n_old; m++)
+					aux.add(ajm[j][m], snap_basis_old[m].block(0));
+				erroraux.add(1.0, aux, -1.0, snap_basis[j].block(0));
+				cout << "   erroraux (block0) j=" << j << ": "
+						<< erroraux.l2_norm() << std::endl;
+			}
+
+			// Project the OLD precursor coefficients onto the NEW fast basis
+			for (unsigned int j = 0; j < dim_rom; j++)
+				for (unsigned int k = 0; k < n_prec; k++) {
+					cjk[j][k] = 0.0;
+					for (unsigned int m = 0; m < n_old; m++)
+						cjk[j][k] += ajm[j][m] * cjk_old[m][k];
+				}
+		}
+
+		for (unsigned int k = 0; k < n_prec; k++)
+			for (unsigned int dr = 0; dr < dim_rom; dr++)
+				N[(k + n_blocks_amplitudes) * dim_rom + dr] = cjk[dr][k];
+	}
+    else
+    	AssertRelease(false,"POD Kinetics for group wise and LUPOD is not implemented.");
+
+    VecRestoreArray(coeffs_n, &N);
+    for (unsigned int k = 0; k < n_prec; k++)
+      XBF[k].clear();
+
+  }
+
+
 
 ///**
 // * @brief
@@ -1009,12 +1069,17 @@ template <int dim, int n_fe_degree>
     // do not change because the number of material (in rods) can be changed
 
     verbose_cout << "Assembling matrices..." << std::flush;
-    V.reinit(materials, matrixfree_type_time);
+//    V.reinit(materials, matrixfree_type_time);
     L.reinit(materials, boundary_conditions, albedo_factors, full_allocated);
-    F.reinit(materials, matrixfree_type_time);
+	if (rom_group_wise == "Monolithic"){
+		BF.reinit(materials, matrixfree_type_time);
+	}
+	else if (rom_group_wise == "Group_Wise")
+		F.reinit(materials, matrixfree_type_time);
 
     for (unsigned int p = 0; p < n_prec; p++)
       XBF[p].reinit(materials, matrixfree_type_time, p);
+
     verbose_cout << " Done!" << std::endl;
   }
 
@@ -1022,7 +1087,7 @@ template <int dim, int n_fe_degree>
  * @brief Assemble Time System
  */
 template <int dim, int n_fe_degree>
-  void ROMKinetics<dim, n_fe_degree>::assemble_ROM_matrices ()
+  void ROMKinetics<dim, n_fe_degree>::assemble_ROM_matrices_monolithic ()
   {
 
     if (LUPOD_type == "POD")
@@ -1033,7 +1098,7 @@ template <int dim, int n_fe_degree>
       FullMatrix<double> romV(dim_rom);
       rominvV = FullMatrix<double>(dim_rom);
       romL = FullMatrix<double>(dim_rom);
-      romF = FullMatrix<double>(dim_rom);
+      romBF = FullMatrix<double>(dim_rom);
       romXBF.resize(n_prec);
       for (unsigned int p = 0; p < n_prec; p++)
         romXBF[p] = FullMatrix<double>(dim_rom);
@@ -1049,7 +1114,7 @@ template <int dim, int n_fe_degree>
         n_matsvecs++;
         L.vmult(auxl, snap_basis[b2]);
         n_matsvecs++;
-        F.vmult(auxf, snap_basis[b2]);
+        BF.vmult(auxf, snap_basis[b2]);
         n_matsvecs++;
 
         for (unsigned int p = 0; p < n_prec; p++)
@@ -1063,7 +1128,7 @@ template <int dim, int n_fe_degree>
         {
           romV(b1, b2) = auxv * snap_basis[b1];
           romL(b1, b2) = auxl * snap_basis[b1];
-          romF(b1, b2) = auxf * snap_basis[b1];
+          romBF(b1, b2) = auxf * snap_basis[b1];
           for (unsigned int p = 0; p < n_prec; p++)
           {
             romXBF[p](b1, b2) = auxxbf[p] * snap_basis[b1];
@@ -1079,7 +1144,7 @@ template <int dim, int n_fe_degree>
 
       V.clear();
       L.clear();
-      F.clear();
+      BF.clear();
       for (unsigned int p = 0; p < n_prec; p++)
         XBF[p].clear();
     }
@@ -1091,7 +1156,7 @@ template <int dim, int n_fe_degree>
       FullMatrix<double> romV(dim_rom);
       rominvV = FullMatrix<double>(dim_rom);
       romL = FullMatrix<double>(dim_rom);
-      romF = FullMatrix<double>(dim_rom);
+      romBF = FullMatrix<double>(dim_rom);
       romXBF.resize(n_prec);
       for (unsigned int p = 0; p < n_prec; p++)
         romXBF[p] = FullMatrix<double>(dim_rom);
@@ -1114,7 +1179,7 @@ template <int dim, int n_fe_degree>
         {
           V.vmult_row(auxv[i], snap_basis[b2], points[i]);
           L.vmult_row(auxl[i], snap_basis[b2], points[i]);
-          F.vmult_row(auxf[i], snap_basis[b2], points[i]);
+          BF.vmult_row(auxf[i], snap_basis[b2], points[i]);
 
           for (unsigned int p = 0; p < n_prec; p++)
           {
@@ -1127,7 +1192,7 @@ template <int dim, int n_fe_degree>
         {
           romV(b1, b2) = auxv * snap_basis_red[b1];
           romL(b1, b2) = auxl * snap_basis_red[b1];
-          romF(b1, b2) = auxf * snap_basis_red[b1];
+          romBF(b1, b2) = auxf * snap_basis_red[b1];
           for (unsigned int p = 0; p < n_prec; p++)
           {
             romXBF[p](b1, b2) = auxxbf[p] * snap_basis_red[b1];
@@ -1135,132 +1200,455 @@ template <int dim, int n_fe_degree>
         }
       }
 
-      //      std::cout << "romV " << std::endl;
-      //      romV.print_formatted(std::cout, 7, true);
-
       rominvV.invert(romV);
-
-      //      std::cout << "rominvV " << std::endl;
-      //      rominvV.print_formatted(std::cout, 7, true);
-      //      exit(0);
 
       V.clear();
       L.clear();
-      F.clear();
+      BF.clear();
       for (unsigned int p = 0; p < n_prec; p++)
         XBF[p].clear();
     }
   }
 
-/**
- * @brief
+
+/*
+ * @brief Assemble Time System
  */
 template <int dim, int n_fe_degree>
-  void ROMKinetics<dim, n_fe_degree>::solve_system_petsc ()
+  void ROMKinetics<dim, n_fe_degree>::assemble_ROM_matrices_groupwise ()
   {
 
-    double init_time_step = 1e-3;
-    unsigned int max_steps = 1e+5;
-
-    // SOLVER PETSC implemented for a linear system
-    TS ts;
-
-    if (step == 0 and print_timefile)
+    if (LUPOD_type == "POD")
     {
-      filename_time = out_file + ".time";
-      std::ofstream out(filename_time.c_str(), std::ios::out);
+      assemble_matrices();
+
+
+		romL_gg.resize(n_groups, std::vector<FullMatrix<double>>(n_groups));
+//		rominvV_gg.resize(n_groups);
+		romF_gg.resize(n_groups);
+//		romXBF_gg.resize(n_groups, std::vector<FullMatrix<double>>(n_prec));
+
+		// Resize each block wich dim_rom
+		for (unsigned int g = 0; g < n_groups; g++) {
+//			rominvV_gg[g] = FullMatrix<double>(dim_rom);
+			romF_gg[g] = FullMatrix<double>(dim_rom);
+//			romXBF_gg[g].resize(n_prec);
+//			for (unsigned int p = 0; p < n_prec; p++)
+//				romXBF_gg[g][p] = FullMatrix<double>(dim_rom);
+			for (unsigned int g2 = 0; g2 < n_groups; g2++)
+				romL_gg[g][g2] = FullMatrix<double>(dim_rom);
+		}
+
+
+      PETScWrappers::MPI::Vector auxv(snap_basis[0].block(0));
+      PETScWrappers::MPI::Vector auxf(snap_basis[0].block(0));
+      std::vector<PETScWrappers::MPI::Vector> auxlg(n_groups);
+      for (unsigned int g=0; g<n_groups; g++)
+    	  auxlg[g].reinit(auxv);
+//      std::vector<PETScWrappers::MPI::BlockVector> auxxbf(n_prec);
+
+
+      for (unsigned int g1 = 0; g1 < n_groups; g1++){
+
+    	  FullMatrix<double> romV(dim_rom);
+    	  for (unsigned int b2 = 0; b2 < dim_rom; b2++)
+    	        {
+//    	          V.vmult(g1,g1,auxv, snap_basis[b2].block(g1));
+//    	          n_matsvecs++;
+    	          for (unsigned int g2 = 0; g2 < n_groups; g2++){
+    	          L.vmult(g2,g1,  auxlg[g2], snap_basis[b2].block(g1));
+    	          n_matsvecs++;
+    	          }
+    	          F.vmult(0,g1,auxf, snap_basis[b2].block(g1));
+    	          n_matsvecs++;
+
+//    	          for (unsigned int p = 0; p < n_prec; p++)
+//    	          {
+//    	            auxxbf[p].reinit(snap_basis[0]);
+//    	            XBF[p].vmult(auxxbf[p], snap_basis[b2]);
+//    	            n_matsvecs++;
+//    	          }
+
+    	          for (unsigned int b1 = 0; b1 < dim_rom; b1++)
+    	          {
+    	            romV(b1, b2) = auxv * snap_basis[b1].block(g1);
+
+    	            for (unsigned int g2 = 0; g2 < n_groups; g2++){
+    	            	romL_gg[g2][g1](b1, b2)= auxlg[g2] * snap_basis[b1].block(g2);
+    	                	          }
+
+
+    	            romF_gg[g1](b1, b2) = auxf * snap_basis[b1].block(0);
+//    	            for (unsigned int p = 0; p < n_prec; p++)
+//    	            {
+//    	              romXBF[p](b1, b2) = auxxbf[p] * snap_basis[b1];
+//    	            }
+
+    	          }
+
+
+
+      }
+
+//    	  rominvV_gg[g1].invert(romV);
+
+      }
+
+      //std::cout << "romV " << std::endl;
+      //romV.print_formatted(std::cout, 7, true);
+//      rominvV.invert(romV);
+      //std::cout << "rominvV " << std::endl;
+      //rominvV.print_formatted(std::cout, 7, true);
+
+//      V.clear();
+      L.clear();
+      BF.clear();
+//      for (unsigned int p = 0; p < n_prec; p++)
+//        XBF[p].clear();
     }
-
-    TSCreate(PETSC_COMM_WORLD, &ts);
-    TSSetProblemType(ts, TS_LINEAR);
-    TSSetApplicationContext(ts, this);
-
-    //   Tell the timestepper context where to compute solutions
-    // Sets the initial solution vector for use by the TS routines.
-    TSSetSolution(ts, coeffs_n);
-
-    //       Provide the call-back for the nonlinear function we are
-    //       evaluating. Thus whenever the timestepping routines need the
-    //       function they will call this routine. Note the final argument
-    //       is the application context used by the call-back functions
-    TSSetRHSFunction(ts, NULL, FormFunctionROM_system<dim, n_fe_degree>,
-      this);
-
-    //   Form the initial guess for the problem
-    //   (this can be done from a function FormInitialGuess)
-
-    //   This indicates that we are using pseudo timestepping to
-    //   find a steady state solution to the nonlinear problem.
-    TSSetType(ts, TSBDF); // backward differentiation formula (BDF)
-    //  TSSetType(ts, TSBEULER);
-
-    //   Set the initial time to start at (this is arbitrary for
-    //   steady state problems); and the initial timestep given above
-    TSSetTimeStep(ts, init_time_step);
-
-    //   Set a large number of timesteps and final duration time
-    //   to insure convergence to steady state.
-    TSSetMaxSteps(ts, max_steps);
-    //    if (update_modes == true)
-    TSSetMaxTime(ts, delta_t);
-
-    TSSetTolerances(ts, PETSC_DETERMINE, NULL, tol_time_ksp, NULL); // FIXME
-    std::cout << "tol_time_ksp " << std::scientific << tol_time_ksp << std::fixed
-              << std::endl;
-    //    else
-    //      TSSetMaxTime(ts, delta_t_petsc);
-    //TSSetExactFinalTime(ts, TS_EXACTFINALTIME_INTERPOLATE);
-    TSSetExactFinalTime(ts, TS_EXACTFINALTIME_MATCHSTEP);
-    // TS_EXACTFINALTIME_MATCHSTEP May be a good option
-    TSSetPostStep(ts, PostStep<dim, n_fe_degree>);
-
-    TSSetFromOptions(ts);
-    TSSetUp(ts);
-
-    //   Perform the solve. This is where the timestepping takes place.
-    TSSolve(ts, coeffs_n);
-
-    const PetscScalar *narray;
-
-    VecGetArrayRead(coeffs_n, &narray);
-    phi = 0.0;
-    for (unsigned int dr = 0; dr < dim_rom; ++dr)
+    else
     {
-      phi.add(narray[dr], snap_basis[dr]);
+    	AssertRelease(false, "Group Wise is not implemented for LUPOD");
+
     }
-
-    // For updating the cjk
-    cjk_old.resize(dim_rom,
-      std::vector<double>(n_prec));
-    for (unsigned int nb = 0; nb < dim_rom; nb++)
-      for (unsigned int k = 0; k < n_prec; k++)
-        cjk_old[nb][k] = narray[(k + 1) * dim_rom + nb];
-
-    VecRestoreArrayRead(coeffs_n, &narray);
-    if (std::abs(time_vect.back() - (time_init_upd + delta_t)) > 1e-12)
-    {
-      std::cout << "time  " << time_init_upd + delta_t << std::endl; //FIXME
-
-      postprocess_time_step();
-      cout << std::setprecision(4) << "   Time:   " << time_init_upd + delta_t
-           << " ---> Power:  "
-           << power_total << std::endl;
-      power_vector.push_back(power_total);
-      time_vect.push_back(time_init_upd + delta_t);
-    }
-    aux_power = power_total;
-    if (out_flag)
-      output_results();
-
-    //   Get the number of steps
-    PetscInt its;
-    TSGetStepNumber(ts, &its);
-    cout << "            its ts_solver: " << its << std::endl;
-
-    //    total_ts_its += its;
-
-    TSDestroy(&ts);
   }
+
+template <int dim, int n_fe_degree>
+  void ROMKinetics<dim, n_fe_degree>::action_T (const PetscScalar *x, PetscScalar *y)
+  {
+    const double beta_sum = materials.get_delayed_fraction_sum(0);
+
+    // 1) reconstruct full group fluxes from reduced coeffs (combined flux)
+    for (unsigned int g = 0; g < n_groups; g++) {
+      mf_phi[g] = 0.0;
+      for (unsigned int m = 0; m < dim_rom; m++)
+        mf_phi[g].add(x[g * dim_rom + m], snap_basis[m].block(g));
+    }
+
+    // 2) apply the FULL L,F once per needed block, then project -> reduced sources
+    Vector<double> aL00(dim_rom), aL11(dim_rom), aL21(dim_rom), aF0(dim_rom), aF1(dim_rom);
+
+    L.vmult(0, 0, mf_tmp, mf_phi[0]);
+    n_matsvecs++;
+    for (unsigned int l = 0; l < dim_rom; l++)
+    	aL00[l] = mf_tmp * snap_basis[l].block(0);
+    L.vmult(1, 1, mf_tmp, mf_phi[1]);
+    n_matsvecs++;
+    for (unsigned int l = 0; l < dim_rom; l++)
+    	aL11[l] = mf_tmp * snap_basis[l].block(1);
+    L.vmult(1, 0, mf_tmp, mf_phi[0]);                                   // L_21 (fast -> thermal)
+    n_matsvecs++;
+    for (unsigned int l = 0; l < dim_rom; l++)
+    	aL21[l] = mf_tmp * snap_basis[l].block(1);
+    F.vmult(0, 0, mf_tmp, mf_phi[0]);
+    n_matsvecs++;
+    for (unsigned int l = 0; l < dim_rom; l++)
+    	aF0[l] = mf_tmp * snap_basis[l].block(0);
+    F.vmult(0, 1, mf_tmp, mf_phi[1]);
+    n_matsvecs++;n_matsvecs++;
+    for (unsigned int l = 0; l < dim_rom; l++)
+    	aF1[l] = mf_tmp * snap_basis[l].block(0);
+
+    Vector<double> Fn(dim_rom);                                        // total fission on fast basis
+    for (unsigned int l = 0; l < dim_rom; l++) Fn[l] = aF0[l] + aF1[l];
+
+    // 3) reduced assembly (same structure as the FormFunction)
+    Vector<double> r(dim_rom), yb(dim_rom);
+
+    // group 0 (fast): V0^-1 [ -L00 + (1-beta) Fn + sum_k lambda_k c_k ]
+    for (unsigned int l = 0; l < dim_rom; l++) {
+      r[l] = -aL00[l] + (1.0 - beta_sum) * Fn[l];
+      for (unsigned int k = 0; k < n_prec; k++)
+        r[l] += materials.get_delayed_decay_constant(0, k) * x[(n_groups + k) * dim_rom + l];
+    }
+    rominvV_gg[0].vmult(yb, r);
+    for (unsigned int l = 0; l < dim_rom; l++) y[l] = yb[l];
+
+    // group 1 (thermal): V1^-1 [ -L11 - L21 ]
+    for (unsigned int l = 0; l < dim_rom; l++) r[l] = -aL11[l] - aL21[l];
+    rominvV_gg[1].vmult(yb, r);
+    for (unsigned int l = 0; l < dim_rom; l++) y[dim_rom + l] = yb[l];
+
+    // precursors: beta_k Fn - lambda_k c_k
+    for (unsigned int k = 0; k < n_prec; k++) {
+      const double beta_k = materials.get_delayed_fraction(0, k);
+      const double lam_k  = materials.get_delayed_decay_constant(0, k);
+      const unsigned int bp = (n_groups + k) * dim_rom;
+      for (unsigned int l = 0; l < dim_rom; l++)
+        y[bp + l] = beta_k * Fn[l] - lam_k * x[bp + l];
+    }
+
+
+  }
+
+template <int dim, int n_fe_degree>
+  void ROMKinetics<dim, n_fe_degree>::precompute_rominvV_groupwise ()
+  {
+    V.reinit(materials, matrixfree_type_time);     // V is constant in time
+    rominvV_gg.resize(n_groups);
+    PETScWrappers::MPI::Vector auxv(snap_basis[0].block(0));
+    for (unsigned int g = 0; g < n_groups; g++) {
+      FullMatrix<double> romV(dim_rom);
+      for (unsigned int b2 = 0; b2 < dim_rom; b2++) {
+        V.vmult(g, g, auxv, snap_basis[b2].block(g));
+        n_matsvecs++;
+        for (unsigned int b1 = 0; b1 < dim_rom; b1++)
+          romV(b1, b2) = auxv * snap_basis[b1].block(g);
+      }
+      rominvV_gg[g] = FullMatrix<double>(dim_rom);
+      rominvV_gg[g].invert(romV);
+    }
+    V.clear();
+  }
+
+template <int dim, int n_fe_degree>
+  void ROMKinetics<dim, n_fe_degree>::assemble_reducedT0_groupwise (Mat T0)
+  {
+    // --- (a) proyectar L y F sobre la base (una sola vez; no se limpian L,F) ---
+    romL_gg.resize(n_groups, std::vector<FullMatrix<double>>(n_groups));
+    romF_gg.resize(n_groups);
+    for (unsigned int g = 0; g < n_groups; g++) {
+      romF_gg[g] = FullMatrix<double>(dim_rom);
+      for (unsigned int g2 = 0; g2 < n_groups; g2++)
+        romL_gg[g][g2] = FullMatrix<double>(dim_rom);
+    }
+
+    PETScWrappers::MPI::Vector auxf(snap_basis[0].block(0));
+    std::vector<PETScWrappers::MPI::Vector> auxlg(n_groups);
+    for (unsigned int g = 0; g < n_groups; g++) auxlg[g].reinit(auxf);
+
+    for (unsigned int g1 = 0; g1 < n_groups; g1++)
+      for (unsigned int b2 = 0; b2 < dim_rom; b2++) {
+        for (unsigned int g2 = 0; g2 < n_groups; g2++)
+          L.vmult(g2, g1, auxlg[g2], snap_basis[b2].block(g1));
+        F.vmult(0, g1, auxf, snap_basis[b2].block(g1));
+        for (unsigned int b1 = 0; b1 < dim_rom; b1++) {
+          for (unsigned int g2 = 0; g2 < n_groups; g2++)
+            romL_gg[g2][g1](b1, b2) = auxlg[g2] * snap_basis[b1].block(g2);
+          romF_gg[g1](b1, b2) = auxf * snap_basis[b1].block(0);
+        }
+      }
+
+    // --- (b) montar T0 = +T(t0) (mismas formulas que RHSJacobianROM_groupwise) ---
+    const double beta_sum = materials.get_delayed_fraction_sum(0);
+    MatZeroEntries(T0);
+
+    std::vector<PetscInt>    rows(dim_rom), cols(dim_rom);
+    std::vector<PetscScalar> vals(dim_rom * dim_rom);
+    auto set_block = [&](const FullMatrix<double> &M,
+                         unsigned int rblk, unsigned int cblk) {
+      for (unsigned int i = 0; i < dim_rom; i++) {
+        rows[i] = rblk * dim_rom + i;
+        cols[i] = cblk * dim_rom + i;
+      }
+      for (unsigned int i = 0; i < dim_rom; i++)
+        for (unsigned int j = 0; j < dim_rom; j++)
+          vals[i * dim_rom + j] = M(i, j);
+      MatSetValues(T0, dim_rom, rows.data(), dim_rom, cols.data(),
+                   vals.data(), INSERT_VALUES);
+    };
+
+    FullMatrix<double> tmp(dim_rom), blk(dim_rom);
+
+    // neutron 2x2
+    tmp = romF_gg[0]; tmp *= (1.0 - beta_sum); tmp.add(-1.0, romL_gg[0][0]);
+    rominvV_gg[0].mmult(blk, tmp);                       set_block(blk, 0, 0);
+    tmp = romF_gg[1]; tmp *= (1.0 - beta_sum);
+    rominvV_gg[0].mmult(blk, tmp);                       set_block(blk, 0, 1);
+    rominvV_gg[1].mmult(blk, romL_gg[1][0]); blk *= -1.0; set_block(blk, 1, 0);
+    rominvV_gg[1].mmult(blk, romL_gg[1][1]); blk *= -1.0; set_block(blk, 1, 1);
+
+    // acoplamiento de precursores
+    for (unsigned int k = 0; k < n_prec; k++) {
+      const double lam_k  = materials.get_delayed_decay_constant(0, k);
+      const double beta_k = materials.get_delayed_fraction(0, k);
+      const unsigned int prow = n_groups + k;
+
+      blk = rominvV_gg[0]; blk *= lam_k;                 set_block(blk, 0, prow);
+      for (unsigned int g = 0; g < n_groups; g++) {
+        blk = romF_gg[g]; blk *= beta_k;                 set_block(blk, prow, g);
+      }
+      blk = 0.0;
+      for (unsigned int i = 0; i < dim_rom; i++) blk(i, i) = -lam_k;
+      set_block(blk, prow, prow);
+    }
+
+    MatAssemblyBegin(T0, MAT_FINAL_ASSEMBLY);
+    MatAssemblyEnd(T0, MAT_FINAL_ASSEMBLY);
+
+    auxf.clear();
+    for (unsigned int g=0; g<n_groups; g++)
+    	auxlg[g].clear();
+    tmp.clear();
+    blk.clear();
+
+  }
+
+template <int dim, int n_fe_degree>
+  void ROMKinetics<dim, n_fe_degree>::ensure_LF_assembled (double ts_time)
+  {
+    const double real_time = time_init_upd + ts_time;
+    if (std::abs(sim_time - real_time) > 1e-10) {
+      sim_time = real_time;
+      perturbation.update_xsec(real_time);
+      L.clear();
+      F.clear();
+      L.reinit(materials, boundary_conditions, albedo_factors, matrixfree_type_time);
+      F.reinit(materials, matrixfree_type_time);
+    }
+  }
+
+template<int dim, int n_fe_degree>
+void ROMKinetics<dim, n_fe_degree>::solve_system_petsc() {
+	unsigned int max_steps = 1e+5;
+
+	TS ts;
+	bool Tassembled=false;
+
+	if (step == 0 and print_timefile) {
+		filename_time = out_file + ".time";
+		std::ofstream out(filename_time.c_str(), std::ios::out);
+	}
+
+	// --- matrix-free objects: only for Group_Wise ---
+	Mat Jshell = nullptr;
+	ShellCtxROM < dim, n_fe_degree > sctx { this, 0.0 }; // {obj, shift};
+	Mat Pmat   = nullptr;
+
+	TSCreate(PETSC_COMM_WORLD, &ts);
+	TSSetProblemType(ts, TS_LINEAR);
+	TSSetApplicationContext(ts, this);
+	TSSetSolution(ts, coeffs_n);
+
+	if (rom_group_wise == "Monolithic") {
+		TSSetRHSFunction(ts, NULL,
+				FormFunctionROM_system_monolithic<dim, n_fe_degree>, this);
+	} else if (rom_group_wise == "Group_Wise") {
+
+
+		// Only one time for set of POD modes because V is constant
+		precompute_rominvV_groupwise();
+
+		if (Tassembled)
+		TSSetRHSFunction(ts, NULL,
+								FormFunctionROM_system_groupwise<dim, n_fe_degree>, this);
+		else{
+
+		TSSetMaxSNESFailures(ts, -1);
+
+		// Reinit vectors for matrix-free multiplication
+		mf_phi.resize(n_groups);
+		for (unsigned int g = 0; g < n_groups; g++)
+			mf_phi[g].reinit(snap_basis[0].block(0));
+		mf_tmp.reinit(snap_basis[0].block(0));
+
+		// Jacobian (a*I - T) as MatShell matrix-free
+		const PetscInt ndim = (n_groups + n_prec) * dim_rom;
+		MatCreateShell(PETSC_COMM_SELF, ndim, ndim, ndim, ndim, &sctx, &Jshell);
+		MatShellSetOperation(Jshell, MATOP_MULT,
+				(void (*)(void)) ShellMatMult_groupwise<dim, n_fe_degree>);
+
+		MatCreateSeqDense(PETSC_COMM_SELF, ndim, ndim, NULL, &T0_pc);
+		MatCreateSeqDense(PETSC_COMM_SELF, ndim, ndim, NULL, &Pmat);
+		pc_frozen = false;     // when the POD modes change, then recompute T0 for the preconditioner
+
+		// Define function for Newton iteration F(t,U,Udot) = Udot - T(t) U
+		TSSetIFunction(ts, NULL, IFunctionROM_groupwise<dim, n_fe_degree>,
+				&sctx);
+		TSSetIJacobian(ts, Jshell, Pmat,
+						IJacobianROM_groupwise<dim, n_fe_degree>, &sctx);
+
+		// 5) forzar el reensamblado de L,F con la xsec del inicio del intervalo
+		//    (el tiempo es continuo en la frontera y la guarda por sim_time no dispararia) // TODO esto es necesario??
+		sim_time = -1.0;
+		}
+	}
+
+	TSSetType(ts, TSBEULER);
+	TSSetTimeStep(ts, delta_time_ts_solver); //TSSetTimeStep(ts, last_dt);
+	TSSetMaxSteps(ts, max_steps);
+	TSSetMaxTime(ts, delta_t);
+//	TSSetTolerances(ts, PETSC_DETERMINE, NULL, tol_time_ksp, NULL);
+	TSSetTolerances(ts, 1e-8, NULL, 1e-6, NULL);
+
+	TSSetExactFinalTime(ts, TS_EXACTFINALTIME_MATCHSTEP);
+	TSSetPostStep(ts, PostStep<dim, n_fe_degree>);
+
+//	TSAdapt adapt; TSGetAdapt(ts, &adapt);
+//	TSAdaptSetStepLimits(adapt, 0.0, 1.0);
+
+	TSSetFromOptions(ts);
+
+	// matrix-free: GMRES with LU for (I-aT_0)
+	if (rom_group_wise == "Group_Wise") {
+		  SNES snes; TSGetSNES(ts, &snes);
+		  KSP ksp;  SNESGetKSP(snes, &ksp);  KSPSetType(ksp, KSPGMRES);
+		  PC  pc;   KSPGetPC(ksp, &pc);       PCSetType(pc, PCLU);
+		}
+
+	TSSetUp(ts);
+	TSSolve(ts, coeffs_n);
+
+	const PetscScalar *narray;
+	VecGetArrayRead(coeffs_n, &narray);
+
+	PetscInt its;
+	TSGetStepNumber(ts, &its);
+	cout << "            its ts_solver: " << its << std::endl;
+	total_its_solver+=its;
+
+	// reconstruct the neutron flux
+	if (rom_group_wise == "Monolithic") {
+		phi = 0.0;
+		for (unsigned int dr = 0; dr < dim_rom; ++dr)
+			phi.add(narray[dr], snap_basis[dr]);
+	} else if (rom_group_wise == "Group_Wise") {
+		phi = 0.0;
+		for (unsigned int dr = 0; dr < dim_rom; ++dr)
+			for (unsigned int g = 0; g < n_groups; ++g)
+				phi.block(g).add(narray[dr + g * dim_rom],
+						snap_basis[dr].block(g));
+	}
+
+	// precursors coefficients for restarting
+	cjk_old.resize(dim_rom, std::vector<double>(n_prec));
+	for (unsigned int nb = 0; nb < dim_rom; nb++)
+		for (unsigned int k = 0; k < n_prec; k++)
+			cjk_old[nb][k] = narray[(k + n_blocks_amplitudes) * dim_rom + nb];
+
+	VecRestoreArrayRead(coeffs_n, &narray);
+
+	// Save last time-step for restarting
+	PetscReal dt_final;
+	TSGetTimeStep(ts, &dt_final);
+	last_dt = dt_final;
+
+	TSDestroy(&ts);
+	if (Jshell)
+		MatDestroy(&Jshell);          // tras TSDestroy (TS soltó su referencia)
+
+	if (rom_group_wise == "Group_Wise") {
+		MatDestroy(&Pmat);
+		MatDestroy(&T0_pc); T0_pc = nullptr;
+	}
+
+	// Postprocess
+	if (std::abs(time_vect.back() - (time_init_upd + delta_t)) > 1e-12) {
+		std::cout << "time  " << time_init_upd + delta_t << std::endl;
+		postprocess_time_step();
+		cout << std::setprecision(4) << "   Time:   " << time_init_upd + delta_t
+				<< " ---> Power:  " << power_total << std::endl;
+		power_vector.push_back(power_total);
+		time_vect.push_back(time_init_upd + delta_t);
+	}
+	aux_power = power_total;
+	if (out_flag)
+		output_results();
+
+	PetscLogDouble mem;
+	PetscMemoryGetCurrentUsage(&mem);
+	PetscPrintf(PETSC_COMM_WORLD, ">>> RAM tras intervalo: %.1f MB\n", mem/1e6);
+}
 
 /*
  * @brief FormFunction definition for Petsc Solver
@@ -1288,8 +1676,19 @@ template <int dim, int n_fe_degree>
 
     TSobject->phi = 0.0;
 
-    for (unsigned int dr = 0; dr < TSobject->dim_rom; ++dr)
-      TSobject->phi.add(n[dr], TSobject->snap_basis[dr]);
+    TSobject->phi = 0.0;
+    if (TSobject->rom_group_wise == "Monolithic")
+    {
+      for (unsigned int dr = 0; dr < TSobject->dim_rom; ++dr)
+        TSobject->phi.add(n[dr], TSobject->snap_basis[dr]);
+    }
+    else if (TSobject->rom_group_wise == "Group_Wise")
+    {
+      for (unsigned int dr = 0; dr < TSobject->dim_rom; ++dr)
+        for (unsigned int g = 0; g < TSobject->n_groups; ++g)
+          TSobject->phi.block(g).add(n[dr + g * TSobject->dim_rom],
+                                     TSobject->snap_basis[dr].block(g));
+    }
 
     TSobject->sim_time = real_time;
     TSobject->perturbation.update_xsec(real_time);
@@ -1369,7 +1768,7 @@ template <int dim, int n_fe_degree>
       double sigma_f;
 
       // Initialize and resize the vectors where it is stored the solution
-      power_per_assembly.resize(1, std::vector<double>(n_cells_out, 0.0));
+      power_per_assembly.assign(1, std::vector<double>(n_cells_out, 0.0));
       std::vector<double> volume_per_assembly(n_cells_out, 0.0);
       std::vector<double> local_phi(n_q_points);
       std::vector<double> radial_power;
@@ -1472,50 +1871,6 @@ template <int dim, int n_fe_degree>
 
       }
 
-      if (dim == 3)
-      {
-
-        // Normalize the values of the power and flows per cell
-        //      normalize_vector(power_per_assembly[0], norm);
-
-        // Calculate the axial power distribution
-        std::vector<double> power_axial;
-        std::vector<std::vector<double> > phi_axial;
-        unsigned int n_planes = materials.assem_per_dim[2];
-
-        unsigned int n_assemblies_per_plane = n_assemblies / n_planes;
-        Assert(n_assemblies_per_plane > 0,
-          ExcMessage("n_assemblies cannot be 0"));
-        radial_power.resize(n_assemblies_per_plane);
-        std::vector<double> volume_per_axial(n_assemblies_per_plane);
-
-        for (unsigned int i = 0; i < n_assemblies_per_plane; i++)
-        {
-          double sum = 0.0;
-          for (unsigned int plane = 0; plane < n_planes; plane++)
-          {
-            if (std::abs(
-                  power_per_assembly[0][n_assemblies_per_plane * plane + i])
-                > 1e-5)
-            {
-              sum += power_per_assembly[0][n_assemblies_per_plane * plane + i]
-                     * volume_per_assembly[n_assemblies_per_plane * plane + i];
-              volume_per_axial[i] += volume_per_assembly[n_assemblies_per_plane * plane
-                                                         + i];
-            }
-          }
-          if (std::abs(sum) > 0.0)
-            radial_power[i] = sum / n_assemblies_per_plane
-                              / volume_per_axial[i];
-        }
-
-        if (print_timefile)
-          print_vector_in_file(radial_power,
-            filename_time,
-            "Radial power " + Utilities::int_to_string(step) + "\n",
-            true);
-
-      }
 
       // These vectors are necessary to make the approximate
       // flux weighting method
@@ -1708,21 +2063,24 @@ template <int dim, int n_fe_degree>
     cout << "------------ START OF THE ROM TIME LOOP ------------------"
          << std::endl;
 
-    cout << "Type of perturbation: " << type_perturbation << std::endl
-         << std::endl;
+    cout << "Type of perturbation: " << type_perturbation  << std::endl;
+    cout << "Type of group treatment: " << rom_group_wise << std::endl
+             << std::endl;
     double time_get_snap = timer.cpu_time();
 
+    // Do for each time interval where the time domain has been divided
+    // if there is restarting
     for (unsigned int rom = 0; rom < n_sets_snap; rom++)
     {
 
+    	double t0 = timer.cpu_time();
       step_rom = rom;
       cout << std::fixed
            << "   Compute POD basis...                CPU Time = "
            << timer.cpu_time() << " s." << std::endl;
 
-      if (rom > 0)
+      if (rom > 0) // Remove the old snap_basis
       {
-        cout << "ROM OLD !!" << std::endl;
         if (snap_basis_old.size() > 1)
           snap_basis_old.clear();
         snap_basis_old.resize(dim_rom);
@@ -1737,6 +2095,7 @@ template <int dim, int n_fe_degree>
       unsigned int M_req = 0;
       get_uint_from_options("-m_req", M_req);
 
+      // Specify the type of POD treatment for the energy groups.
       if (rom_group_wise == "Monolithic")
       {
         if (LUPOD_type == "POD")
@@ -1745,21 +2104,45 @@ template <int dim, int n_fe_degree>
       }
       else if (rom_group_wise == "Group_Wise")
       {
-        std::vector<std::vector<unsigned int> > points_per_block;
-        //if (LUPOD_type == "LUPOD") // TODO
-        //compute_LUPOD_basis_group_wise(snapshots[rom], epsilon_M, epsilon_N,
-        //  snaps, points_per_block, dim_rom, snap_basis_ful, snap_basis_red);
         if (LUPOD_type == "POD")
-          compute_POD_basis_group_wise(snapshots[rom], epsilon_M, M_req,
+          compute_time_POD_basis_group_wise(snapshots[rom], epsilon_M, M_req,
             dim_rom, snap_basis);
       }
       else
         AssertRelease(false, "rom_group_wise must be Monolithic or Group_Wise");
 
-      cout << std::fixed
-           << "   Init time computation...                CPU Time = "
+      double t1 = timer.cpu_time();
+          cout << "   Basis rom=" << rom << ": " << t1-t0 << " s" << std::endl;
+
+
+
+	  // --- Restart projection error ||delta_phi|| (only at restarts) ---
+			if (rom > 0 and rom_group_wise == "Group_Wise")
+			{
+			  for (unsigned int g = 0; g < n_groups; g++)
+			  {
+				PETScWrappers::MPI::Vector proj(phi.block(g));
+				proj = 0.0;
+				for (unsigned int m = 0; m < dim_rom; m++)
+				  proj.add(snap_basis[m].block(g) * phi.block(g),
+						   snap_basis[m].block(g));
+				PETScWrappers::MPI::Vector d(phi.block(g));
+				d.add(-1.0, proj);
+				cout << "   RESTART " << rom
+					 << "  ||delta_phi||/||phi||  g=" << g << " : "
+					 << std::scientific << d.l2_norm() / phi.block(g).l2_norm()
+					 << std::fixed << std::endl;
+			  }
+			}
+
+			cout << std::fixed  << "   Init time computation...                CPU Time = "
            << timer.cpu_time() << " s." << std::endl;
-      init_time_computation();
+      if (rom_group_wise == "Monolithic")
+      init_time_computation_monolithic();
+      else if (rom_group_wise == "Group_Wise")
+    	  init_time_computation_group_wise();
+
+      std::cout<<"dim_rom: "<<dim_rom<<std::endl;
 
       if (rom == 0)
       {
@@ -1788,6 +2171,10 @@ template <int dim, int n_fe_degree>
       //std::cout << "Delta_t: " << delta_t << std::endl;
       //std::cout << "time_init_upd: " << time_init_upd << std::endl;
 
+      double t2 = timer.cpu_time();
+          cout << "   Init rom=" << rom << ": " << t2-t1 << " s" << std::endl;
+
+
       verbose_cout << "   Solve the ROM system...                 CPU Time = "
                    << timer.cpu_time()
                    << " s." << std::endl;
@@ -1804,6 +2191,9 @@ template <int dim, int n_fe_degree>
       //postprocess_noise();
       //verbose_cout << " Done!" << std::endl;
 
+      double t3 = timer.cpu_time();
+      cout << "   Solve rom=" << rom << ": " << t3-t2 << " s" << std::endl;
+
     }
 
     if (this_mpi_process == 0)
@@ -1814,6 +2204,7 @@ template <int dim, int n_fe_degree>
         true, 10);
 
     }
+    cout << "            total_its_ts_solver: " << total_its_solver << std::endl;
     cout << "            time_get_snap: " << time_get_snap << " s." << std::endl;
     cout << "            time_ROM: " << timer.cpu_time() - time_get_snap << " s."
          << std::endl;
@@ -1827,7 +2218,7 @@ template <int dim, int n_fe_degree>
  * @brief FormFunction definition for Petsc Solver
  */
 template <int dim, int n_fe_degree>
-  PetscErrorCode FormFunctionROM_system (TS ts,
+  PetscErrorCode FormFunctionROM_system_monolithic (TS ts,
     PetscReal time,
     Vec N,
     Vec NDOT,
@@ -1852,7 +2243,7 @@ template <int dim, int n_fe_degree>
     {
       TSobject->sim_time = real_time;
       TSobject->perturbation.update_xsec(real_time);
-      TSobject->assemble_ROM_matrices();
+      TSobject->assemble_ROM_matrices_monolithic();
     }
 
     for (unsigned int i = 0; i < (n_prec + 1) * dim_rom; i++)
@@ -1871,7 +2262,7 @@ template <int dim, int n_fe_degree>
     TSobject->romL.vmult(auxvec, n_b);
     auxvec *= -1.0;
     // auxvec=Fn+auxvec
-    TSobject->romF.vmult_add(auxvec, n_b);
+    TSobject->romBF.vmult_add(auxvec, n_b);
     // ndot_b1=LambdaInv*auxvec;
     TSobject->rominvV.vmult(ndot_b, auxvec);
 
@@ -1925,6 +2316,199 @@ template <int dim, int n_fe_degree>
     VecRestoreArrayRead(N, &n);
     VecRestoreArray(NDOT, &ndot);
 
+    return 0;
+  }
+
+/*
+ * @brief FormFunction definition for Petsc Solver (groupwise ROM)
+ *        Assumes fission spectrum chi = [1, 0]: fission feeds the fast group
+ *        (g = 0) and the precursors only.
+ */
+template <int dim, int n_fe_degree>
+  PetscErrorCode FormFunctionROM_system_groupwise (TS ts,
+    PetscReal time,
+    Vec N,
+    Vec NDOT,
+    void *ctx)
+  {
+    TSGetApplicationContext(ts, &ctx);
+    PetscScalar *ndot;
+    const PetscScalar *n;
+
+    VecGetArrayRead(N, &n);
+    VecGetArray(NDOT, &ndot);
+
+    ROMKinetics<dim, n_fe_degree> *TSobject = (ROMKinetics<dim, n_fe_degree>*) ctx;
+
+    const unsigned int n_prec   = TSobject->n_prec;
+    const unsigned int dim_rom  = TSobject->dim_rom;
+    const unsigned int n_groups = TSobject->n_groups;
+    const double real_time = TSobject->time_init_upd + time;
+
+    // Reassemble ROM matrices only when the time actually changes
+    if (std::abs(TSobject->sim_time - real_time) > 1e-10)
+    {
+      TSobject->sim_time = real_time;
+      TSobject->perturbation.update_xsec(real_time);
+      TSobject->assemble_ROM_matrices_groupwise();
+    }
+
+    // Zero the WHOLE derivative vector (n_groups + n_prec blocks)
+    for (unsigned int i = 0; i < (n_groups + n_prec) * dim_rom; i++)
+      ndot[i] = 0.0;
+
+    const double beta_sum = TSobject->materials.get_delayed_fraction_sum(0);
+
+    Vector<double> ndot_b(dim_rom);
+    Vector<double> auxvec(dim_rom);
+    Vector<double> n_b(dim_rom);
+
+    // Split the neutron part of n into per-group vectors
+    std::vector<Vector<double>> n_g(n_groups);
+    for (unsigned int g = 0; g < n_groups; g++) {
+      n_g[g].reinit(dim_rom);
+      for (unsigned int dr = 0; dr < dim_rom; dr++)
+        n_g[g][dr] = n[g * dim_rom + dr];
+    }
+
+    // Precompute F_g * n_g ONCE per group (reused for prompt source and for every precursor)
+    std::vector<Vector<double>> Fn(n_groups);
+    for (unsigned int g = 0; g < n_groups; g++) {
+      Fn[g].reinit(dim_rom);
+      TSobject->romF_gg[g].vmult(Fn[g], n_g[g]);
+    }
+
+    //
+    // GROUP-GROUP BLOCKS of T  (specialized to 2 groups)
+    //
+    for (unsigned int g1 = 0; g1 < n_groups; g1++)
+      for (unsigned int g2 = 0; g2 < n_groups; g2++) {
+
+        if (g1 == g2) {
+          // (g,g): (V_g)^-1 [ -L_gg n_g (+ (1-beta) F_g n_g for the fast group only) ]
+          TSobject->romL_gg[g1][g1].vmult(auxvec, n_g[g1]);   // L_gg n_g
+          auxvec *= -1.0;                                     // -L_gg n_g
+          if (g1 == 0)
+            auxvec.add(1.0 - beta_sum, Fn[g1]);               // + (1-beta) F_1 n_1  (fission in fast group only)
+          TSobject->rominvV_gg[g1].vmult(ndot_b, auxvec);
+          for (unsigned int dr = 0; dr < dim_rom; dr++)
+            ndot[dim_rom * g1 + dr] += ndot_b[dr];
+
+        } else if (g1 == 0 and g2 == 1) {
+          // (1,2): (V_1)^-1 (1-beta) F_2 n_2     (fission from thermal flux, born into fast group)
+          auxvec.equ(1.0 - beta_sum, Fn[g2]);                 // (1-beta) F_2 n_2
+          TSobject->rominvV_gg[g1].vmult(ndot_b, auxvec);
+          for (unsigned int dr = 0; dr < dim_rom; dr++)
+            ndot[dim_rom * g1 + dr] += ndot_b[dr];
+
+        } else if (g1 == 1 and g2 == 0) {
+          // (2,1): -(V_2)^-1 L_21 n_1   (in-scatter into thermal group)
+          TSobject->romL_gg[g1][g2].vmult(auxvec, n_g[g2]);  // L_21 n_1
+          auxvec *= -1.0;  // - L_21 n_1
+          TSobject->rominvV_gg[g1].vmult(ndot_b, auxvec);     // (V_2)^-1
+          for (unsigned int dr = 0; dr < dim_rom; dr++)
+            ndot[dim_rom * g1 + dr] += ndot_b[dr];
+        }
+      }
+
+    //
+    // PRECURSOR BLOCKS
+    //
+
+    // Delayed neutron source to group 1: (V_1)^-1 * sum_k lambda_k c_k  (V^-1 apply)
+    n_b = 0;
+    for (unsigned int k = 0; k < n_prec; k++) {
+      const double lam = TSobject->materials.get_delayed_decay_constant(0, k);
+      const unsigned int bp = (k + n_groups) * dim_rom;
+      for (unsigned int dr = 0; dr < dim_rom; dr++)
+        n_b[dr] += lam * n[bp + dr];
+    }
+    TSobject->rominvV_gg[0].vmult(ndot_b, n_b);
+    for (unsigned int dr = 0; dr < dim_rom; dr++)
+      ndot[dr] += ndot_b[dr];
+
+    // Precursor production and decay
+    for (unsigned int k = 0; k < n_prec; k++) {
+      const unsigned int bp = (k + n_groups) * dim_rom;
+      const double beta_k = TSobject->materials.get_delayed_fraction(0, k);
+      const double lam_k  = TSobject->materials.get_delayed_decay_constant(0, k);
+
+      // Production: sum_g beta_k F_g n_g
+      for (unsigned int g = 0; g < n_groups; g++)
+        for (unsigned int dr = 0; dr < dim_rom; dr++)
+          ndot[bp + dr] += beta_k * Fn[g][dr];
+
+      // Decay: -lambda_k c_k
+      for (unsigned int dr = 0; dr < dim_rom; dr++)
+        ndot[bp + dr] -= lam_k * n[bp + dr];
+    }
+
+    VecRestoreArrayRead(N, &n);
+    VecRestoreArray(NDOT, &ndot);
+
+    return 0;
+  }
+
+
+
+
+template <int dim, int n_fe_degree>
+  PetscErrorCode IFunctionROM_groupwise (TS /*ts*/, PetscReal time,
+    Vec U, Vec Udot, Vec Fres, void *ctx)
+  {
+    auto *sc = (ShellCtxROM<dim, n_fe_degree>*) ctx;
+    auto *obj = sc->obj;
+    obj->ensure_LF_assembled(time);
+
+    const PetscScalar *u, *udot; PetscScalar *f;
+    VecGetArrayRead(U, &u); VecGetArrayRead(Udot, &udot); VecGetArray(Fres, &f);
+    obj->action_T(u, f);                                   // f = T u
+    const PetscInt ndim = (obj->n_groups + obj->n_prec) * obj->dim_rom;
+    for (PetscInt i = 0; i < ndim; i++) f[i] = udot[i] - f[i];   // residual Udot - T U
+    VecRestoreArrayRead(U, &u); VecRestoreArrayRead(Udot, &udot); VecRestoreArray(Fres, &f);
+    return 0;
+  }
+
+template <int dim, int n_fe_degree>
+  PetscErrorCode IJacobianROM_groupwise (TS /*ts*/, PetscReal time,
+    Vec /*U*/, Vec /*Udot*/, PetscReal a, Mat J, Mat P, void *ctx)
+  {
+    auto *sc  = (ShellCtxROM<dim, n_fe_degree>*) ctx;
+    auto *obj = sc->obj;
+    obj->ensure_LF_assembled(time);
+    sc->shift = a;                                  // shift para el shell MatMult
+
+    if (!obj->pc_frozen) {                          // proyeccion cara: UNA vez por intervalo
+      obj->assemble_reducedT0_groupwise(obj->T0_pc);
+      obj->pc_frozen = true;
+    }
+
+    // P = a*I - T0
+    MatCopy(obj->T0_pc, P, SAME_NONZERO_PATTERN);
+    MatScale(P, -1.0);
+    MatShift(P, a);
+    MatAssemblyBegin(P, MAT_FINAL_ASSEMBLY); MatAssemblyEnd(P, MAT_FINAL_ASSEMBLY);
+    MatAssemblyBegin(J, MAT_FINAL_ASSEMBLY); MatAssemblyEnd(J, MAT_FINAL_ASSEMBLY);
+
+    return 0;
+  }
+
+template <int dim, int n_fe_degree>
+  PetscErrorCode ShellMatMult_groupwise (Mat J, Vec x, Vec y)
+  {
+    ShellCtxROM<dim, n_fe_degree> *sc;
+    MatShellGetContext(J, &sc);
+    auto *obj = sc->obj;
+    const PetscScalar *xa;
+    PetscScalar *ya;
+    VecGetArrayRead(x, &xa);
+    VecGetArray(y, &ya);
+    obj->action_T(xa, ya);                                 // ya = T x
+    const PetscInt ndim = (obj->n_groups + obj->n_prec) * obj->dim_rom;
+    for (PetscInt i = 0; i < ndim; i++)
+    	ya[i] = sc->shift * xa[i] - ya[i];   // (a I - T) x
+    VecRestoreArrayRead(x, &xa);
+    VecRestoreArray(y, &ya);
     return 0;
   }
 

@@ -757,8 +757,8 @@ template <int dim, int n_fe_degree>
       poison_mf_blocks[row]->vmult_add(dst, src);
     else
     {
-      PETScWrappers::MPI::Vector dst_vec(comm, dst.size(), dst.local_size());
-      PETScWrappers::MPI::Vector src_vec(comm, src.size(), src.local_size());
+      PETScWrappers::MPI::Vector dst_vec(comm, dst.size(), dst.locally_owned_size());
+      PETScWrappers::MPI::Vector src_vec(comm, src.size(), src.locally_owned_size());
       copy_to_Vector(src_vec, src);
       matrix_blocks[row][col]->vmult_add(dst_vec, src_vec);
       // dst = dst_vec;
@@ -788,8 +788,8 @@ template <int dim, int n_fe_degree>
       poison_mf_blocks[row]->vmult(dst, src);
     else
     {
-      PETScWrappers::MPI::Vector dst_vec(comm, dst.size(), dst.local_size());
-      PETScWrappers::MPI::Vector src_vec(comm, src.size(), src.local_size());
+      PETScWrappers::MPI::Vector dst_vec(comm, dst.size(), dst.locally_owned_size());
+      PETScWrappers::MPI::Vector src_vec(comm, src.size(), src.locally_owned_size());
       copy_to_Vector(src_vec, src);
       matrix_blocks[row][col]->vmult_add(dst_vec, src_vec);
       //dst = dst_vec;
@@ -1351,6 +1351,30 @@ template <int dim, int n_fe_degree>
       matrix_blocks[row][col]->vmult_add(v1, v3);
   }
 
+/**
+ * @brief Complete matrix-vector multiplication.
+ * dst = FisionMatrixBase * src
+ */
+template <int dim, int n_fe_degree>
+ double FisionMatrixBase<dim, n_fe_degree>::vmult_dot (const unsigned int row,
+   	    const unsigned int col, PETScWrappers::MPI::Vector &dst,
+     const PETScWrappers::MPI::Vector &src) const
+  {
+
+	AssertIndexRange(row, n_blocks);
+	AssertIndexRange(col, n_blocks);
+    PETScWrappers::MPI::Vector inter(src);
+
+    vmult(row,col,inter, src);
+    double val = dst * inter;
+
+
+    inter.clear();
+
+    return val;
+
+  }
+
 // ----------------------------------------------------------------- //
 // -------------------- Block Multiplications ---------------------- //
 // ------------------------ ParallelVector ------------------------- //
@@ -1372,8 +1396,8 @@ template <int dim, int n_fe_degree>
       mass_mf_blocks[row][col]->vmult_add(dst, src);
     else
     {
-      PETScWrappers::MPI::Vector dst_vec(comm, dst.size(), dst.local_size());
-      PETScWrappers::MPI::Vector src_vec(comm, src.size(), src.local_size());
+      PETScWrappers::MPI::Vector dst_vec(comm, dst.size(), dst.locally_owned_size());
+      PETScWrappers::MPI::Vector src_vec(comm, src.size(), src.locally_owned_size());
       copy_to_Vector(src_vec, src);
       matrix_blocks[row][col]->vmult_add(dst_vec, src_vec);
       //      dst = dst_vec;
@@ -1400,8 +1424,8 @@ template <int dim, int n_fe_degree>
       mass_mf_blocks[row][col]->vmult(dst, src);
     else
     {
-      PETScWrappers::MPI::Vector dst_vec(comm, dst.size(), dst.local_size());
-      PETScWrappers::MPI::Vector src_vec(comm, src.size(), src.local_size());
+      PETScWrappers::MPI::Vector dst_vec(comm, dst.size(), dst.locally_owned_size());
+      PETScWrappers::MPI::Vector src_vec(comm, src.size(), src.locally_owned_size());
       copy_to_Vector(src_vec, src);
       matrix_blocks[row][col]->vmult_add(dst_vec, src_vec);
       //dst = dst_vec;

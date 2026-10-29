@@ -57,17 +57,21 @@ set Output_Flag           = false
 # Filename where will be written the output
 set Output_Filename       = 3D_Roseton/roseton_FE2_60p_rom.out
 
+# True/false - Print the .time with the solutions by time-step
+set Print_Time_Dependent_Data = true
 
-# TIME PARAMETERS
+# Delta time of the iteration
+set Time_Delta          = 0.01
+
 # Final time of the computation
 set Time_End            = 7.0
 
-# True/false - Activate ROM Calculation
-set ROM_Transient       = true
-set ROM_Type_Snapshots  = bank123 
-# set ROM_Time_Break_Snapshots  = 7.5 26.7
-# Number of snapshots for the ROM method
-set N_Snapshots         = 5
+set ROM_Transient              = true
+set ROM_Type_Snapshots         = static_bank_swept 
+set ROM_Banks                  = 1 2
+set N_Snapshots                = 10
+set Epsilon_M  = 1e-5
+set ROM_Group_Wise             = Group_Wise
 
 # INSTABILITY
 
