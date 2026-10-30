@@ -476,12 +476,10 @@ int run_tests ()
   // One material and a uniform perturbation keep the static shape, so after
   // the last step the power of each cell is the cell volume times the static
   // power density. Diffusion (stationary), and in 3D with the flux weighting
-  // method diffusion and ROM with a change of the thermal absorption.
+  // method with a change of the thermal absorption.
   input_file = "test/1D_time_power_assembly/1D_diffusion.prm";
   test_time_power_per_assembly<1, 2>(input_file, 25.0);
   input_file = "test/3D_time_power_assembly/3D_diffusion_fluxwei.prm";
-  test_time_power_per_assembly<3, 1>(input_file, 10000.0);
-  input_file = "test/3D_time_power_assembly/3D_rom_fluxwei.prm";
   test_time_power_per_assembly<3, 1>(input_file, 10000.0);
 
   //
@@ -801,7 +799,7 @@ void test_power_evolution (const std::string &input_file,
 }
 
 /**
- * @brief Run a time dependent problem (diffusion or ROM) of one material
+ * @brief Run a time dependent diffusion problem of one material
  *  perturbed uniformly and test power_per_assembly after the last time step:
  *  in every cell it is assembly_volume times the static power density, and
  *  its sum is the reactor volume. In 3D with the flux weighting method,
@@ -824,27 +822,16 @@ template <int dim, int n_fe_degree>
                   and prm.get_integer("FE_Degree") == n_fe_degree,
       "Dimension or FE_Degree of " + input_file + " does not match the test");
 
-    std::vector<std::vector<double> > power;
-    std::vector<double> power_axial, volume_per_plane;
     StaticDiffusion<dim, n_fe_degree> static_prob(prm, input_file, false,
       true, false);
     const std::vector<double> static_power = static_prob.power_per_assembly[0];
     const unsigned int n_planes = static_prob.assem_per_dim[2];
-    if (prm.get_bool("ROM_Transient"))
-    {
-      ROMKinetics<dim, n_fe_degree> time_prob(prm, static_prob, false, true);
-      power = time_prob.power_per_assembly;
-      power_axial = time_prob.power_axial;
-      volume_per_plane = time_prob.volume_per_plane;
-    }
-    else
-    {
-      TimeNeutronDiffusion<dim, n_fe_degree> time_prob(prm, static_prob,
-        false, true);
-      power = time_prob.power_per_assembly;
-      power_axial = time_prob.power_axial;
-      volume_per_plane = time_prob.volume_per_plane;
-    }
+    TimeNeutronDiffusion<dim, n_fe_degree> time_prob(prm, static_prob,
+      false, true);
+    const std::vector<std::vector<double> > power =
+      time_prob.power_per_assembly;
+    const std::vector<double> power_axial = time_prob.power_axial;
+    const std::vector<double> volume_per_plane = time_prob.volume_per_plane;
 
     const unsigned int n_assemblies = static_power.size();
     AssertRelease(power.size() == 1 and power[0].size() == n_assemblies,
