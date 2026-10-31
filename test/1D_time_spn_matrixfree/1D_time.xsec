@@ -1,0 +1,25 @@
+# 1D two-group slab: six fuel cells (material 2) and two reflector cells
+# (material 1). The delayed spectrum equals the prompt one. The neutron
+# speeds are low, so that the diagonal preconditioner converges.
+Materials
+1  2 2 2 2 2 2 1 1
+
+XSecs 2
+# mat Sigma_t1  chi_1  nu_Sigma_f1  Sigma_f1  Sigma_s1->1  Sigma_s1->2
+#     Sigma_t2  chi_2  nu_Sigma_f2  Sigma_f2  Sigma_s2->1  Sigma_s2->2
+# reflector
+1   0.22   0.9   0.0     0.0     0.19   0.025
+    0.90   0.1   0.0     0.0     0.0    0.86
+# fuel
+2   0.25   0.9   0.005   0.002   0.22   0.02
+    0.80   0.1   0.135   0.055   0.0    0.72
+
+Precursors 1
+#    beta    lambda
+1   0.0065    0.08
+
+Velocity
+1.0e+4  1.0e+3
+
+Decay_Spectrum
+0.9  0.1

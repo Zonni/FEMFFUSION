@@ -12,6 +12,7 @@
 #include "../include/static_spn.h"
 #include "../include/static_full_spn.h"
 #include "../include/time_computation.h"
+#include "../include/time_computation_spn.h"
 
 #include "../include/noise/noise_diffusion.h"
 #include "../include/noise/noise_spn.h"
@@ -417,6 +418,103 @@ int run_tests ()
 
   input_file = "test/3D_Langenbuch/3D_Langenbuch_ds_rods_mov.prm";
   test_power_evolution(input_file, power_langen, 1e-4);
+
+  // SPN transient with the full_matrixfree time operator and the diagonal
+  // preconditioner: its inverse diagonal is that of the non_diagonal time
+  // operator, every time step converges, and the last power is that of the
+  // default time operator and preconditioner. Options given on the command
+  // line are restored after.
+  input_file = "test/1D_time_spn_matrixfree/1D_time_sp3.prm";
+  {
+    std::cout << "Trans ... " << input_file << " " << std::flush;
+    // Inverse diagonals with zero-current faces (no boundary terms)
+    double max_diff = 0.0;
+    {
+      ParameterHandler prm;
+      prm_declare_entries(prm);
+      prm.parse_input(input_file);
+      StaticSPN<1, 2> static_prob(prm, input_file, false, true);
+      std::string time_scheme = prm.get("Distributed_Time_Scheme");
+      lower_case(time_scheme);
+      const std::vector<unsigned int> zero_current(2, 1);
+      const MatrixFreeType types[2] = { non_diagonal, full_matrixfree };
+      PETScWrappers::MPI::BlockVector inv_diagonal[2];
+      for (unsigned int t = 0; t < 2; ++t)
+      {
+        SystemMatrixTimeSPN<1, 2> T(PETSC_COMM_WORLD, static_prob.dof_handler,
+          static_prob.constraints);
+        T.reinit(static_prob.materials, static_prob.n_moments, zero_current,
+          static_prob.albedo_factors, prm.get_double("Time_Delta"), time_scheme,
+          types[t], static_prob.listen_to_material_id);
+        T.get_inv_diagonal(inv_diagonal[t]);
+        T.clear();
+      }
+      for (unsigned int b = 0; b < inv_diagonal[0].n_blocks(); ++b)
+        for (unsigned int i = 0; i < inv_diagonal[0].block(b).size(); ++i)
+        {
+          const double diff = std::abs(
+            inv_diagonal[1].block(b)(i) / inv_diagonal[0].block(b)(i) - 1.0);
+          if (not (diff <= max_diff)) // a NaN is kept
+            max_diff = diff;
+        }
+    }
+
+    const unsigned int n_options = 4;
+    const std::string options[n_options] = { "-matrixfree_type_time",
+      "-init_prec", "-tol_ksp", "-print_timefile" };
+    const std::string values[2][n_options] = {
+      { "non_diagonal", "gs-cgilu", "1e-12", "false" },
+      { "full_matrixfree", "diagonal", "1e-12", "false" } };
+    std::vector<std::string> given(n_options, "");
+    for (unsigned int i = 0; i < n_options; ++i)
+      get_string_from_options(options[i], given[i]);
+
+    PetscErrorCode ierr;
+    double last_power[2];
+    double max_its = 0.0;
+    for (unsigned int run = 0; run < 2; ++run)
+    {
+      for (unsigned int i = 0; i < n_options; ++i)
+      {
+        ierr = PetscOptionsSetValue(NULL, options[i].c_str(),
+          values[run][i].c_str());
+        AssertRelease(ierr == 0, "Error setting " + options[i]);
+      }
+      ParameterHandler prm;
+      prm_declare_entries(prm);
+      prm.parse_input(input_file);
+      StaticSPN<1, 2> static_prob(prm, input_file, false, true);
+      TimeNeutronSPN<1, 2> time_pro(prm, static_prob, false, true);
+      last_power[run] = time_pro.power_vector.back();
+      if (run == 1)
+        for (unsigned int s = 0; s < time_pro.solver_its.size(); ++s)
+          if (time_pro.solver_its[s] > max_its)
+            max_its = time_pro.solver_its[s];
+    }
+
+    for (unsigned int i = 0; i < n_options; ++i)
+    {
+      if (given[i].empty())
+        ierr = PetscOptionsClearValue(NULL, options[i].c_str());
+      else
+        ierr = PetscOptionsSetValue(NULL, options[i].c_str(),
+          given[i].c_str());
+      AssertRelease(ierr == 0, "Error restoring " + options[i]);
+    }
+
+    AssertRelease(max_diff < 1e-10,
+      "  Error solving test " + input_file + '\n'
+      + "  Inverse diagonals of full_matrixfree and non_diagonal differ by "
+      + num_to_str(max_diff) + '.');
+    // The KSP of a time step stops at 400 iterations
+    AssertRelease(max_its < 400 and is_similar(last_power[1], last_power[0],
+      1e-8), "  Error solving test " + input_file + '\n'
+        + "  Last power with full_matrixfree and diagonal: "
+        + num_to_str(last_power[1]) + " and it should be "
+        + num_to_str(last_power[0])
+        + ". Largest number of iterations: " + num_to_str(max_its) + '.');
+    std::cout << " Passed!" << std::endl;
+  }
 
   //TODO IMPLEMENT IT
   // "Test Langenbuch reactor with Out-Of-Phase (sigma_f):"
