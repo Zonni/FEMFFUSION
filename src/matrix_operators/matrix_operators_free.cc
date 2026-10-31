@@ -834,7 +834,7 @@ template <int dim, int n_fe_degree, typename number>
           fe_eval.submit_dof_value(VectorizedArray<number>(), j);
         fe_eval.submit_dof_value(make_vectorized_array<number>(1.), i);
 
-        fe_eval.integrate(EvaluationFlags::values | EvaluationFlags::gradients);
+        fe_eval.evaluate(EvaluationFlags::values | EvaluationFlags::gradients);
         for (unsigned int q = 0; q < fe_eval.n_q_points; ++q)
         {
           fe_eval.submit_value(sigma_va * fe_eval.get_value(q), q);
