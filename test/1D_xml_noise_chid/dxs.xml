@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<materials ngroups="1">
+  <mix id="0">
+    <name>HomogeneousOneGroup</name>
+    <SigmaT> 1.0e-3 0.0 </SigmaT>
+    <SigmaS>
+      0.0 0.0;
+    </SigmaS>
+    <Chi> 0.0 0.0 </Chi>
+    <NuSigF> 0.0 0.0 </NuSigF>
+  </mix>
+</materials>

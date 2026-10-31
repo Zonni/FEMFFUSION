@@ -156,6 +156,23 @@ int run_tests ()
 
   //
   //-----------------------------------------------------------------//
+  // TEST 1D_xml_noise_chid
+  // XML noise with one precursor family, with and without ChiD (ChiD = Chi).
+  // Uniform noise on a zero-current slab: delta_phi = c phi with
+  // c = -dSigma_r / (i w/v + nuSigma_f/k beta i w/(lambda + i w)), |c| = 7.4937466,
+  // phi = k/Sigma_f = 125 on 17 dofs: |c| 125 sqrt(17) = 3862.18860
+  input_file = "test/1D_xml_noise_chid/noise_chid.prm";
+  test_noise_problem(input_file, 3862.188597, 3.86e-3);
+  input_file = "test/1D_xml_noise_chid/noise_no_chid.prm";
+  test_noise_problem(input_file, 3862.188597, 3.86e-3);
+  // Two groups, no nprecursors: with Beta_eff and Lambda_eff from the DYN file every
+  // fission neutron is born in group 1. Closed form 106.80656619; a prompt spectrum
+  // (1, chi_2) gives 42.82 and a delayed spectrum (1, 1) 106.80651, hence the tolerance.
+  input_file = "test/1D_xml_noise_chid/noise_2g_dyn.prm";
+  test_noise_problem(input_file, 106.80656619, 5e-6);
+
+  //
+  //-----------------------------------------------------------------//
   // TEST   2D_biblis_test
   // Testing degenerated eigenvalues (2 or more equal eigenvalues due to symmetry).
   input_file = "test/2D_biblis_test/biblis_FE3.prm";

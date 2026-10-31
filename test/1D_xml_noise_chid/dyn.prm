@@ -1,0 +1,2 @@
+# Frequency of the perturbation (Hz); beta, lambda and the velocity are in the XML file
+set Frequency            = 1.0
