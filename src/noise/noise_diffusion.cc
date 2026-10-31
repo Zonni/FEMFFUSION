@@ -414,7 +414,7 @@ template <int dim, int n_fe_degree>
       }
 
       for (unsigned int g = 0; g < n_groups; g++)
-        noise_per_assembly[g][cell->user_index()] = complex(delta_cell_phi[g][0],
+        noise_per_assembly[g][cell->user_index()] += complex(delta_cell_phi[g][0],
           delta_cell_phi[g][1]);
 
       volume_per_assembly[cell->user_index()] += cell->measure();
