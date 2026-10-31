@@ -359,9 +359,8 @@ int run_tests ()
   // --------------------------------------------------------------- //
   // 1D SPN Noise
   // --------------------------------------------------------------- //
-  // Not converged
-  //input_file = "test/1D_noise_SPN_1g/1D_noise_diffusion.prm";
-  //test_noise_problem(input_file, 26.0953);
+  input_file = "test/1D_noise_SPN_1g/1D_noise_diffusion.prm";
+  test_noise_problem(input_file, 26.095462);
   input_file = "test/1D_noise_SPN_1g/1D_noise_sp1.prm";
   test_noise_problem(input_file, 26.095597);
   input_file = "test/1D_noise_SPN_1g/1D_noise_fsp1.prm";
