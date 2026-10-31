@@ -1270,11 +1270,11 @@ template <int dim, int n_fe_degree>
 
           power_cell += sigma_f * phi_cell;
 
-          phi_per_assembly[eig][g][cell->user_index()] = phi_cell;
+          phi_per_assembly[eig][g][cell->user_index()] += phi_cell;
         }
 
         volume += cell->measure();
-        norm += power_cell;
+        norm += std::abs(power_cell);
         power_per_assembly[eig][cell->user_index()] += power_cell;
         volume_per_assembly[cell->user_index()] += cell->measure();
       }
@@ -1301,12 +1301,11 @@ template <int dim, int n_fe_degree>
         {
 
           normalize_vector(power_per_assembly[eig], -1);
+          for (unsigned int g = 0; g < n_groups; ++g)
+            normalize_vector(phi_per_assembly[eig][g], -1);
           for (unsigned int c = 0; c < n_components; ++c)
             for (unsigned int g = 0; g < phi[eig][c].n_blocks(); ++g)
-            {
-              normalize_vector(phi_per_assembly[eig][g], -1);
               normalize_vector(phi[eig][c].block(g), -1);
-            }
           change_flag = true;
         }
         else if (power_per_assembly[eig][i] > +0.0001)

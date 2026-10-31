@@ -22,6 +22,21 @@ test_keff_problem (const std::string &input_file,
   const double keff,
   const double tol = 2e-5);
 
+/**
+ *  @brief Test the power and the flux per cell of a static Full SPN problem with
+ *  one material: in every mode and every cell, sum_g sigma_f,g phi_g must be the
+ *  power. In every mode, the first cell with power must be positive, the mean
+ *  absolute power must be 1, the flux of each group and cell must be the mean
+ *  of the nodal flux over the cell, and in 1D SP1 the current must have the
+ *  sign of its mode. If flux is not empty, the flux of group g of the first
+ *  mode must be flux[g] in every cell.
+ */
+template <int dim, int n_fe_degree>
+  void test_full_spn_per_cell (
+    const std::string &input_file,
+    const std::vector<double> &flux = std::vector<double>(),
+    const double tol = 1e-8);
+
 /*
  * @brief
  */
