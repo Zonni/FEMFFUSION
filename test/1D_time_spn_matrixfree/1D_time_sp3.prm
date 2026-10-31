@@ -1,0 +1,36 @@
+# 1D two-group slab, fuel and reflector, reflective left face and vacuum
+# right face, SP3 transient. Sigma_a2 of the fuel oscillates as
+# 0.08 + 1.0e-3 sin(2 pi t) 1/cm. The test runs this input file with the
+# full_matrixfree time operator and the diagonal preconditioner, and with
+# the default time operator and preconditioner: the powers must agree.
+set Dimension                = 1
+set Transport_Appr           = SPN
+set N_SPN                    = 3
+set N_Eigenvalues            = 1
+set Energy_Groups            = 2
+set Geometry_Type            = Rectangular
+set FE_Degree                = 2
+set N_Refinements            = 0
+set Mesh_Size                = 8
+set Cell_Pitch_x             = 8* 1.5
+set Boundary_Conditions      = 1 2
+set Output_Flag              = false
+set Print_Grid_Flag          = false
+set XSEC_Type                = XSEC
+set XSECS_Filename           = test/1D_time_spn_matrixfree/1D_time.xsec
+set Output_Filename          = test/1D_time_spn_matrixfree/1D_time_sp3.out
+set EPS_Tolerance            = 1e-12
+set KSP_Tolerance            = 1e-12
+
+# Time parameters (default scheme: Implicit-Exponential)
+set Transient                = true
+set Time_Delta               = 0.01
+set Time_End                 = 0.1025
+set Type_Perturbation        = Single_Material
+set Perturbation_Function    = Sinus
+set XS_Name                  = all
+set Group_Changing           = 0
+set Material_Changing        = 2
+# Sigma_tr1 Sigma_a1 nuSigma_f1 Sigma_12 Sigma_tr2 Sigma_a2 nuSigma_f2
+set Amplitudes               = 0.0 0.0 0.0 0.0 0.0 1.0e-3 0.0
+set Frequency                = 1.0
