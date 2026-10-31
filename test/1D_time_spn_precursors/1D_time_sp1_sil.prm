@@ -1,0 +1,35 @@
+# The transient of 1D_time_sp1.prm with the Semi-Implicit-Euler scheme. The
+# last power is the diffusion value 0.914389680266 (0.914441783024 with the
+# flux of the previous step).
+set Dimension                = 1
+set Transport_Appr           = SPN
+set N_SPN                    = 1
+set N_Eigenvalues            = 1
+set Energy_Groups            = 2
+set Geometry_Type            = Rectangular
+set FE_Degree                = 2
+set N_Refinements            = 0
+set Mesh_Size                = 5
+set Cell_Pitch_x             = 5* 2.0
+set Boundary_Conditions      = 1 1
+set Output_Flag              = false
+set Print_Grid_Flag          = false
+set XSEC_Type                = XSEC
+set XSECS_Filename           = test/1D_time_spn_precursors/1D_time.xsec
+set Output_Filename          = test/1D_time_spn_precursors/1D_time_sp1_sil.out
+set EPS_Tolerance            = 1e-12
+set KSP_Tolerance            = 1e-12
+
+# Time parameters
+set Transient                = true
+set Distributed_Time_Scheme  = Semi-Implicit-Euler
+set Time_Delta               = 0.01
+set Time_End                 = 0.1025
+set Type_Perturbation        = Single_Material
+set Perturbation_Function    = Sinus
+set XS_Name                  = all
+set Group_Changing           = 0
+set Material_Changing        = 1
+# Sigma_tr1 Sigma_a1 nuSigma_f1 Sigma_12 Sigma_tr2 Sigma_a2 nuSigma_f2
+set Amplitudes               = 0.0 0.0 0.0 0.0 0.0 1.0e-4 0.0
+set Frequency                = 1.0

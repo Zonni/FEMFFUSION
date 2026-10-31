@@ -944,6 +944,9 @@ template <int dim, int n_fe_degree>
     if (step % out_interval == 0)
       verbose_cout << "   its: " << its << std::endl;
 
+    // The precursors are updated with the flux of this time step
+    compute_phi_from_u();
+
     verbose_cout << "solve_precursors... " << std::endl;
     solve_precursors();
     verbose_cout << "Done!" << std::endl;
@@ -1124,10 +1127,10 @@ template <int dim, int n_fe_degree>
   }
 
 /**
- * @brief postprocess_time_step
+ * @brief Compute the flux moments phi from the solution u.
  */
 template <int dim, int n_fe_degree>
-  void TimeNeutronSPN<dim, n_fe_degree>::postprocess_time_step ()
+  void TimeNeutronSPN<dim, n_fe_degree>::compute_phi_from_u ()
   {
 
     for (unsigned int m1 = 0; m1 < n_moments; ++m1)
@@ -1143,6 +1146,17 @@ template <int dim, int n_fe_degree>
       }
 
     }
+
+  }
+
+/**
+ * @brief postprocess_time_step
+ */
+template <int dim, int n_fe_degree>
+  void TimeNeutronSPN<dim, n_fe_degree>::postprocess_time_step ()
+  {
+
+    compute_phi_from_u();
 
     // Initialize all that  is needed to iterate over dofs and cells
     QGauss<dim> quadrature_formula(n_fe_degree + 1);

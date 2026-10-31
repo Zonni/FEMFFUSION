@@ -83,5 +83,14 @@ void run_tests_utils ();
 void run_test_static_rom (const std::string &input_file,
   unsigned int n_tests);
 
+/*
+ * @brief Run a 1D SPN time dependent problem (FE_Degree 2), only the last
+ * power is checked.
+ */
+void
+test_power_evolution_spn (const std::string &input_file,
+  const double power,
+  const double tol = 1e-8);
+
 #endif
 
