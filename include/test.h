@@ -31,6 +31,16 @@ test_power_evolution (const std::string &input_file,
   const double tol = 1e-4);
 
 /*
+ *  @brief Test the power per assembly of a time dependent problem after its
+ *  last time step.
+ */
+template <int dim, int n_fe_degree>
+  void test_time_power_per_assembly (
+    const std::string &input_file,
+    const double assembly_volume,
+    const double tol = 1e-8);
+
+/*
  *  @brief Test noise problem through the mean and the l2 norm of the delta_phi.
  */
 void test_noise_problem (
