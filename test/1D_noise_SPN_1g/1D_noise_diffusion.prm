@@ -55,3 +55,5 @@ set DYN_Filename         = test/1D_noise_SPN_1g/1g.dyn.prm
 # Filename where will be written the output.
 set Output_Filename      = test/1D_noise_SPN_1g/1D_noise_diffusion.out
 
+
+set PC_Noise             = block_jacobi
