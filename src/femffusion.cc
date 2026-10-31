@@ -61,7 +61,7 @@ void prm_declare_entries (ParameterHandler &prm)
   // Other Transport approximations
   prm.declare_entry("Transport_Appr", "Diffusion",
     Patterns::Selection("Diffusion | SPN | Full_SPN | SDPN"),
-    "Transport Approximation used (Diffusion | SPN | SDPN)");
+    "Transport Approximation used (Diffusion | SPN | Full_SPN | SDPN)");
   prm.declare_entry("SPDN_Type", "Damian", Patterns::Selection("Damian | Nazari"),
     "SDPN Type (Damian | Nazari)");
   prm.declare_entry("N_SPN", "3", Patterns::Integer(1, 7),
@@ -91,9 +91,13 @@ void prm_declare_entries (ParameterHandler &prm)
       " Set a matrix where, 0 means no materials, 1 nuclear fuel and 2 reflector");
   prm.declare_entry("Boundary_Conditions", "", Patterns::Anything(),
     "(LEFT, RIGHT, TOP, BOTTOM, FRONT, BACK ) \n"
-      "(0  ZeroFlow) (1  Symmetry) (2 Albedo) (3 Vacuum)");
+      "(0 Zero flux) (1 Zero current, symmetry) (2 Vacuum, Marshak)\n"
+      " (>= 3 Albedo, set code - 3 of Albedo_Factors)");
   prm.declare_entry("Albedo_Factors", "", Patterns::Anything(),
-    "Set Albedo Factor, beta, defining the BC as,  vec{n} D nabla phi = beta phi");
+    "Albedo factors alpha for faces with Boundary_Conditions code >= 3, as used\n"
+      " by Diffusion (other approximations are not described here): one value per\n"
+      " energy group in each set (code 3 is set 0), and the face condition\n"
+      " -D n.grad(phi_g) = alpha phi_g (alpha = 0.5: code 2 vacuum)");
   prm.declare_entry("Triangulation_Filename", "", Patterns::Anything(),
     "Filename where the triangulation is saved/loaded the output");
   prm.declare_entry("Refinement_Model", "local", Patterns::Anything(),
@@ -185,7 +189,7 @@ void prm_declare_entries (ParameterHandler &prm)
   prm.declare_entry("PC_Noise", "gauss_seidel", Patterns::Anything(),
     "Preconditioner used for the noise complex linear system solver");
   prm.declare_entry("KSP_Noise_Tolerance", "1e-14", Patterns::Double(),
-    "Relative tolerance of the noise complex linear system solver");
+    "Absolute residual tolerance of the noise complex linear system solver");
 
   // Time Domain Variables
   prm.declare_entry("Distributed_Time_Scheme", "Implicit-Exponential",
@@ -214,9 +218,10 @@ void prm_declare_entries (ParameterHandler &prm)
   prm.declare_entry("Frequency", "1.0", Patterns::Double(),
     "Frequency of the vibration in Hz");
   prm.declare_entry("Amplitude", "0.0", Patterns::Double(),
-    "Amplitude instability in %");
+    "Amplitude of the Mechanical_Vibration displacement, an absolute amount in cm");
   prm.declare_entry("Amplitudes", "", Patterns::Anything(),
-    "Amplitude instabilities in %");
+    "Amplitudes of the Sinus perturbation with XS_Name all and of Noise_7g,"
+      " absolute amounts in 1/cm");
   prm.declare_entry("Out_Phase", "3.141592653589793", Patterns::Double(),
     "Phase for the out of phase");
   prm.declare_entry("Slope_Up", "0.0", Patterns::Anything(),
@@ -230,7 +235,7 @@ void prm_declare_entries (ParameterHandler &prm)
   //  prm.declare_entry("Material_Changing_1", "0", Patterns::Integer(),
   //    "Second Material where the instability is inserted");
   prm.declare_entry("Group_Changing", "0", Patterns::Integer(),
-    "Second Material where the instability is inserted");
+    "Energy group perturbed (1-based); 0 perturbs all groups");
   prm.declare_entry("XS_Name", "Sigma_f", Patterns::Anything(),
     "Cross Section where the Sigma_f/Sigma_a...");
   prm.declare_entry("Type_Perturbation", "None",
@@ -260,7 +265,8 @@ void prm_declare_entries (ParameterHandler &prm)
     Patterns::FileName(Patterns::FileName::FileType::input),
     "Filename where the XS of the read_xml_file perturbation.");
   prm.declare_entry("XS_Perturbation_Fraction", "0.0", Patterns::Double(),
-    "True/false - Make a pseudostatic calculation");
+    "ROM_Static: fraction f; each perturbed cross section x is sampled in\n"
+      " [(1 - f) x, (1 + f) x] (IHS_XS snapshots and the N_Test random tests)");
 
   // Save/Load Time dependent Calculations
   prm.declare_entry("Save_Time", "false", Patterns::Bool(),
