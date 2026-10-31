@@ -1438,7 +1438,7 @@ template <int dim, int n_fe_degree>
     {
       for (unsigned int g = 0; g < n_groups; ++g)
         data_out.add_data_vector(
-          phi[0][0].block(g),
+          phi[eig][0].block(g),
           "phi_g" + num_to_str(g + 1) + "_eig_" + num_to_str(eig + 1));
 
       unsigned int c = 0;

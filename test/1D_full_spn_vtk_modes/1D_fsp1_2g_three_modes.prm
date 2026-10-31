@@ -1,0 +1,62 @@
+# Reactor 1D Full SP1, 2 groups, 200 cm, vacuum | zero current, three modes
+# ---------------------------------------------------------------------------
+
+# Dimension of the problem (1, 2 or 3)
+set Dimension            = 1
+
+# Number of eigenvalues
+set N_Eigenvalues        = 3
+
+# Transport Approximation used (Diffusion | SPN | Full_SPN)
+set Transport_Appr       = Full_SPN
+
+# Set N of the SPN equations used (1, 3 or 5)
+set N_SPN                = 1
+
+# Set the number of neutron energy groups defined in the calculation
+set Energy_Groups        = 2
+
+#
+# REACTOR DEFINITION
+# Finite element Degree
+set FE_Degree            = 1
+
+# Number of global refinements
+set N_Refinements        = 0
+
+# Number of cells per dimension
+set Mesh_Size            = 8
+
+# Pitch of the cells in x dimension
+set Cell_Pitch_x         = 8* 25.0
+
+# Boundary Conditions  (0 ZeroFlux) (1 ZeroCurrent) (2 Vaccum)
+#                       LEFT RIGHT
+set Boundary_Conditions  = 2 1
+
+#
+# OUTPUT OPTIONS
+# Filename where will be written the output
+set Output_Filename      = test/1D_full_spn_vtk_modes/1D_fsp1_2g_three_modes.out
+
+# True/false - Make a .vtk file with the output
+set Output_Flag          = true
+
+# Number of Refinements per cell in the .vtk output
+set Out_Refinements      = 1
+
+# True/false - Print the grid in .eps
+set Print_Grid_Flag      = false
+
+#
+# CROSS SECTIONS
+# Filename where it is stored the material cross section
+set XSECS_Filename       = test/1D_full_spn_vtk_modes/2g.xsec
+
+# XS type file defined (XS2G | XSEC | XML | Valkin)
+set XSEC_Type            = XS2G
+
+#
+# SOLVER
+set EPS_Tolerance        = 1e-10
+set KSP_Tolerance        = 1e-12
