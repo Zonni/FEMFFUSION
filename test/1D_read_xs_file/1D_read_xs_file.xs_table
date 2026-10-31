@@ -1,0 +1,23 @@
+# Cross sections of material 1 at each time: the static values
+# Time t: MatNum sigma_tr1 sigma_a1 nu_sigma_f1 sigma_f1 sigma_12
+#                sigma_tr2 sigma_a2 nu_sigma_f2 sigma_f2
+# Rows every 0.02 s from t = 0.01: with Time_Delta 0.01 every other step,
+# the last one (t = 0.1) included, falls mid-interval (weight 0.5)
+N_Perturbed_Materials 1
+Perturbed_Materials 1
+N_Time_Steps 7
+XSECS
+Time 0.01
+1  0.25  0.01  0.005  0.002  0.02  0.8  0.08  0.135  0.055
+Time 0.03
+1  0.25  0.01  0.005  0.002  0.02  0.8  0.08  0.135  0.055
+Time 0.05
+1  0.25  0.01  0.005  0.002  0.02  0.8  0.08  0.135  0.055
+Time 0.07
+1  0.25  0.01  0.005  0.002  0.02  0.8  0.08  0.135  0.055
+Time 0.09
+1  0.25  0.01  0.005  0.002  0.02  0.8  0.08  0.135  0.055
+Time 0.11
+1  0.25  0.01  0.005  0.002  0.02  0.8  0.08  0.135  0.055
+Time 0.13
+1  0.25  0.01  0.005  0.002  0.02  0.8  0.08  0.135  0.055
