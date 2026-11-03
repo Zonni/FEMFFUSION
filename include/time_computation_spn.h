@@ -234,6 +234,8 @@ template <int dim, int n_fe_degree>
     std::vector<std::vector<double>> velocities_vector;
 
     private:
+
+    void compute_phi_from_u ();
   };
 
 #endif /* TIME_COMPUTATION_SPN_H_ */
