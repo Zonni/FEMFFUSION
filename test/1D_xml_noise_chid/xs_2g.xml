@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Composition>
+0 1 0 1 0 1 0 1
+</Composition>
+<materials ngroups="2">
+  <mix id="0">
+    <name>HomogeneousTwoGroup</name>
+    <SigmaT> 0.25 0.8 </SigmaT>
+    <SigmaS>
+      0.22 0.0;
+      0.02 0.72;
+    </SigmaS>
+    <Chi> 0.9 0.1 </Chi>
+    <NuSigF> 0.005 0.135 </NuSigF>
+    <SigF> 0.002 0.055 </SigF>
+  </mix>
+  <mix id="1">
+    <name>SameMaterialAgain</name>
+    <SigmaT> 0.25 0.8 </SigmaT>
+    <SigmaS>
+      0.22 0.0;
+      0.02 0.72;
+    </SigmaS>
+    <Chi> 0.9 0.1 </Chi>
+    <NuSigF> 0.005 0.135 </NuSigF>
+    <SigF> 0.002 0.055 </SigF>
+  </mix>
+</materials>

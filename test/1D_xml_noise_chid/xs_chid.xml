@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Composition>
+0 0 0 0 0 0 0 0
+</Composition>
+<materials ngroups="1" nprecursors="1">
+  <mix id="0">
+    <name>HomogeneousOneGroup</name>
+    <SigmaT> 0.5 </SigmaT>
+    <SigmaS>
+      0.48;
+    </SigmaS>
+    <Chi> 1.0 </Chi>
+    <NuSigF> 0.025 </NuSigF>
+    <SigF> 0.01 </SigF>
+    <Beta> 0.0065 </Beta>
+    <Lambda> 0.08 </Lambda>
+    <ChiD>
+      1.0;
+    </ChiD>
+    <Velocities> 2.2e+5 </Velocities>
+  </mix>
+</materials>
