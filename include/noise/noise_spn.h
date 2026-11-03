@@ -120,9 +120,8 @@ template <int dim, int n_fe_degree>
     const Triangulation<dim> &tria;
     const FiniteElement<dim> &fe_block;
     const DoFHandler<dim> &dof_handler_block;
-    //const AffineConstraints<double>& constraints_block;
+    const AffineConstraints<double> &constraints;
     double keff;
-    AffineConstraints<double> constraints;
 
     // Boundary Conditions
     const std::vector<unsigned int> &boundary_conditions;
