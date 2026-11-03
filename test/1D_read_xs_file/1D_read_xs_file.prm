@@ -1,0 +1,57 @@
+# Reactor 1D with 5 cells, 2 energy groups and one material.
+# Read_XS_File transient whose table repeats the static cross sections:
+# the reactor stays critical and the total power must stay at 1.
+# ---------------------------------------------------------------------------
+
+# Dimension of the problem (1, 2 or 3)
+set Dimension            = 1
+
+# Number of eigenvalues
+set N_Eigenvalues        = 1
+
+# Set Energy Groups
+set Energy_Groups        = 2
+
+# Transport approximation and geometry
+set Transport_Appr       = Diffusion
+set Geometry_Type        = Rectangular
+
+# REACTOR DEFINITION
+# Finite element Degree
+set FE_Degree            = 2
+
+# Number of global refinements
+set N_Refinements        = 0
+
+# Number of cells per dimension
+set Mesh_Size            = 5
+
+# Pitch of the cells in x dimension
+set Cell_Pitch_x         = 5* 2.0
+
+# Boundary Conditions  (0  ZeroFlux) (1  Symmetry) (2 Vacuum)
+set Boundary_Conditions  = 1 1
+
+# OUT OPTIONS
+# True/false - Make a .vtk file with the output
+set Output_Flag          = false
+
+# True/false - Print the grid in .eps
+set Print_Grid_Flag      = false
+
+# Time Dependent Problem
+set Transient            = true
+set Type_Perturbation    = Read_XS_File
+set Time_Delta           = 0.01
+set Time_End             = 0.1
+
+# FILENAMES
+# Cross sections in the XSEC format
+set XSEC_Type            = XSEC
+set XSECS_Filename       = test/1D_read_xs_file/1D_read_xs_file.xsec
+
+# Cross sections of the perturbed material at each tabulated time
+set Read_XS_Filename     = test/1D_read_xs_file/1D_read_xs_file.xs_table
+
+# Filename where will be written the output
+set Output_Filename      = test/1D_read_xs_file/1D_read_xs_file.out

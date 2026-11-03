@@ -1885,8 +1885,8 @@ template <int dim>
           materials.set_sigma_r(sigma_a2, 1, pert_mat);
           materials.set_nu_sigma_f(nu_sigma_f1 / materials.keff, 0, pert_mat);
           materials.set_nu_sigma_f(nu_sigma_f2 / materials.keff, 1, pert_mat);
-          materials.set_sigma_f(sigma_f1, 0, pert_mat);
-          materials.set_sigma_f(sigma_f2, 1, pert_mat);
+          materials.set_sigma_f(sigma_f1 / materials.keff, 0, pert_mat);
+          materials.set_sigma_f(sigma_f2 / materials.keff, 1, pert_mat);
           materials.set_sigma_s(sigma_12, 0, 1, pert_mat);
         }
       }
