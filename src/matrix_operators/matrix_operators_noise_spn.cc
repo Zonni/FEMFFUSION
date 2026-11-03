@@ -585,9 +585,7 @@ template <int dim, int n_fe_degree>
                       factor = 1;
                       break;
                     default: // Custom Albedo BC
-                      factor = albedo_factors[(boundary_conditions[boundary_id] - 3)
-                                              * materials.get_n_groups()
-                                              + g];
+                      factor = albedo_factors[boundary_conditions[boundary_id] - 3];
                       break;
                   }
 
@@ -736,9 +734,7 @@ template <int dim, int n_fe_degree>
                     factor = 1.0;
                     break;
                   default: // Custom Albedo BC
-                    factor = albedo_factors[(boundary_conditions[boundary_id] - 3)
-                                            * materials.get_n_groups()
-                                            + g];
+                    factor = albedo_factors[boundary_conditions[boundary_id] - 3];
                     break;
                 }
 
