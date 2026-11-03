@@ -200,8 +200,8 @@ template <int dim, int n_fe_degree>
               {
                 coeffs_L[gi][gj][mi][mj][mat] +=
                                                  -sp_coeff[0][mi][mj] * exp_value[np]
-                                                 * materials.get_prompt_spectra(mat,
-                                                   gi)
+                                                 * materials.get_delayed_spectra(mat,
+                                                   np, gi)
                                                  * materials.get_nu_sigma_f(gj, mat);
               }
 
@@ -352,8 +352,8 @@ template <int dim, int n_fe_degree>
               {
                 coeffs_L[gi][gj][mi][mj][mat] +=
                                                  -sp_coeff[0][mi][mj] * exp_value[np]
-                                                 * materials.get_prompt_spectra(mat,
-                                                   gi)
+                                                 * materials.get_delayed_spectra(mat,
+                                                   np, gi)
                                                  * materials.get_nu_sigma_f(gj, mat);
               }
 
@@ -734,8 +734,8 @@ template <int dim, int n_fe_degree>
                       np < materials.get_n_precursors(); np++)
 
                     sigma += -sp_coeff[0][mi][mj] * exp_value[np]
-                             * materials.get_prompt_spectra(mat,
-                               gi)
+                             * materials.get_delayed_spectra(mat,
+                               np, gi)
                              * materials.get_nu_sigma_f(gj, mat);
 
                   bc_coeff = marshack_coeff[mi][mj];
@@ -766,9 +766,8 @@ template <int dim, int n_fe_degree>
                            * materials.get_nu_sigma_f(gj, mat);
                   for (unsigned int np = 0;
                       np < materials.get_n_precursors(); np++)
-                    // TODO check to change get_prompt_spectra by get_delayed_spectra
                     sigma += -sp_coeff[0][mi][mj] * exp_value[np]
-                             * materials.get_prompt_spectra(mat, gi)
+                             * materials.get_delayed_spectra(mat, np, gi)
                              * materials.get_nu_sigma_f(gj, mat);
 
                   bc_coeff = marshack_coeff[mi][mj];
@@ -792,9 +791,8 @@ template <int dim, int n_fe_degree>
 
                 for (unsigned int np = 0;
                     np < materials.get_n_precursors(); np++)
-                  // TODO check to change get_prompt_spectra by get_delayed_spectra
                   sigma += -exp_value[np]
-                           * materials.get_prompt_spectra(mat, gi)
+                           * materials.get_delayed_spectra(mat, np, gi)
                            * materials.get_nu_sigma_f(gj, mat);
 
                 cell_L.equ(sigma, cell_val);
