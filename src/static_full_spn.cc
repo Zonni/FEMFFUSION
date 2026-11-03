@@ -1270,7 +1270,7 @@ template <int dim, int n_fe_degree>
 
           power_cell += sigma_f * phi_cell;
 
-          phi_per_assembly[eig][g][cell->user_index()] = phi_cell;
+          phi_per_assembly[eig][g][cell->user_index()] += phi_cell;
         }
 
         volume += cell->measure();
