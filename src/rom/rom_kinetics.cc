@@ -1878,9 +1878,9 @@ template <int dim, int n_fe_degree>
       {
         //std::cout << "power.. " << std::endl;
         //std::cout << "assem_per_dim[2]: " << assem_per_dim[2] << std::endl;
-        volume_per_plane.resize(assem_per_dim[2], 0.0);
+        volume_per_plane.assign(assem_per_dim[2], 0.0);
         unsigned int plane;
-        power_axial.resize(assem_per_dim[2], 0.0);
+        power_axial.assign(assem_per_dim[2], 0.0);
 
         for (unsigned int i = 0; i < power_per_assembly[0].size(); i++)
         {
