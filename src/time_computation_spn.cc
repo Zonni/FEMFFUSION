@@ -120,9 +120,9 @@ template <int dim, int n_fe_degree>
     lower_case(time_scheme);
 
     // Type of preconditioner: "fixed" or "good-broyden" or "bad-broyden"
-    type_preconditioner = "fixed";
+    type_preconditioner = prm.get("Type_Time_Preconditioner");
     // Initial preconditioner: "gs-cgilu" or "gs-ilu" or "diagonal "
-    initial_preconditioner = "gs-cgilu";
+    initial_preconditioner = prm.get("Initial_Time_Preconditioner");
 
     // Solver parameters
     init_delta_t = prm.get_double("Time_Delta");
