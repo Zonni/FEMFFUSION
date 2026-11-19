@@ -23,6 +23,16 @@ test_keff_problem (const std::string &input_file,
   const double tol = 2e-5);
 
 /**
+ *  @brief Run a static 1D problem whose Output_Filename lies in a subfolder of
+ *  folder, after removing folder, and check the eigenvalue in its output file.
+ */
+void
+test_output_folder (const std::string &input_file,
+  const std::string &folder,
+  const double keff,
+  const double tol = 2e-5);
+
+/**
  *  @brief Test the power and the flux per cell of a static Full SPN problem with
  *  one material: in every mode and every cell, sum_g sigma_f,g phi_g must be the
  *  power. In every mode, the first cell with power must be positive, the mean
