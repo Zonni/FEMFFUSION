@@ -977,8 +977,8 @@ template <int dim, int n_fe_degree>
       // Create Folder if Does not exist
       std::size_t pos = out_file.find_last_of('/');
       std::string folderPath = (pos != std::string::npos) ? out_file.substr(0, pos) : "";
-      if (!std::filesystem::exists(folderPath))
-        std::filesystem::create_directory(folderPath);
+      if (!folderPath.empty() && !std::filesystem::exists(folderPath))
+        std::filesystem::create_directories(folderPath);
       // Create and erase the content of output file
       std::ofstream out(out_file.c_str(), std::ios::out);
 
@@ -1211,9 +1211,9 @@ template <int dim, int n_fe_degree>
                              (pos != std::string::npos) ?
                                                           filename_vtk.substr(0, pos) :
                                                           "";
-    if (!std::filesystem::exists(folderPath))
+    if (!folderPath.empty() && !std::filesystem::exists(folderPath))
     {
-      std::filesystem::create_directory(folderPath);
+      std::filesystem::create_directories(folderPath);
       cout << "Folder created: " << folderPath << std::endl;
     }
 
