@@ -663,6 +663,100 @@ int run_tests ()
     std::cout << " Passed!" << std::endl;
   }
 
+  // SPN transient with the time preconditioners given as input entries. With
+  // Initial_Time_Preconditioner = diagonal and the full_matrixfree time
+  // operator the powers equal those with -init_prec diagonal. With a negative
+  // -t_end (no time step) the entries set type_preconditioner and
+  // initial_preconditioner, and -type_prec and -init_prec override them.
+  // Options given on the command line are restored after.
+  input_file = "test/1D_time_spn_matrixfree/1D_time_sp3.prm";
+  {
+    std::cout << "Trans SPN ... " << input_file << " " << std::flush;
+    const unsigned int n_options = 6;
+    const std::string options[n_options] = { "-matrixfree_type_time",
+      "-tol_ksp", "-print_timefile", "-init_prec", "-type_prec", "-t_end" };
+    // An empty value clears the option
+    const std::string values[4][n_options] = {
+      { "full_matrixfree", "1e-12", "false", "", "", "" },
+      { "full_matrixfree", "1e-12", "false", "diagonal", "", "" },
+      { "full_matrixfree", "1e-12", "false", "", "", "-1e-6" },
+      { "full_matrixfree", "1e-12", "false", "gs-ilu", "fixed", "-1e-6" } };
+    // Type_Time_Preconditioner and Initial_Time_Preconditioner of each run
+    // ("" keeps the default of the entry)
+    const std::string entries[4][2] = { { "", "diagonal" }, { "", "" },
+      { "bad-broyden", "diagonal" }, { "bad-broyden", "diagonal" } };
+    std::vector<std::string> given(n_options, "");
+    for (unsigned int i = 0; i < n_options; ++i)
+      get_string_from_options(options[i], given[i]);
+
+    PetscErrorCode ierr;
+    std::vector<double> power[2];
+    std::string type_prec[2], init_prec[2];
+    for (unsigned int run = 0; run < 4; ++run)
+    {
+      for (unsigned int i = 0; i < n_options; ++i)
+      {
+        if (values[run][i].empty())
+          ierr = PetscOptionsClearValue(NULL, options[i].c_str());
+        else
+          ierr = PetscOptionsSetValue(NULL, options[i].c_str(),
+            values[run][i].c_str());
+        AssertRelease(ierr == 0, "Error setting " + options[i]);
+      }
+      ParameterHandler prm;
+      prm_declare_entries(prm);
+      prm.parse_input(input_file);
+      if (not entries[run][0].empty())
+        prm.set("Type_Time_Preconditioner", entries[run][0]);
+      if (not entries[run][1].empty())
+        prm.set("Initial_Time_Preconditioner", entries[run][1]);
+      StaticSPN<1, 2> static_prob(prm, input_file, false, true);
+      TimeNeutronSPN<1, 2> time_pro(prm, static_prob, false, true);
+      if (run < 2)
+        power[run] = time_pro.power_vector;
+      else
+      {
+        type_prec[run - 2] = time_pro.type_preconditioner;
+        init_prec[run - 2] = time_pro.initial_preconditioner;
+      }
+    }
+
+    for (unsigned int i = 0; i < n_options; ++i)
+    {
+      if (given[i].empty())
+        ierr = PetscOptionsClearValue(NULL, options[i].c_str());
+      else
+        ierr = PetscOptionsSetValue(NULL, options[i].c_str(),
+          given[i].c_str());
+      AssertRelease(ierr == 0, "Error restoring " + options[i]);
+    }
+
+    const unsigned int n_steps[2] = { static_cast<unsigned int>(
+      power[0].size()), static_cast<unsigned int>(power[1].size()) };
+    double max_diff = 0.0;
+    for (unsigned int s = 0; s < n_steps[0] and s < n_steps[1]; ++s)
+    {
+      const double diff = std::abs(power[0][s] / power[1][s] - 1.0);
+      if (not (diff <= max_diff)) // a NaN is kept
+        max_diff = diff;
+    }
+    AssertRelease(n_steps[0] == n_steps[1] and max_diff < 1e-12,
+      "  Error solving test " + input_file + '\n'
+      + "  Powers with Initial_Time_Preconditioner = diagonal ("
+      + num_to_str(n_steps[0]) + " steps) differ from those with"
+      + " -init_prec diagonal (" + num_to_str(n_steps[1])
+      + " steps) by " + num_to_str(max_diff) + '.');
+    AssertRelease(type_prec[0] == "bad-broyden"
+                  and init_prec[0] == "diagonal"
+                  and type_prec[1] == "fixed" and init_prec[1] == "gs-ilu",
+      "  Error solving test " + input_file + '\n'
+      + "  Preconditioners from the entries: " + type_prec[0] + " and "
+      + init_prec[0] + " and they should be bad-broyden and diagonal;"
+      + " with -type_prec fixed -init_prec gs-ilu: " + type_prec[1]
+      + " and " + init_prec[1] + '.');
+    std::cout << " Passed!" << std::endl;
+  }
+
   //TODO IMPLEMENT IT
   // "Test Langenbuch reactor with Out-Of-Phase (sigma_f):"
   /*
