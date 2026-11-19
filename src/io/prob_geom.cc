@@ -371,7 +371,7 @@ template <int dim>
     const std::vector<Pin_type> & pin_types,
     const unsigned int first_manifold)
   {
-    Assert(dim >= 2, ExcMessage("dim must be at least 2."));
+    static_assert(dim >= 2, "assign_pin_manifolds needs dim >= 2");
     // how many pins?
     const unsigned int n_total_pins = pin_center.size();
     // After extruding the triangulation we have to specify the interior
@@ -772,7 +772,8 @@ template <int dim>
     const unsigned int n_ref_axial,
     const std::string refinement_model)
   {
-    assert(dim == 2 or dim == 3);
+    AssertRelease(dim == 2 or dim == 3,
+      "Geometry_Type = Composed needs Dimension = 2 or 3");
     unsigned int counter;
     const unsigned int nothing = static_cast<unsigned int>(-1);
 
@@ -963,11 +964,12 @@ template <int dim>
     // set the different identifiers to the mesh, in order to attach
     // different manifolds to different identifiers
     const unsigned int first_manifold = 10;
-    assign_pin_manifolds(tria_result,
-      pin_center,
-      pin_radius,
-      pin_types,
-      first_manifold);
+    if constexpr (dim >= 2)
+      assign_pin_manifolds(tria_result,
+        pin_center,
+        pin_radius,
+        pin_types,
+        first_manifold);
 
     // attach manifolds to the mesh and refine
     set_manifold_and_refine(tria_result,
