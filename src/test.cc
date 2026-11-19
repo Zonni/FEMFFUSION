@@ -158,6 +158,25 @@ int run_tests ()
 
   //
   //-----------------------------------------------------------------//
+  // TEST 2D_full_spn_geometry_matrix
+  // 2D Full SP1, 2 groups, zero current, a Geometry_Matrix of 3 x 2 cells
+  // without the last cell of its second row: the flux is flat with the
+  // flux_2g of each of the 5 cells and k is the infinite medium value 31/24
+  input_file = "test/2D_full_spn_geometry_matrix/2D_fsp1_geometry_matrix.prm";
+  test_keff_problem(input_file, 1.291667);
+  test_full_spn_per_cell<2, 1>(input_file, flux_2g);
+
+  // The same cells in two planes: 10 cells, k = 31/24 and power 1 in each
+  // cell of the second plane
+  input_file = "test/3D_full_spn_geometry_matrix/3D_fsp1_geometry_matrix.prm";
+  out_file = "test/3D_full_spn_geometry_matrix/3D_fsp1_geometry_matrix.out";
+  test_keff_problem(input_file, 1.291667);
+  std::vector<double> power_plane(
+      { 1.0, 1.0, 1.0, 1.0, 1.0 });
+  chek_output_vector(out_file, "Plane 2", power_plane, 2);
+
+  //
+  //-----------------------------------------------------------------//
   // TEST 1D_hom_slab_2g_2cm
   input_file = "test/1D_hom_slab_2g_2cm/1D_hom_zerocurrent.prm";
   test_keff_problem(input_file, 2.5);
