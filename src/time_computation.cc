@@ -957,7 +957,8 @@ template <int dim, int n_fe_degree>
 
     // E =R*phi_old
     Rfree.vmult(E, phi);
-    Rfree.clear();
+    if (type_perturbation != "Step_Change_Material" or step < 1 or reinit_step < 1)
+      Rfree.clear();
     E *= 1 / delta_t[step];
 
     if (time_scheme == "implicit-exponential")
@@ -1198,7 +1199,8 @@ template <int dim, int n_fe_degree>
       AssertRelease(false, "Invalid type of time scheme.");
     }
 
-    BMfree.clear();
+    if (type_perturbation != "Step_Change_Material" or step < 1 or reinit_step < 1)
+      BMfree.clear();
   }
 
 /**

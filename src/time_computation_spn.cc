@@ -826,7 +826,8 @@ template <int dim, int n_fe_degree>
 
     // E =R*u_old
     Rfree.vmult(E, u);
-    Rfree.clear();
+    if (type_perturbation != "Step_Change_Material" or step < 1)
+      Rfree.clear();
     E *= 1 / delta_t[step];
 
     if (time_scheme == "implicit-exponential")

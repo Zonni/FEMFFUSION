@@ -720,6 +720,14 @@ int run_tests ()
   input_file = "test/1D_read_xs_file/1D_read_xs_file.prm";
   test_power_evolution(input_file, power_read_xs, 1e-6);
 
+  // Test Step_Change_Material: steps 2 and later use the time operators of
+  // step 1. One material and zero-current faces keep the flux flat, so the
+  // power is that of the two-group point kinetics of the implicit-exponential
+  // scheme (0.853414367244 after the last step).
+  std::vector<double> power_step_change(1, 8.5341436725e-01);
+  input_file = "test/1D_time_step_change/1D_time_step.prm";
+  test_power_evolution(input_file, power_step_change, 1e-6);
+
   //
   // --------------------------------------------------------------- //
   // TEST POWER PER ASSEMBLY OF THE LAST TIME STEP
@@ -937,6 +945,10 @@ int run_tests ()
   // SP3 with vacuum faces and no perturbation: the power stays 1.
   input_file = "test/1D_time_spn_precursors/1D_time_sp3_static.prm";
   test_power_evolution_spn(input_file, 1.0, 1e-8);
+  // SP1 transient with Step_Change_Material: the last power is that of the
+  // diffusion case.
+  input_file = "test/1D_time_step_change/1D_time_step_sp1.prm";
+  test_power_evolution_spn(input_file, 8.5341436725e-01, 1e-6);
 
   // ---------------------------------------------------------------------//
   std::cout << std::endl;
