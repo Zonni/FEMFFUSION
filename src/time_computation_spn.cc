@@ -118,6 +118,7 @@ template <int dim, int n_fe_degree>
     t_end = prm.get_double("Time_End");
     time_scheme = prm.get("Distributed_Time_Scheme");
     lower_case(time_scheme);
+    print_timefile = prm.get_bool("Print_Time_Dependent_Data");
 
     // Type of preconditioner: "fixed" or "good-broyden" or "bad-broyden"
     type_preconditioner = "fixed";
