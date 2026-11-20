@@ -6,12 +6,14 @@
 #include <math.h>
 #include <iomanip>
 #include <sstream>
+#include <filesystem>
 
 #include "../include/test.h"
 #include "../include/utils.h"
 #include "../include/femffusion.h"
 #include "../include/static_diffusion.h"
 #include "../include/static_spn.h"
+#include "../include/static_sdpn.h"
 #include "../include/static_full_spn.h"
 #include "../include/time_computation.h"
 #include "../include/time_computation_spn.h"
@@ -180,6 +182,23 @@ int run_tests ()
   // 2 groups, vacuum | zero current, first three modes
   input_file = "test/1D_full_spn_vtk_modes/1D_fsp1_2g_three_modes.prm";
   test_full_spn_vtk_modes(input_file);
+
+  //
+  //-----------------------------------------------------------------//
+  // TEST 1D_output_folder
+  // Output_Filename inside two folders that do not exist: every static
+  // solver must create them and write its output file there
+  input_file = "test/1D_output_folder/diffusion.prm";
+  test_output_folder(input_file, "test/1D_output_folder/out", 2.5);
+
+  input_file = "test/1D_output_folder/sp3.prm";
+  test_output_folder(input_file, "test/1D_output_folder/out", 2.5);
+
+  input_file = "test/1D_output_folder/sdp3.prm";
+  test_output_folder(input_file, "test/1D_output_folder/out", 2.5);
+
+  input_file = "test/1D_output_folder/fsp1.prm";
+  test_output_folder(input_file, "test/1D_output_folder/out", 2.5);
 
   //
   //-----------------------------------------------------------------//
@@ -2345,6 +2364,68 @@ void run_tests_utils ()
   test_child_pos();
   test_child_at_face();
 
+  std::cout << " Passed!" << std::endl;
+}
+
+/**
+ *  @brief Run a static 1D problem with FE_Degree 3 whose Output_Filename lies
+ *  in a subfolder of folder, after removing folder. The problem must create the
+ *  folders and write its first eigenvalue, keff, in the output file.
+ */
+void test_output_folder (const std::string &input_file,
+  const std::string &folder,
+  const double keff,
+  const double tol)
+{
+  std::cout << "Output folder... " << input_file << " " << std::flush;
+
+  ParameterHandler prm;
+  prm_declare_entries(prm);
+  AssertRelease(fexists(input_file),
+    "ERROR!: Input File .prm Does NOT exist\n Use -f input_file.prm  option");
+  prm.parse_input(input_file);
+  AssertRelease(prm.get_integer("Dimension") == 1
+                and prm.get_integer("FE_Degree") == 3,
+    "Dimension or FE_Degree of " + input_file + " does not match the test");
+  const std::string out_file = prm.get("Output_Filename");
+  AssertRelease(out_file.compare(0, folder.size() + 1, folder + "/") == 0
+                and out_file.find('/', folder.size() + 1) != std::string::npos,
+    "Output_Filename of " + input_file + " is not in a subfolder of " + folder);
+  std::filesystem::remove_all(folder);
+  AssertRelease(not std::filesystem::exists(folder),
+    "The folder " + folder + " could not be removed");
+
+  std::string transport = prm.get("Transport_Appr");
+  lower_case(transport);
+  if (transport == "diffusion")
+  {
+    StaticDiffusion<1, 3> problem(prm, input_file, false, true);
+  }
+  else if (transport == "spn")
+  {
+    StaticSPN<1, 3> problem(prm, input_file, false, true);
+  }
+  else if (transport == "sdpn")
+  {
+    StaticSDPN<1, 3> problem(prm, input_file, false, true);
+  }
+  else if (transport == "full_spn")
+  {
+    StaticFullSPN<1, 3> problem(prm, input_file, false, true);
+  }
+  else
+    AssertRelease(false, "Transport_Appr of " + input_file + " is not tested");
+
+  AssertRelease(fexists(out_file),
+    "  Error solving test " + input_file + '\n' + "  Output file " + out_file
+    + " was not written.");
+  std::vector<double> eigenvalues;
+  parse_vector_in_file(out_file, "The Eigenvalues are:", eigenvalues, 1, 1);
+  std::ostringstream message;
+  message << std::setprecision(12) << "  Error solving test " << input_file
+          << '\n' << "  Eigenvalue in " << out_file << ": " << eigenvalues[0]
+          << " and it should be " << keff << '.';
+  AssertRelease(is_similar(eigenvalues[0], keff, tol), message.str());
   std::cout << " Passed!" << std::endl;
 }
 
