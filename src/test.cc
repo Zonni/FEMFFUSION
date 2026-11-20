@@ -668,8 +668,10 @@ int run_tests ()
   // operator the powers equal those with -init_prec diagonal. With a negative
   // -t_end (no time step) the entries set type_preconditioner and
   // initial_preconditioner, and -type_prec and -init_prec override them.
-  // Options given on the command line are restored after.
-  input_file = "test/1D_time_spn_matrixfree/1D_time_sp3.prm";
+  // Options given on the command line are restored after. The input file is
+  // 1D_time_sp3.prm with its own Output_Filename, so that the outputs of the
+  // test above stay its own.
+  input_file = "test/1D_time_spn_matrixfree/1D_time_sp3_entries.prm";
   {
     std::cout << "Trans SPN ... " << input_file << " " << std::flush;
     const unsigned int n_options = 6;
