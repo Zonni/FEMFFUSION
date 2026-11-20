@@ -376,19 +376,18 @@ template <int dim, int n_fe_degree>
     if (prm.get("Geometry_Matrix") != "")
     {
       verbose_cout << "parsing Geometry_Matrix... " << std::flush;
-      std::vector<std::vector<unsigned int> > geometry_matrix_2d;
-      //parse_matrix(prm.get("Geometry_Matrix"), geometry_matrix_2d,
-      //  assem_per_dim[1], assem_per_dim[0]);
       materials.set_geometry_matrix(assem_per_dim, prm.get("Geometry_Matrix"));
       AssertRelease(prm.get("Geometry_Points") == "",
         "Geometry_Matrix and Geometry_Points cannot be defined at the same time");
       verbose_cout << "Done!" << std::endl;
 
-      // Calculation n_assemblies (approximately)
+      // Calculation n_assemblies
+      const std::vector<std::vector<unsigned int> > &geometry_matrix =
+          materials.get_geometry_matrix();
       n_assemblies = 0;
       for (unsigned int r = 0; r < assem_per_dim[1]; ++r)
         for (unsigned int c = 0; c < assem_per_dim[0]; ++c)
-          if (geometry_matrix_2d[r][c] != 0)
+          if (geometry_matrix[r][c] != 0)
             n_assemblies++;
       n_assemblies *= assem_per_dim[2];
       verbose_cout << "n_assemblies: " << n_assemblies << std::endl;
